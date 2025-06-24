@@ -1,291 +1,533 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Match the words!</title>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Match the words!</title>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 2rem;
+    text-align: center;
+    color: #333;
+    background-color: #f9f9f9;
+    background-image:
+      linear-gradient(to right, #ddd 1px, transparent 1px),
+      linear-gradient(to bottom, #ddd 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  h1, h2 {
+    color: #00695c;
+    margin-bottom: 1rem;
+  }
+  .hidden {
+    display: none;
+  }
+  .quiz-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    max-width: 800px;
+    margin: 0 auto 2rem;
+  }
+  .quiz-btn {
+    padding: 0.8rem 1rem;
+    background-color: #00796b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 0.9rem;
+    user-select: none;
+  }
+  .quiz-btn:hover {
+    background-color: #004d40;
+  }
+  #timer {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 0;
+    color: #00796b;
+  }
+  .game-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    justify-items: center;
+    margin-top: 1rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 130px;
+    align-items: center;
+  }
+  .item {
+    width: 180px;
+    height: 60px;
+    padding: 1rem;
+    border: 2px solid #00838f;
+    background-color: #ffffff;
+    border-radius: 12px;
+    cursor: grab;
+    transition: all 0.25s ease;
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    text-align: center;
+    word-break: break-word;
+    user-select: none;
+  }
+  .item:active {
+    cursor: grabbing;
+  }
+  .item.correct {
+    background-color: #c8e6c9;
+    border-color: #2e7d32;
+    color: #2e7d32;
+    cursor: default;
+    animation: correctMatchAnim 0.6s ease forwards;
+  }
+  .item.incorrect {
+    background-color: #ffcdd2;
+    border-color: #c62828;
+  }
+  button {
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    cursor: pointer;
+    background-color: #00796b;
+    color: white;
+    transition: background-color 0.3s;
+    user-select: none;
+  }
+  button:hover {
+    background-color: #004d40;
+  }
+  button.speaker {
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    margin-left: 8px;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+  }
+  #back-btn {
+    margin-left: 1rem;
+    background: #555;
+  }
+  #leaderboard {
+    max-width: 400px;
+    margin: 1rem auto;
+    text-align: left;
+    background: #e0f2f1;
+    padding: 1rem;
+    border-radius: 12px;
+    color: #004d40;
+  }
+  #leaderboard h3 {
+    margin-top: 0;
+  }
+  @keyframes correctMatchAnim {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0px #2e7d32;
     }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #e0f7fa, #f1f8e9);
-      margin: 0;
-      padding: 2rem;
-      text-align: center;
-      color: #333;
+    50% {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px 4px #2e7d32;
     }
-
-    h1, h2 {
-      color: #00695c;
-      margin-bottom: 1rem;
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0px #2e7d32;
     }
-
-    .hidden {
-      display: none;
-    }
-
+  }
+  @media (max-width: 600px) {
     .game-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 2rem;
-      justify-items: center;
-      margin-top: 2rem;
+      grid-template-columns: 1fr 1fr;
     }
-
-    .column {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      min-width: 130px;
-      align-items: center;
-    }
-
     .item {
-      width: 180px;
-      height: 60px;
-      padding: 1rem;
-      border: 2px solid #00838f;
-      background-color: #ffffff;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      box-shadow: 2px 4px 8px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      text-align: center;
-      word-break: break-word;
+      width: 140px;
+      height: 50px;
+      font-size: 1rem;
     }
-
-    .item:hover {
-      background-color: #e0f2f1;
-      transform: scale(1.03);
-    }
-
-    .item.selected {
-      background-color: #b2ebf2;
-      border-color: #00acc1;
-    }
-
-    .item.correct {
-      background-color: #c8e6c9;
-      border-color: #2e7d32;
-      color: #2e7d32;
-      cursor: default;
-    }
-
-    .item.incorrect {
-      background-color: #ffcdd2;
-      border-color: #c62828;
-    }
-
     button {
-      padding: 0.7rem 1.5rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      margin-top: 1.5rem;
-      cursor: pointer;
-      background-color: #00796b;
-      color: white;
-      transition: background-color 0.3s;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
     }
-
-    button:hover {
-      background-color: #004d40;
+    .quiz-selection {
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     }
-
-    button.speaker {
-      background: transparent;
-      border: none;
-      font-size: 1rem;
-      margin-left: 8px;
-      color: #555;
+    .quiz-btn {
+      font-size: 0.8rem;
+      padding: 0.5rem 0.8rem;
     }
-
-    #start-screen, #game-screen {
-      animation: fadeIn 0.5s ease-in;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.98); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-
-    @media (max-width: 600px) {
-      .game-container {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
 
   <!-- Start Screen -->
   <div id="start-screen">
     <h1>Match the words!</h1>
-    <p>Match each English word with its correct Japanese translation.</p>
-    <button id="start-btn">Start Game</button>
+    <p>Select a lesson to begin:</p>
+    <div class="quiz-selection" id="quiz-selection">
+      <!-- Buttons inserted by JS -->
+    </div>
   </div>
 
   <!-- Game Screen -->
   <div id="game-screen" class="hidden">
-    <h2>Match the Words</h2>
+    <h2 id="lesson-title"></h2>
+    <div id="timer">Time: 0:00</div>
     <div class="game-container">
-      <div class="column" id="english-col-1"></div>
-      <div class="column" id="english-col-2"></div>
-      <div class="column" id="japanese-col-1"></div>
-      <div class="column" id="japanese-col-2"></div>
+      <div class="column" id="english-col"></div>
+      <div class="column" id="japanese-col"></div>
     </div>
-    <button id="reset-btn">Reset</button>
+    <button id="back-btn">Back to Lessons</button>
+    <div id="leaderboard" class="hidden">
+      <h3>Leaderboard</h3>
+      <ul id="leaderboard-list"></ul>
+    </div>
   </div>
 
-  <script>
-    const vocab = [
+<script>
+  const quizzes = {
+    "Lesson 1-1": [
       { english: "cat", japanese: "ねこ" },
       { english: "dog", japanese: "いぬ" },
+      { english: "bird", japanese: "とり" }
+    ],
+    "Lesson 1-2": [
       { english: "water", japanese: "みず" },
+      { english: "fire", japanese: "ひ" },
+      { english: "earth", japanese: "つち" }
+    ],
+    "Lesson 2-1": [
       { english: "book", japanese: "ほん" },
+      { english: "pen", japanese: "ペン" },
+      { english: "paper", japanese: "かみ" }
+    ],
+    "Lesson 2-2": [
+      { english: "apple", japanese: "りんご" },
+      { english: "banana", japanese: "バナナ" },
+      { english: "orange", japanese: "オレンジ" }
+    ],
+    "Lesson 3-1": [
+      { english: "red", japanese: "あか" },
+      { english: "blue", japanese: "あお" },
+      { english: "green", japanese: "みどり" }
+    ],
+    "Lesson 3-2": [
       { english: "school", japanese: "がっこう" },
-      { english: "apple", japanese: "りんご" }
-    ];
+      { english: "teacher", japanese: "せんせい" },
+      { english: "student", japanese: "がくせい" }
+    ]
+  };
 
-    let selectedEnglish = null;
-    let selectedJapanese = null;
-    let correctMatches = 0;
-
-    function shuffle(array) {
-      return array.sort(() => Math.random() - 0.5);
-    }
-
-    function speakEnglish(word) {
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = "en-US";
-      speechSynthesis.speak(utterance);
-    }
-
-    function celebrate() {
-      confetti({
-        particleCount: 200,
-        spread: 90,
-        origin: { y: 0.6 }
-      });
-    }
-
-    function checkWinCondition() {
-      if (correctMatches === vocab.length) {
-        setTimeout(() => {
-          celebrate();
-          alert("🎉 Excellent! You've matched all pairs correctly!");
-        }, 300);
+  // Generate lesson buttons 1-1 to 8-3 automatically for UI
+  function generateLessonButtons() {
+    const container = document.getElementById("quiz-selection");
+    container.innerHTML = ""; // clear before adding
+    for(let lessonNum=1; lessonNum<=8; lessonNum++) {
+      for(let quizNum=1; quizNum<=3; quizNum++) {
+        const lessonName = `Lesson ${lessonNum}-${quizNum}`;
+        const btn = document.createElement("button");
+        btn.classList.add("quiz-btn");
+        btn.textContent = lessonName;
+        btn.dataset.lesson = lessonName;
+        container.appendChild(btn);
       }
     }
+  }
 
-    function createItem(text, lang, pairId) {
-      const div = document.createElement("div");
-      div.classList.add("item");
-      div.dataset.lang = lang;
-      div.dataset.id = pairId;
+  let currentVocab = [];
+  let matchedPairs = new Set();
+  let startTime = null;
+  let timerInterval = null;
 
-      if (lang === "en") {
-        const wordSpan = document.createElement("span");
-        wordSpan.textContent = text;
+  // Timer display update
+  function updateTimer() {
+    const elapsed = Math.floor((Date.now() - startTime)/1000);
+    const minutes = Math.floor(elapsed/60);
+    const seconds = elapsed % 60;
+    document.getElementById("timer").textContent = `Time: ${minutes}:${seconds.toString().padStart(2,'0')}`;
+  }
 
-        const speaker = document.createElement("button");
-        speaker.className = "speaker";
-        speaker.textContent = "🔊";
-        speaker.addEventListener("click", (e) => {
-          e.stopPropagation();
-          speakEnglish(text);
-        });
+  // Start timer
+  function startTimer() {
+    startTime = Date.now();
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+  }
 
-        div.appendChild(wordSpan);
-        div.appendChild(speaker);
-      } else {
-        div.textContent = text;
-      }
+  // Stop timer
+  function stopTimer() {
+    clearInterval(timerInterval);
+  }
 
-      div.addEventListener("click", () => {
-        if (div.classList.contains("correct")) return;
+  // Speak English word
+  function speakEnglish(word) {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = "en-US";
+    speechSynthesis.speak(utterance);
+  }
 
-        if (lang === "en") {
-          if (selectedEnglish && selectedEnglish !== div) {
-            selectedEnglish.classList.remove("selected");
-          }
-          selectedEnglish = div;
-          div.classList.toggle("selected");
-        } else {
-          if (selectedJapanese && selectedJapanese !== div) {
-            selectedJapanese.classList.remove("selected");
-          }
-          selectedJapanese = div;
-          div.classList.toggle("selected");
-        }
+  // Confetti celebration
+  function celebrate() {
+    confetti({
+      particleCount: 200,
+      spread: 90,
+      origin: { y: 0.6 }
+    });
+  }
 
-        if (selectedEnglish && selectedJapanese) {
-          if (selectedEnglish.dataset.id === selectedJapanese.dataset.id) {
-            selectedEnglish.classList.add("correct");
-            selectedJapanese.classList.add("correct");
-            selectedEnglish.classList.remove("selected");
-            selectedJapanese.classList.remove("selected");
-            correctMatches++;
-            checkWinCondition();
-          } else {
-            selectedEnglish.classList.add("incorrect");
-            selectedJapanese.classList.add("incorrect");
-            setTimeout(() => {
-              selectedEnglish.classList.remove("selected", "incorrect");
-              selectedJapanese.classList.remove("selected", "incorrect");
-            }, 800);
-          }
-          selectedEnglish = null;
-          selectedJapanese = null;
-        }
-      });
+  // Save time in leaderboard (localStorage)
+  function saveTime(lesson, timeSeconds) {
+    let leaderboard = JSON.parse(localStorage.getItem("leaderboard") || "{}");
+    if (!leaderboard[lesson]) leaderboard[lesson] = [];
+    leaderboard[lesson].push(timeSeconds);
+    leaderboard[lesson].sort((a,b) => a-b);
+    leaderboard[lesson] = leaderboard[lesson].slice(0,5); // top 5 times
+    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+  }
 
-      return div;
-    }
-
-    function setupGame() {
-      selectedEnglish = null;
-      selectedJapanese = null;
-      correctMatches = 0;
-
-      const engCol1 = document.getElementById("english-col-1");
-      const engCol2 = document.getElementById("english-col-2");
-      const japCol1 = document.getElementById("japanese-col-1");
-      const japCol2 = document.getElementById("japanese-col-2");
-
-      [engCol1, engCol2, japCol1, japCol2].forEach(col => col.innerHTML = "");
-
-      const shuffledEnglish = shuffle([...vocab]);
-      const shuffledJapanese = shuffle([...vocab]);
-
-      const halfE = Math.ceil(shuffledEnglish.length / 2);
-      shuffledEnglish.forEach((pair, i) => {
-        const col = i < halfE ? engCol1 : engCol2;
-        col.appendChild(createItem(pair.english, "en", pair.english));
-      });
-
-      const halfJ = Math.ceil(shuffledJapanese.length / 2);
-      shuffledJapanese.forEach((pair, i) => {
-        const col = i < halfJ ? japCol1 : japCol2;
-        col.appendChild(createItem(pair.japanese, "ja", pair.english));
+  // Show leaderboard UI
+  function showLeaderboard(lesson) {
+    const leaderboardDiv = document.getElementById("leaderboard");
+    const list = document.getElementById("leaderboard-list");
+    list.innerHTML = "";
+    let leaderboard = JSON.parse(localStorage.getItem("leaderboard") || "{}");
+    let times = leaderboard[lesson] || [];
+    if(times.length === 0) {
+      list.innerHTML = "<li>No records yet.</li>";
+    } else {
+      times.forEach(t => {
+        const li = document.createElement("li");
+        const min = Math.floor(t/60);
+        const sec = t % 60;
+        li.textContent = `${min}:${sec.toString().padStart(2,"0")}`;
+        list.appendChild(li);
       });
     }
+    leaderboardDiv.classList.remove("hidden");
+  }
 
-    document.getElementById("start-btn").addEventListener("click", () => {
-      document.getElementById("start-screen").classList.add("hidden");
-      document.getElementById("game-screen").classList.remove("hidden");
-      setupGame();
+  // Create draggable English item
+  function createEnglishItem(text, pairId) {
+    const div = document.createElement("div");
+    div.classList.add("item", "en");
+    div.dataset.lang = "en";
+    div.dataset.id = pairId;
+    div.setAttribute("draggable", "true");
+
+    const wordSpan = document.createElement("span");
+    wordSpan.textContent = text;
+
+    const speaker = document.createElement("button");
+    speaker.className = "speaker";
+    speaker.textContent = "🔊";
+    speaker.addEventListener("click", (e) => {
+      e.stopPropagation();
+      speakEnglish(text);
     });
 
-    document.getElementById("reset-btn").addEventListener("click", setupGame);
-  </script>
+    div.appendChild(wordSpan);
+    div.appendChild(speaker);
+
+    // Drag events
+    div.addEventListener("dragstart", (e) => {
+      if(div.classList.contains("correct")) {
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.setData("text/plain", pairId);
+      setTimeout(() => {
+        div.style.visibility = "hidden";
+      }, 0);
+    });
+    div.addEventListener("dragend", (e) => {
+      div.style.visibility = "visible";
+    });
+
+    return div;
+  }
+
+  // Create droppable Japanese item
+  function createJapaneseItem(text, pairId) {
+    const div = document.createElement("div");
+    div.classList.add("item");
+    div.dataset.lang = "ja";
+    div.dataset.id = pairId;
+
+    div.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      if(!div.classList.contains("correct")) {
+        div.style.borderColor = "#00acc1";
+        div.style.backgroundColor = "#e0f7fa";
+      }
+    });
+
+    div.addEventListener("dragleave", (e) => {
+      if(!div.classList.contains("correct")) {
+        div.style.borderColor = "#00838f";
+        div.style.backgroundColor = "#fff";
+      }
+    });
+
+    div.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if(div.classList.contains("correct")) return;
+
+      div.style.borderColor = "#00838f";
+      div.style.backgroundColor = "#fff";
+
+      const draggedId = e.dataTransfer.getData("text/plain");
+      const dropId = div.dataset.id;
+
+      if(draggedId === dropId) {
+        markCorrectMatch(draggedId);
+      } else {
+        // flash red for incorrect
+        div.classList.add("incorrect");
+        setTimeout(() => {
+          div.classList.remove("incorrect");
+        }, 800);
+        // find dragged English div and flash incorrect as well
+        const engDiv = document.querySelector(`.item.en[data-id='${draggedId}']`);
+        if(engDiv) {
+          engDiv.classList.add("incorrect");
+          setTimeout(() => engDiv.classList.remove("incorrect"), 800);
+        }
+      }
+    });
+
+    return div;
+  }
+
+  // Mark matched pair as correct with animation
+  function markCorrectMatch(pairId) {
+    if(matchedPairs.has(pairId)) return;
+    matchedPairs.add(pairId);
+
+    const engDiv = document.querySelector(`.item.en[data-id='${pairId}']`);
+    const jaDiv = [...document.querySelectorAll('.item')].find(el => el.dataset.lang === 'ja' && el.dataset.id === pairId);
+    if(!engDiv || !jaDiv) return;
+
+    engDiv.classList.add("correct");
+    jaDiv.classList.add("correct");
+
+    engDiv.setAttribute("draggable", "false");
+    engDiv.style.cursor = "default";
+
+    checkWinCondition();
+  }
+
+  // Check if all matched
+  function checkWinCondition() {
+    if(matchedPairs.size === currentVocab.length) {
+      stopTimer();
+      celebrate();
+      const elapsedSeconds = Math.floor((Date.now() - startTime)/1000);
+      alert(`🎉 Congratulations! You matched all pairs in ${formatTime(elapsedSeconds)}!`);
+      saveTime(document.getElementById("lesson-title").textContent, elapsedSeconds);
+      showLeaderboard(document.getElementById("lesson-title").textContent);
+    }
+  }
+
+  // Format seconds as mm:ss
+  function formatTime(sec) {
+    const m = Math.floor(sec/60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2,"0")}`;
+  }
+
+  // Shuffle array helper
+  function shuffle(array) {
+    let currentIndex = array.length, randomIndex;
+    while(currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+  }
+
+  // Setup game board with drag and drop items
+  function setupGame() {
+    matchedPairs.clear();
+    const engCol = document.getElementById("english-col");
+    const japCol = document.getElementById("japanese-col");
+    engCol.innerHTML = "";
+    japCol.innerHTML = "";
+
+    // Shuffle vocab separately
+    const shuffledEnglish = shuffle([...currentVocab]);
+    const shuffledJapanese = shuffle([...currentVocab]);
+
+    shuffledEnglish.forEach(pair => {
+      const engItem = createEnglishItem(pair.english, pair.english);
+      engCol.appendChild(engItem);
+    });
+
+    shuffledJapanese.forEach(pair => {
+      const jaItem = createJapaneseItem(pair.japanese, pair.english);
+      japCol.appendChild(jaItem);
+    });
+
+    // Start timer fresh
+    stopTimer();
+    startTimer();
+
+    // Hide leaderboard during game
+    document.getElementById("leaderboard").classList.add("hidden");
+  }
+
+  // Lesson select handler
+  function onLessonSelect(e) {
+    if (!e.target.classList.contains('quiz-btn')) return;
+    const lessonName = e.target.dataset.lesson;
+    currentVocab = quizzes[lessonName] || [];
+    if(currentVocab.length === 0) {
+      alert(`No vocabulary found for ${lessonName}`);
+      return;
+    }
+    document.getElementById("start-screen").classList.add("hidden");
+    document.getElementById("game-screen").classList.remove("hidden");
+    document.getElementById("lesson-title").textContent = lessonName;
+    setupGame();
+  }
+
+  // Back to lessons button
+  function backToLessons() {
+    stopTimer();
+    document.getElementById("game-screen").classList.add("hidden");
+    document.getElementById("start-screen").classList.remove("hidden");
+    document.getElementById("leaderboard").classList.add("hidden");
+  }
+
+  window.onload = () => {
+    generateLessonButtons();
+    document.getElementById("quiz-selection").addEventListener("click", onLessonSelect);
+    document.getElementById("back-btn").addEventListener("click", backToLessons);
+  };
+</script>
+
 </body>
 </html>
