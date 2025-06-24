@@ -3,360 +3,326 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vocabulary Quiz Game</title>
+<title>Drag & Drop Vocabulary Match Game</title>
 
-<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nico+Moji&display=swap" rel="stylesheet" />
 
-<!-- Confetti library -->
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 <style>
-  /* CSS Variables for Light & Dark Modes */
-  :root {
-    --bg-color: #f5f7f6;
-    --text-color: #334d4d;
-    --primary-color: #4a7c74;
-    --primary-dark: #2e5d54;
-    --secondary-color: #d6e3e1;
-    --button-bg: #4a7c74;
-    --button-hover: #2e5d54;
-    --correct-color: #a8d5a3;
-    --incorrect-color: #e57373;
-    --progress-bg: #cbd9d7;
-    --progress-fill: #4a7c74;
-    --progress-warning: #db9242;
-    --input-border: #a2b3b0;
-    --shadow-color: rgba(0,0,0,0.1);
-    --coin-gradient-start: #ffd963;
-    --coin-gradient-end: #b8860b;
-    --timer-color: var(--primary-dark);
+  * {
+    box-sizing: border-box;
   }
-  /* Dark mode overrides */
-  [data-theme="dark"] {
-    --bg-color: #263238;
-    --text-color: #cfd8dc;
-    --primary-color: #80cbc4;
-    --primary-dark: #4f9a94;
-    --secondary-color: #37474f;
-    --button-bg: #80cbc4;
-    --button-hover: #4f9a94;
-    --correct-color: #a5d6a7;
-    --incorrect-color: #ef9a9a;
-    --progress-bg: #455a64;
-    --progress-fill: #80cbc4;
-    --progress-warning: #ffb74d;
-    --input-border: #78909c;
-    --shadow-color: rgba(0,0,0,0.4);
-    --coin-gradient-start: #ffe082;
-    --coin-gradient-end: #c79200;
-    --timer-color: #80cbc4;
-  }
-
-  /* Base styles */
-  * { box-sizing: border-box; }
   body {
     font-family: 'Comic Neue', cursive;
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background: #f0f0f0;
     margin: 0; padding: 1rem;
-    text-align: center;
-    user-select: none;
-    transition: background-color 0.4s, color 0.4s;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-
-    /* subtle pattern background */
-    background-image:
-      radial-gradient(circle at 0 0, rgba(0,0,0,0.03) 1px, transparent 1px),
-      radial-gradient(circle at 10px 10px, rgba(0,0,0,0.03) 1px, transparent 1px);
-    background-size: 20px 20px;
+    color: #333;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  body.dark-mode {
+    background-color: #121212;
+    color: #ddd;
   }
   h1 {
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-    color: var(--primary-dark);
+    text-align: center;
+    color: #00695c;
   }
-  h2 {
-    font-family: 'Nico Moji', monospace;
-    margin-top: 1.5rem;
-    font-size: 2rem;
-  }
-  button {
-    font-family: 'Comic Neue', cursive;
-    background-color: var(--button-bg);
-    border: none;
-    border-radius: 10px;
+  #dark-mode-toggle {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: #00796b;
     color: white;
-    padding: 0.7rem 1.4rem;
-    margin: 0.3rem;
-    font-size: 1.1rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
-    box-shadow: 0 2px 8px var(--shadow-color);
-    transition:
-      background-color 0.3s ease,
-      transform 0.2s ease,
-      box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
     user-select: none;
   }
-  button:hover:not(:disabled) {
-    background-color: var(--button-hover);
-    transform: scale(1.08);
-    box-shadow: 0 6px 14px var(--shadow-color);
+  #dark-mode-toggle:hover {
+    background-color: #004d40;
   }
-  button:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-  input[type="text"] {
-    font-family: 'Comic Neue', cursive;
-    padding: 0.5rem;
-    width: 80%;
-    max-width: 320px;
-    font-size: 1.1rem;
-    margin-top: 1rem;
-    border-radius: 10px;
-    border: 2px solid var(--input-border);
-    outline-offset: 2px;
-    transition: border-color 0.3s ease;
-  }
-  input[type="text"]:focus {
-    border-color: var(--primary-color);
+  .hidden {
+    display: none;
   }
 
-  /* Start Screen */
-  .start-screen {
-    max-width: 640px;
+  /* Start screen */
+  #start-screen {
+    max-width: 600px;
     margin: 0 auto 2rem;
-    padding: 1rem 1.2rem;
-    background: var(--secondary-color);
+    background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 14px var(--shadow-color);
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  }
+  #start-screen.dark-mode {
+    background: #1f1f1f;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.9);
+  }
+  #player-name {
+    width: 80%;
+    font-size: 1rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    font-family: 'Comic Neue', cursive;
+    outline: none;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s;
+  }
+  #player-name:focus {
+    border-color: #00796b;
   }
   .set-buttons {
     display: flex;
     flex-wrap: wrap;
+    gap: 0.7rem;
     justify-content: center;
-    gap: 0.6rem;
-    margin-top: 1rem;
   }
-  /* Cute font for set buttons */
   .set-buttons button {
+    padding: 0.6rem 1.2rem;
+    background: #00796b;
+    color: white;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
     font-family: 'Comic Neue', cursive;
-    font-weight: 700;
-    font-size: 1.05rem;
-    background-color: #a8bbc9;
-    color: #2c3e50;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    transition: background-color 0.3s, transform 0.2s;
   }
   .set-buttons button:hover {
-    background-color: #7a93a1;
-    color: white;
+    background-color: #004d40;
+    transform: scale(1.05);
   }
 
-  /* Dark mode toggle */
-  #dark-mode-toggle {
-    margin-top: 1rem;
-    cursor: pointer;
-    background: none;
-    border: 2px solid var(--primary-color);
-    color: var(--primary-color);
-    padding: 0.4rem 0.8rem;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    user-select: none;
-    transition: background-color 0.3s, color 0.3s, transform 0.2s;
-  }
-  #dark-mode-toggle:hover {
-    background-color: var(--primary-color);
-    color: white;
-    transform: scale(1.1);
-  }
-
-  /* Game Screen */
-  .game-screen {
-    max-width: 640px;
+  /* Game screen */
+  #game-screen {
+    max-width: 700px;
     margin: 0 auto;
-    background: var(--secondary-color);
+    background: white;
     border-radius: 12px;
-    box-shadow: 0 6px 18px var(--shadow-color);
-    padding: 1.5rem 1.8rem;
-    position: relative;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    user-select: none;
   }
+  #game-screen.dark-mode {
+    background: #1f1f1f;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.9);
+  }
+
   #progress-container {
-    width: 100%;
-    height: 28px;
-    background: var(--progress-bg);
-    border-radius: 14px;
+    width: 80%;
+    height: 20px;
+    background: #ddd;
+    border-radius: 10px;
+    margin: 0 auto 0.5rem auto;
     overflow: hidden;
-    box-shadow: inset 0 0 6px rgba(0,0,0,0.12);
-    margin: 0 auto 12px;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+  }
+  body.dark-mode #progress-container {
+    background: #333;
+    box-shadow: inset 0 0 5px rgba(255,255,255,0.1);
   }
   #progress-bar {
     height: 100%;
     width: 100%;
-    background-color: var(--progress-fill);
-    border-radius: 14px 0 0 14px;
-    transition: width 0.6s ease, background-color 0.6s ease;
+    background-color: #00796b;
+    transition: width 1s linear;
   }
+  body.dark-mode #progress-bar {
+    background-color: #4caf50;
+  }
+
   #timer {
     font-family: 'Nico Moji', monospace;
-    font-weight: 700;
-    font-size: 1.6rem;
-    margin: 8px 0 18px;
-    color: var(--timer-color);
-    transition: color 0.3s ease;
+    font-weight: bold;
+    font-size: 1.3rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #004d40;
+    transition: color 0.3s;
+  }
+  body.dark-mode #timer {
+    color: #a5d6a7;
   }
   #timer.pulse {
-    animation: pulse 1s infinite ease-in-out;
-    color: var(--progress-warning);
+    animation: pulseRed 1s infinite alternate;
+    color: #e53935 !important;
   }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+  @keyframes pulseRed {
+    0% { color: #004d40; }
+    100% { color: #e53935; }
   }
 
   #score-container {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-dark);
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: #2e7d32;
     display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 12px;
-    font-family: 'Comic Neue', cursive;
-    margin-bottom: 1.3rem;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  body.dark-mode #score-container {
+    color: #a5d6a7;
   }
   #money-amount {
+    font-size: 1.6rem;
     color: #f9a825;
   }
   #piggy-bank {
-    width: 70px;
-    height: 65px;
-    user-select: none;
+    width: 60px;
+    height: 50px;
     transition: transform 0.3s ease;
-    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
   }
 
-  /* Options Buttons */
-  #options-container {
+  #word-lists {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.9rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 1rem;
   }
-  .option-btn {
-    background: var(--secondary-color);
-    border: 3px solid var(--primary-color);
+
+  /* Drop zones for English words */
+  .drop-zone {
+    flex: 1 1 45%;
+    min-height: 320px;
+    background: #a2cfc4;
     border-radius: 12px;
-    padding: 0.9rem 1.5rem;
-    font-size: 1.3rem;
-    color: var(--primary-dark);
-    cursor: pointer;
-    box-shadow: 0 3px 8px var(--shadow-color);
-    width: 90%;
-    max-width: 420px;
-    transition:
-      background-color 0.4s ease,
-      border-color 0.4s ease,
-      box-shadow 0.4s ease,
-      transform 0.2s ease;
+    padding: 10px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    overflow-y: auto;
+  }
+  body.dark-mode .drop-zone {
+    background: #225544;
+    box-shadow: 0 0 8px rgba(255,255,255,0.1);
+  }
+
+  .drop-zone h3 {
+    margin: 0 0 10px 0;
+    font-family: 'Comic Neue', cursive;
+  }
+
+  /* Draggable vocab words (Japanese) */
+  .vocab-word {
+    background: #d0e8e4;
+    padding: 8px 12px;
+    margin: 6px 0;
+    border-radius: 10px;
+    cursor: grab;
+    user-select: none;
+    font-family: 'Nico Moji', monospace;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: background-color 0.3s;
+  }
+  .vocab-word.dragging {
+    opacity: 0.5;
+  }
+  body.dark-mode .vocab-word {
+    background: #336655;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+
+  /* English word targets */
+  .target-word {
+    background: #f4f4f4;
+    padding: 10px 14px;
+    margin: 8px 0;
+    border-radius: 12px;
+    border: 2px dashed #00796b;
+    min-height: 42px;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Comic Neue', cursive;
+    transition: background-color 0.3s, border-color 0.3s;
     user-select: none;
   }
-  .option-btn:hover:not(:disabled) {
-    background-color: var(--primary-color);
-    color: white;
-    box-shadow: 0 6px 16px var(--shadow-color);
-    transform: scale(1.06);
-  }
-  .option-btn.correct {
-    background-color: var(--correct-color);
+  .target-word.correct {
+    background-color: #a5d6a7;
     border-color: #2e7d32;
     color: #2e7d32;
-    cursor: default;
   }
-  .option-btn.incorrect {
+  .target-word.incorrect {
     animation: shake 0.5s;
-    background-color: var(--incorrect-color);
-    border-color: #b71c1c;
-    color: white;
-    cursor: default;
+    border-color: #e53935;
   }
+  body.dark-mode .target-word {
+    background: #224433;
+    border-color: #4caf50;
+    color: #a5d6a7;
+  }
+  body.dark-mode .target-word.correct {
+    background-color: #4caf50;
+    border-color: #2e7d32;
+    color: #1b3d1a;
+  }
+
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
     20%, 60% { transform: translateX(-8px); }
     40%, 80% { transform: translateX(8px); }
   }
 
-  /* Fade animations for question changes */
-  .fade-out {
-    animation: fadeOut 0.5s forwards;
-  }
-  .fade-in {
-    animation: fadeIn 0.5s forwards;
-  }
-  @keyframes fadeOut {
-    from {opacity: 1;}
-    to {opacity: 0;}
-  }
-  @keyframes fadeIn {
-    from {opacity: 0;}
-    to {opacity: 1;}
-  }
-
-  /* Coin styling and animation */
+  /* Coin animation */
   .coin {
     position: fixed;
-    width: 26px;
-    height: 26px;
-    background: radial-gradient(circle at 13px 13px, var(--coin-gradient-start) 0%, var(--coin-gradient-end) 100%);
+    width: 25px;
+    height: 25px;
+    background: radial-gradient(circle at 12px 12px, #ffd700 0%, #b8860b 100%);
     border-radius: 50%;
     box-shadow: inset 0 0 8px #fff700;
     pointer-events: none;
     animation: fallCoin 1s ease forwards;
-    z-index: 9999;
-    filter: drop-shadow(0 0 3px rgba(0,0,0,0.15));
+    z-index: 1000;
   }
   @keyframes fallCoin {
     0% { transform: translateY(0) scale(1); opacity: 1; }
     80% { opacity: 1; }
-    100% { transform: translateY(140px) scale(0.3); opacity: 0; }
+    100% { transform: translateY(180px) scale(0.3); opacity: 0; }
   }
 </style>
 </head>
 <body>
 
-  <!-- Start Screen -->
-  <section class="start-screen" id="start-screen" role="main" aria-label="Start screen">
-    <h1>Vocabulary Quiz Game</h1>
-    <input type="text" id="player-name" placeholder="Enter your name..." autocomplete="off" aria-label="Enter your name" />
-    <div class="set-buttons" id="set-buttons" aria-label="Vocabulary sets to choose"></div>
+<div id="dark-mode-toggle" title="Toggle Dark Mode">🌙</div>
 
-    <button id="dark-mode-toggle" aria-pressed="false" aria-label="Toggle dark mode">Toggle Dark Mode</button>
+<div id="start-screen" aria-label="Start screen">
+  <h1>Vocabulary Match Game</h1>
+  <input type="text" id="player-name" placeholder="Enter your name..." autocomplete="off" aria-label="Player name" />
+  <div class="set-buttons" id="set-buttons" aria-label="Select vocabulary set"></div>
+</div>
 
-    <div style="margin-top:1.5rem; font-style: italic; color: var(--primary-dark); font-size: 0.95rem;">
-      Choose a set and challenge yourself!
+<div id="game-screen" class="hidden" aria-live="polite" aria-label="Game screen">
+  <div id="progress-container" aria-label="Time progress">
+    <div id="progress-bar"></div>
+  </div>
+  <div id="timer">Time: 05:00</div>
+  <div id="score-container" aria-live="polite">
+    Money: <span id="money-amount">¥0</span>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Piggy_bank_icon.svg/64px-Piggy_bank_icon.svg.png" id="piggy-bank" alt="Piggy bank" />
+  </div>
+  <div id="word-lists">
+    <div class="drop-zone" id="japanese-list" aria-label="Japanese words (draggable)">
+      <h3>Japanese Words</h3>
     </div>
-  </section>
-
-  <!-- Game Screen -->
-  <section class="game-screen hidden" id="game-screen" role="main" aria-label="Game screen">
-    <div id="progress-container" aria-label="Time remaining">
-      <div id="progress-bar"></div>
+    <div class="drop-zone" id="english-list" aria-label="English words (drop targets)">
+      <h3>English Words</h3>
     </div>
-    <div id="timer" aria-live="polite" aria-atomic="true">Time: 05:00</div>
-    <div id="score-container" aria-live="polite" aria-atomic="true">
-      Money: <span id="money-amount">¥0</span>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Piggy_bank_icon_pink.svg/64px-Piggy_bank_icon_pink.svg.png" id="piggy-bank" alt="Piggy bank" />
-    </div>
-    <h2 id="japanese-word" aria-live="polite"></h2>
-    <div id="options-container"></div>
-  </section>
+  </div>
+</div>
 
 <script>
-  // Full vocabulary sets
   const vocabSets = {
     1: [
       {english:"minute", japanese:"分"},
@@ -377,7 +343,7 @@
       {english:"today", japanese:"今日"},
       {english:"yesterday", japanese:"昨日"},
       {english:"ago", japanese:"～前に"},
-      {english:"spread", japanese:"広める"},
+      {english:"spread", japanese:"広める"}
     ],
     2: [
       {english:"if", japanese:"もし"},
@@ -389,7 +355,7 @@
       {english:"naughty", japanese:"いたずらな"},
       {english:"trouble", japanese:"心配、悩み、やっかいな事態"},
       {english:"lend", japanese:"貸す"},
-      {english:"another", japanese:"もう一つの"},
+      {english:"another", japanese:"もう一つの"}
     ],
     3: [
       {english:"think", japanese:"考える・思う"},
@@ -408,7 +374,7 @@
       {english:"horror", japanese:"ホラー"},
       {english:"novel", japanese:"小説"},
       {english:"mystery", japanese:"ミステリー"},
-      {english:"encourage", japanese:"励ます"},
+      {english:"encourage", japanese:"励ます"}
     ],
     4: [
       {english:"finish", japanese:"終わる"},
@@ -422,7 +388,7 @@
       {english:"among", japanese:"の中に・の間に"},
       {english:"ending", japanese:"終わり"},
       {english:"town", japanese:"町"},
-      {english:"witch", japanese:"魔女"},
+      {english:"witch", japanese:"魔女"}
     ],
     5: [
       {english:"famous", japanese:"有名"},
@@ -439,466 +405,460 @@
       {english:"more", japanese:"もっと"},
       {english:"perhaps", japanese:"多分"},
       {english:"bakery", japanese:"パン屋"},
-      {english:"need", japanese:"必要"},
+      {english:"need", japanese:"必要"}
     ],
     6: [
       {english:"relax", japanese:"くつろぐ"},
       {english:"customer", japanese:"お客さん"},
       {english:"provide", japanese:"提供する"},
       {english:"several", japanese:"いくつかの"},
-      {english:"comfort", japanese:"快適さ"},
-      {english:"clothes", japanese:"服"},
-      {english:"special", japanese:"特別な"},
-      {english:"certain", japanese:"確かな"},
-      {english:"recommend", japanese:"勧める"},
-      {english:"weekend", japanese:"週末"},
-      {english:"price", japanese:"価格"},
-      {english:"discovery", japanese:"発見"},
-      {english:"space", japanese:"宇宙・空間"},
-      {english:"foreign", japanese:"外国の"},
-      {english:"adventure", japanese:"冒険"},
-      {english:"performance", japanese:"パフォーマンス"},
+      {english:"that way", japanese:"そのようにして"},
+      {english:"plenty", japanese:"十分な"},
+      {english:"choice", japanese:"選択"},
+      {english:"however", japanese:"しかしながら"},
+      {english:"leftovers", japanese:"残り物・食べ残し"},
+      {english:"away", japanese:"別の方向へ・わきへ"},
+      {english:"throw away", japanese:"無駄に使う"},
+      {english:"waste", japanese:"無駄"},
+      {english:"discount", japanese:"割引"},
+      {english:"enough", japanese:"十分な"},
+      {english:"help", japanese:"助ける"}
     ],
     7: [
-      {english:"always", japanese:"いつも"},
-      {english:"usually", japanese:"たいてい"},
-      {english:"sometimes", japanese:"時々"},
-      {english:"often", japanese:"よく"},
-      {english:"never", japanese:"決して〜ない"},
-      {english:"already", japanese:"すでに"},
-      {english:"yet", japanese:"まだ"},
-      {english:"just", japanese:"ちょうど"},
-      {english:"soon", japanese:"すぐに"},
-      {english:"still", japanese:"まだ"},
-      {english:"ever", japanese:"今までに"},
-      {english:"recently", japanese:"最近"},
-      {english:"lately", japanese:"最近"},
-      {english:"before", japanese:"以前に"},
-      {english:"finally", japanese:"ついに"},
+      {english:"pool", japanese:"プール"},
+      {english:"over", japanese:"〜以上"},
+      {english:"review", japanese:"見直す"},
+      {english:"rule", japanese:"規則"},
+      {english:"kitchen", japanese:"台所"},
+      {english:"must", japanese:"〜しなければならない"},
+      {english:"mask", japanese:"マスク"},
+      {english:"smartphone", japanese:"スマートフォン"},
+      {english:"back", japanese:"戻る"},
+      {english:"return", japanese:"返す"},
+      {english:"week", japanese:"週"},
+      {english:"quiet", japanese:"静かな"},
+      {english:"future", japanese:"未来"},
+      {english:"in the future", japanese:"将来"},
+      {english:"somewhere", japanese:"どこかに"},
+      {english:"explore", japanese:"探検する"},
+      {english:"clothes", japanese:"服"},
+      {english:"design", japanese:"デザイン"},
+      {english:"chef", japanese:"シェフ"}
     ],
     8: [
-      {english:"weather", japanese:"天気"},
-      {english:"rain", japanese:"雨"},
-      {english:"snow", japanese:"雪"},
-      {english:"sunny", japanese:"晴れ"},
-      {english:"cloudy", japanese:"曇り"},
-      {english:"windy", japanese:"風の強い"},
-      {english:"fog", japanese:"霧"},
-      {english:"storm", japanese:"嵐"},
-      {english:"temperature", japanese:"気温"},
-      {english:"forecast", japanese:"予報"},
-      {english:"humidity", japanese:"湿度"},
-      {english:"thunder", japanese:"雷"},
-      {english:"lightning", japanese:"稲妻"},
-      {english:"weather report", japanese:"天気予報"},
-      {english:"season", japanese:"季節"},
+      {english:"as", japanese:"〜として"},
+      {english:"behind", japanese:"後ろに"},
+      {english:"cut down", japanese:"切り倒す"},
+      {english:"building", japanese:"建物"},
+      {english:"destroy", japanese:"破壊する"},
+      {english:"shock", japanese:"ショック"},
+      {english:"great", japanese:"素晴らしい"},
+      {english:"like", japanese:"〜のような"},
+      {english:"think", japanese:"考える"},
+      {english:"rainforest", japanese:"熱帯雨林"},
+      {english:"cutting", japanese:"切ること"},
+      {english:"tree", japanese:"木"},
+      {english:"really", japanese:"本当に"},
+      {english:"clean", japanese:"きれいな"},
+      {english:"save", japanese:"救う・保存する"},
+      {english:"too much", japanese:"多すぎる"},
+      {english:"need to", japanese:"〜しなければならない"},
+      {english:"but", japanese:"しかし"},
+      {english:"cause", japanese:"原因になる"},
+      {english:"problem", japanese:"問題"}
     ],
     9: [
-      {english:"family", japanese:"家族"},
-      {english:"father", japanese:"お父さん"},
-      {english:"mother", japanese:"お母さん"},
-      {english:"brother", japanese:"兄弟"},
-      {english:"sister", japanese:"姉妹"},
-      {english:"grandfather", japanese:"おじいさん"},
-      {english:"grandmother", japanese:"おばあさん"},
-      {english:"uncle", japanese:"おじ"},
-      {english:"aunt", japanese:"おば"},
-      {english:"cousin", japanese:"いとこ"},
-      {english:"child", japanese:"子供"},
-      {english:"parent", japanese:"親"},
-      {english:"relative", japanese:"親戚"},
-      {english:"baby", japanese:"赤ちゃん"},
-      {english:"family reunion", japanese:"家族の集まり"},
+      {english:"bring", japanese:"持ってくる"},
+      {english:"wait", japanese:"待つ"},
+      {english:"tired", japanese:"疲れた"},
+      {english:"bus stop", japanese:"バス停"},
+      {english:"miss", japanese:"乗り遅れる"},
+      {english:"catch", japanese:"間に合う・捕まえる"},
+      {english:"morning", japanese:"朝"},
+      {english:"first", japanese:"最初の"},
+      {english:"train", japanese:"電車"},
+      {english:"hope", japanese:"望む"},
+      {english:"have to", japanese:"〜しなければならない"},
+      {english:"forget", japanese:"忘れる"},
+      {english:"key", japanese:"鍵"},
+      {english:"door", japanese:"ドア"},
+      {english:"close", japanese:"閉める"},
+      {english:"bus", japanese:"バス"},
+      {english:"stop", japanese:"止まる"},
+      {english:"late", japanese:"遅い"}
     ],
     10: [
-      {english:"school", japanese:"学校"},
-      {english:"student", japanese:"学生"},
-      {english:"teacher", japanese:"先生"},
-      {english:"classroom", japanese:"教室"},
-      {english:"homework", japanese:"宿題"},
-      {english:"exam", japanese:"試験"},
+      {english:"listen", japanese:"聞く"},
+      {english:"sound", japanese:"音"},
+      {english:"quiet", japanese:"静か"},
       {english:"library", japanese:"図書館"},
-      {english:"lesson", japanese:"授業"},
-      {english:"subject", japanese:"科目"},
-      {english:"grade", japanese:"成績"},
-      {english:"principal", japanese:"校長"},
-      {english:"schedule", japanese:"予定"},
-      {english:"uniform", japanese:"制服"},
-      {english:"break time", japanese:"休み時間"},
-      {english:"club activity", japanese:"クラブ活動"},
+      {english:"noise", japanese:"騒音"},
+      {english:"friend", japanese:"友達"},
+      {english:"talk", japanese:"話す"},
+      {english:"rule", japanese:"ルール"},
+      {english:"break", japanese:"破る"},
+      {english:"ask", japanese:"尋ねる"},
+      {english:"answer", japanese:"答え"},
+      {english:"please", japanese:"お願いします"},
+      {english:"thank you", japanese:"ありがとう"},
+      {english:"respect", japanese:"尊敬"},
+      {english:"help", japanese:"助ける"},
+      {english:"clean", japanese:"きれいにする"}
     ],
     11: [
-      {english:"food", japanese:"食べ物"},
-      {english:"rice", japanese:"ご飯"},
-      {english:"bread", japanese:"パン"},
-      {english:"fish", japanese:"魚"},
-      {english:"meat", japanese:"肉"},
-      {english:"vegetable", japanese:"野菜"},
-      {english:"fruit", japanese:"果物"},
-      {english:"soup", japanese:"スープ"},
-      {english:"dessert", japanese:"デザート"},
-      {english:"drink", japanese:"飲み物"},
-      {english:"breakfast", japanese:"朝食"},
-      {english:"lunch", japanese:"昼食"},
-      {english:"dinner", japanese:"夕食"},
-      {english:"restaurant", japanese:"レストラン"},
-      {english:"menu", japanese:"メニュー"},
+      {english:"want", japanese:"欲しい"},
+      {english:"go", japanese:"行く"},
+      {english:"eat", japanese:"食べる"},
+      {english:"drink", japanese:"飲む"},
+      {english:"play", japanese:"遊ぶ"},
+      {english:"read", japanese:"読む"},
+      {english:"write", japanese:"書く"},
+      {english:"study", japanese:"勉強する"},
+      {english:"sleep", japanese:"寝る"},
+      {english:"walk", japanese:"歩く"},
+      {english:"run", japanese:"走る"},
+      {english:"watch", japanese:"見る"},
+      {english:"listen", japanese:"聞く"},
+      {english:"talk", japanese:"話す"},
+      {english:"work", japanese:"働く"}
     ],
     12: [
-      {english:"travel", japanese:"旅行"},
-      {english:"airport", japanese:"空港"},
-      {english:"ticket", japanese:"切符"},
-      {english:"passport", japanese:"パスポート"},
-      {english:"hotel", japanese:"ホテル"},
-      {english:"luggage", japanese:"荷物"},
-      {english:"tour", japanese:"ツアー"},
-      {english:"map", japanese:"地図"},
-      {english:"guide", japanese:"ガイド"},
-      {english:"bus", japanese:"バス"},
-      {english:"train", japanese:"電車"},
-      {english:"car", japanese:"車"},
-      {english:"beach", japanese:"ビーチ"},
-      {english:"mountain", japanese:"山"},
-      {english:"sightseeing", japanese:"観光"},
-    ],
-    13: [
-      {english:"sports", japanese:"スポーツ"},
-      {english:"soccer", japanese:"サッカー"},
-      {english:"baseball", japanese:"野球"},
-      {english:"tennis", japanese:"テニス"},
-      {english:"basketball", japanese:"バスケットボール"},
-      {english:"swimming", japanese:"水泳"},
-      {english:"running", japanese:"走ること"},
-      {english:"volleyball", japanese:"バレーボール"},
-      {english:"coach", japanese:"コーチ"},
-      {english:"team", japanese:"チーム"},
-      {english:"match", japanese:"試合"},
-      {english:"goal", japanese:"ゴール"},
-      {english:"winner", japanese:"勝者"},
-      {english:"loser", japanese:"敗者"},
-      {english:"tournament", japanese:"トーナメント"},
-    ],
-    14: [
-      {english:"music", japanese:"音楽"},
-      {english:"song", japanese:"歌"},
-      {english:"piano", japanese:"ピアノ"},
-      {english:"guitar", japanese:"ギター"},
-      {english:"drum", japanese:"ドラム"},
-      {english:"dance", japanese:"踊り"},
-      {english:"concert", japanese:"コンサート"},
-      {english:"band", japanese:"バンド"},
-      {english:"singer", japanese:"歌手"},
-      {english:"voice", japanese:"声"},
-      {english:"melody", japanese:"メロディー"},
-      {english:"rhythm", japanese:"リズム"},
-      {english:"instrument", japanese:"楽器"},
-      {english:"performance", japanese:"演奏"},
-      {english:"listen", japanese:"聞く"},
-    ],
-    15: [
       {english:"environment", japanese:"環境"},
+      {english:"plastic", japanese:"プラスチック"},
       {english:"recycle", japanese:"リサイクル"},
+      {english:"save", japanese:"救う"},
       {english:"pollution", japanese:"汚染"},
       {english:"nature", japanese:"自然"},
-      {english:"forest", japanese:"森"},
-      {english:"river", japanese:"川"},
-      {english:"animal", japanese:"動物"},
-      {english:"plant", japanese:"植物"},
-      {english:"climate", japanese:"気候"},
       {english:"earth", japanese:"地球"},
-      {english:"green", japanese:"緑"},
-      {english:"energy", japanese:"エネルギー"},
+      {english:"animal", japanese:"動物"},
+      {english:"forest", japanese:"森"},
+      {english:"water", japanese:"水"},
+      {english:"air", japanese:"空気"},
       {english:"reduce", japanese:"減らす"},
-      {english:"waste", japanese:"無駄"},
-      {english:"conserve", japanese:"保存する"},
+      {english:"reuse", japanese:"再利用"},
+      {english:"clean", japanese:"きれい"},
+      {english:"protect", japanese:"守る"}
     ],
+    13: [
+      {english:"must", japanese:"しなければならない"},
+      {english:"cannot", japanese:"してはいけない"},
+      {english:"should", japanese:"したほうがいい"},
+      {english:"don't have to", japanese:"しなくてもいい"},
+      {english:"always", japanese:"いつも"},
+      {english:"never", japanese:"決して〜ない"},
+      {english:"sometimes", japanese:"時々"},
+      {english:"usually", japanese:"たいてい"},
+      {english:"often", japanese:"よく"},
+      {english:"rarely", japanese:"めったに〜ない"},
+      {english:"maybe", japanese:"たぶん"},
+      {english:"probably", japanese:"おそらく"},
+      {english:"mustn't", japanese:"してはいけない"},
+      {english:"could", japanese:"〜できた"},
+      {english:"would", japanese:"〜だろう"}
+    ],
+    14: [
+      {english:"want to", japanese:"〜したい"},
+      {english:"like to", japanese:"〜するのが好き"},
+      {english:"need to", japanese:"〜しなければならない"},
+      {english:"try to", japanese:"〜しようとする"},
+      {english:"plan to", japanese:"〜するつもり"},
+      {english:"hope to", japanese:"〜することを望む"},
+      {english:"decide to", japanese:"〜することに決める"},
+      {english:"learn to", japanese:"〜することを学ぶ"},
+      {english:"forget to", japanese:"〜することを忘れる"},
+      {english:"remember to", japanese:"〜することを覚えている"}
+    ],
+    15: [
+      {english:"use plastic", japanese:"プラスチックを使う"},
+      {english:"save energy", japanese:"エネルギーを節約する"},
+      {english:"recycle paper", japanese:"紙をリサイクルする"},
+      {english:"turn off lights", japanese:"電気を消す"},
+      {english:"plant trees", japanese:"木を植える"},
+      {english:"walk to school", japanese:"学校に歩いて行く"},
+      {english:"reduce waste", japanese:"ゴミを減らす"},
+      {english:"use reusable bags", japanese:"再利用可能なバッグを使う"},
+      {english:"avoid plastic bottles", japanese:"プラスチックのボトルを避ける"},
+      {english:"save water", japanese:"水を節約する"}
+    ]
   };
 
-  // Global game state
-  let currentSet = null;
-  let questions = [];
-  let currentIndex = 0;
-  let score = 0;
-  let timerInterval = null;
-  let timeLeft = 300; // 5 minutes in seconds
-  let coinsEarned = 0;
-
-  // DOM references
   const startScreen = document.getElementById('start-screen');
   const gameScreen = document.getElementById('game-screen');
-  const setButtonsContainer = document.getElementById('set-buttons');
   const playerNameInput = document.getElementById('player-name');
-  const darkModeToggle = document.getElementById('dark-mode-toggle');
-
-  const japaneseWordEl = document.getElementById('japanese-word');
-  const optionsContainer = document.getElementById('options-container');
+  const setButtonsDiv = document.getElementById('set-buttons');
+  const japaneseList = document.getElementById('japanese-list');
+  const englishList = document.getElementById('english-list');
+  const timerDisplay = document.getElementById('timer');
   const progressBar = document.getElementById('progress-bar');
-  const timerEl = document.getElementById('timer');
-  const moneyAmountEl = document.getElementById('money-amount');
+  const moneyAmount = document.getElementById('money-amount');
   const piggyBank = document.getElementById('piggy-bank');
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  let darkMode = false;
 
-  // --- Initialize start screen sets buttons ---
-  function createSetButtons() {
-    setButtonsContainer.innerHTML = '';
-    for (const setNum in vocabSets) {
+  let currentSet = null;
+  let totalTime = 300; // 5 minutes in seconds
+  let timeLeft = totalTime;
+  let timerInterval = null;
+  let money = 0;
+
+  // To track correct matches: { english: japanese }
+  let matchedPairs = new Map();
+
+  // Setup dark mode toggle
+  darkModeToggle.addEventListener('click', () => {
+    darkMode = !darkMode;
+    document.body.classList.toggle('dark-mode', darkMode);
+    startScreen.classList.toggle('dark-mode', darkMode);
+    gameScreen.classList.toggle('dark-mode', darkMode);
+  });
+
+  // Initialize start screen with set buttons
+  function initStartScreen() {
+    setButtonsDiv.innerHTML = '';
+    for (const key in vocabSets) {
       const btn = document.createElement('button');
-      btn.textContent = `Set ${setNum} (${vocabSets[setNum].length} words)`;
-      btn.setAttribute('data-set', setNum);
+      btn.textContent = `Set ${key}`;
+      btn.dataset.set = key;
       btn.addEventListener('click', () => {
-        if (!playerNameInput.value.trim()) {
-          alert('Please enter your name before starting.');
+        const name = playerNameInput.value.trim();
+        if (!name) {
+          alert('Please enter your name before starting!');
           playerNameInput.focus();
           return;
         }
-        startGame(parseInt(setNum));
+        startGame(parseInt(btn.dataset.set));
       });
-      setButtonsContainer.appendChild(btn);
+      setButtonsDiv.appendChild(btn);
     }
   }
 
-  // --- Dark Mode Toggle ---
-  function toggleDarkMode() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      darkModeToggle.setAttribute('aria-pressed', 'false');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      darkModeToggle.setAttribute('aria-pressed', 'true');
+  // Shuffle array
+  function shuffle(arr) {
+    for (let i = arr.length -1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i+1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
   }
-  darkModeToggle.addEventListener('click', toggleDarkMode);
 
-  // --- Start Game ---
-  function startGame(setNum) {
-    currentSet = setNum;
-    score = 0;
-    coinsEarned = 0;
-    timeLeft = 300;
-    moneyAmountEl.textContent = `¥0`;
+  // Start the game
+  function startGame(setNumber) {
+    currentSet = vocabSets[setNumber];
+    timeLeft = totalTime;
+    money = 0;
+    matchedPairs.clear();
+
     startScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
-    questions = shuffleArray(vocabSets[currentSet].slice());
-    currentIndex = 0;
-    showQuestion();
+
+    updateMoney();
+    setupWords();
     startTimer();
   }
 
-  // --- Timer ---
+  // Setup draggable Japanese words and English drop zones
+  function setupWords() {
+    japaneseList.innerHTML = '<h3>Japanese Words</h3>';
+    englishList.innerHTML = '<h3>English Words</h3>';
+
+    // Clone and shuffle
+    const japWords = currentSet.map(e => e.japanese);
+    const engWords = currentSet.map(e => e.english);
+    shuffle(japWords);
+    shuffle(engWords);
+
+    // Create Japanese draggable words
+    japWords.forEach(jp => {
+      const div = document.createElement('div');
+      div.textContent = jp;
+      div.className = 'vocab-word';
+      div.draggable = true;
+      div.id = 'jp-' + jp;
+      div.addEventListener('dragstart', dragStart);
+      div.addEventListener('dragend', dragEnd);
+      japaneseList.appendChild(div);
+    });
+
+    // Create English drop zones
+    engWords.forEach(en => {
+      const div = document.createElement('div');
+      div.textContent = en;
+      div.className = 'target-word';
+      div.dataset.english = en;
+      div.addEventListener('dragover', dragOver);
+      div.addEventListener('drop', drop);
+      englishList.appendChild(div);
+    });
+  }
+
+  // Drag handlers
+  function dragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.textContent);
+    this.classList.add('dragging');
+  }
+  function dragEnd(e) {
+    this.classList.remove('dragging');
+  }
+  function dragOver(e) {
+    e.preventDefault();
+  }
+  function drop(e) {
+    e.preventDefault();
+    if (this.classList.contains('correct')) return; // already matched
+
+    const draggedJapanese = e.dataTransfer.getData('text/plain');
+    const english = this.dataset.english;
+
+    // Find the correct Japanese for this English
+    const correctPair = currentSet.find(pair => pair.english === english);
+    if (!correctPair) return;
+
+    if (correctPair.japanese === draggedJapanese) {
+      // Correct match
+      matchedPairs.set(english, draggedJapanese);
+      this.classList.add('correct');
+      this.textContent = english + " ✅";
+
+      // Remove draggable Japanese word
+      const jpElem = document.getElementById('jp-' + draggedJapanese);
+      if (jpElem) jpElem.remove();
+
+      addMoney(10);
+      confetti();
+
+      // Check if all matched
+      if (matchedPairs.size === currentSet.length) {
+        endGame(true);
+      }
+    } else {
+      // Incorrect match
+      this.classList.add('incorrect');
+      this.classList.add('shake');
+      setTimeout(() => {
+        this.classList.remove('incorrect');
+        this.classList.remove('shake');
+      }, 600);
+      // Optional: flash red on dragged word
+      const jpElem = document.getElementById('jp-' + draggedJapanese);
+      if (jpElem) {
+        jpElem.classList.add('flash-red');
+        setTimeout(() => {
+          jpElem.classList.remove('flash-red');
+        }, 800);
+      }
+    }
+  }
+
+  // Money update and coin animation
+  function addMoney(amount) {
+    money += amount;
+    updateMoney();
+    dropCoin();
+  }
+  function updateMoney() {
+    moneyAmount.textContent = '¥' + money;
+  }
+
+  // Coin falling animation into piggy bank slot
+  function dropCoin() {
+    const coin = document.createElement('div');
+    coin.className = 'coin';
+    document.body.appendChild(coin);
+
+    // Start at center of Japanese list (random Japanese word location)
+    const japWords = document.querySelectorAll('.vocab-word');
+    let startRect;
+    if (japWords.length) {
+      startRect = japWords[0].getBoundingClientRect();
+    } else {
+      startRect = japaneseList.getBoundingClientRect();
+    }
+    coin.style.left = startRect.left + startRect.width / 2 + 'px';
+    coin.style.top = startRect.top + startRect.height / 2 + 'px';
+
+    // Animate falling to piggy bank
+    const pigRect = piggyBank.getBoundingClientRect();
+    const dx = pigRect.left + pigRect.width / 2 - (startRect.left + startRect.width / 2);
+    const dy = pigRect.top + pigRect.height / 2 - (startRect.top + startRect.height / 2);
+
+    // Use CSS animation + JS to move coin
+    coin.animate([
+      { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.3)`, opacity: 0 }
+    ], { duration: 1000, easing: 'ease-in-out' });
+
+    setTimeout(() => coin.remove(), 1100);
+  }
+
+  // Timer functions
   function startTimer() {
     updateTimerDisplay();
-    progressBar.style.width = '100%';
-    progressBar.style.backgroundColor = 'var(--progress-fill)';
-    timerEl.classList.remove('pulse');
-
-    if (timerInterval) clearInterval(timerInterval);
+    clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       timeLeft--;
       updateTimerDisplay();
       updateProgressBar();
 
       if (timeLeft <= 30) {
-        timerEl.classList.add('pulse');
-        progressBar.style.backgroundColor = 'var(--progress-warning)';
+        timerDisplay.classList.add('pulse');
       } else {
-        timerEl.classList.remove('pulse');
-        progressBar.style.backgroundColor = 'var(--progress-fill)';
+        timerDisplay.classList.remove('pulse');
       }
 
       if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        endGame();
+        endGame(false);
       }
     }, 1000);
   }
-
   function updateTimerDisplay() {
-    const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-    const seconds = (timeLeft % 60).toString().padStart(2, '0');
-    timerEl.textContent = `Time: ${minutes}:${seconds}`;
+    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const s = (timeLeft % 60).toString().padStart(2, '0');
+    timerDisplay.textContent = `Time: ${m}:${s}`;
   }
-
   function updateProgressBar() {
-    const percent = (timeLeft / 300) * 100;
-    progressBar.style.width = `${percent}%`;
+    const percent = (timeLeft / totalTime) * 100;
+    progressBar.style.width = percent + '%';
   }
 
-  // --- Show Question ---
-  function showQuestion() {
-    // Fade out old content
-    japaneseWordEl.classList.add('fade-out');
-    optionsContainer.classList.add('fade-out');
-    setTimeout(() => {
-      // Clear old options
-      optionsContainer.innerHTML = '';
-
-      // Show new Japanese word
-      const q = questions[currentIndex];
-      japaneseWordEl.textContent = q.japanese;
-
-      // Make 4 options: one correct + 3 random wrong
-      const allWords = vocabSets[currentSet];
-      let options = [q];
-      while (options.length < 4) {
-        const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
-        if (!options.some(o => o.english === randomWord.english)) options.push(randomWord);
-      }
-      options = shuffleArray(options);
-
-      options.forEach(option => {
-        const btn = document.createElement('button');
-        btn.textContent = option.english;
-        btn.className = 'option-btn';
-        btn.addEventListener('click', () => handleAnswer(btn, option));
-        optionsContainer.appendChild(btn);
-      });
-
-      // Fade in new content
-      japaneseWordEl.classList.remove('fade-out');
-      japaneseWordEl.classList.add('fade-in');
-      optionsContainer.classList.remove('fade-out');
-      optionsContainer.classList.add('fade-in');
-
-      // Remove fade-in after animation to allow next fade out
-      setTimeout(() => {
-        japaneseWordEl.classList.remove('fade-in');
-        optionsContainer.classList.remove('fade-in');
-      }, 600);
-    }, 500);
-  }
-
-  // --- Handle Answer ---
-  function handleAnswer(button, selectedOption) {
-    if (button.disabled) return;
-
-    const correctAnswer = questions[currentIndex].english;
-    if (selectedOption.english === correctAnswer) {
-      button.classList.add('correct');
-      incrementScore();
-      playConfetti();
-      coinsEarned++;
-      animateCoinToPiggyBank(button);
-      disableAllOptions();
-      setTimeout(() => {
-        nextQuestion();
-      }, 1200);
-    } else {
-      button.classList.add('incorrect');
-      shakeButton(button);
-      button.disabled = true;
-    }
-  }
-
-  function disableAllOptions() {
-    const buttons = optionsContainer.querySelectorAll('button');
-    buttons.forEach(btn => btn.disabled = true);
-  }
-
-  // --- Next Question ---
-  function nextQuestion() {
-    currentIndex++;
-    if (currentIndex >= questions.length) {
-      endGame();
-    } else {
-      showQuestion();
-    }
-  }
-
-  // --- End Game ---
-  function endGame() {
+  // End game
+  function endGame(won) {
     clearInterval(timerInterval);
-    alert(`Time's up! ${playerNameInput.value.trim()}, you earned ¥${coinsEarned * 10}!`);
-    // Reset screens
+    if (won) {
+      alert(`Congratulations! You matched all words and earned ¥${money}.`);
+    } else {
+      alert(`Time's up! You earned ¥${money}.`);
+    }
+    resetGame();
+  }
+
+  // Reset game to start screen
+  function resetGame() {
+    matchedPairs.clear();
+    japaneseList.innerHTML = '';
+    englishList.innerHTML = '';
     gameScreen.classList.add('hidden');
     startScreen.classList.remove('hidden');
-    playerNameInput.value = '';
+    money = 0;
+    updateMoney();
+    timeLeft = totalTime;
+    updateTimerDisplay();
+    updateProgressBar();
   }
 
-  // --- Increment Score ---
-  function incrementScore() {
-    score++;
-    moneyAmountEl.textContent = `¥${score * 10}`;
-  }
-
-  // --- Utility: Shuffle Array ---
-  function shuffleArray(array) {
-    let arr = array.slice();
-    for (let i = arr.length -1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i+1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
-
-  // --- Confetti on correct ---
-  function playConfetti() {
-    confetti({
-      particleCount: 40,
+  // Confetti on correct match
+  function confetti() {
+    confettiLib({
+      particleCount: 100,
       spread: 70,
       origin: { y: 0.6 }
     });
   }
-
-  // --- Shake animation ---
-  function shakeButton(btn) {
-    btn.classList.add('shake');
-    setTimeout(() => {
-      btn.classList.remove('shake');
-    }, 500);
+  // Wrap confetti to avoid name conflict with variable name
+  function confettiLib(opts) {
+    confetti(opts);
   }
 
-  // --- Animate coin falling into piggy bank ---
-  function animateCoinToPiggyBank(originBtn) {
-    // Create coin element
-    const coin = document.createElement('div');
-    coin.className = 'coin';
-
-    // Get origin button position (center top)
-    const originRect = originBtn.getBoundingClientRect();
-    coin.style.left = `${originRect.left + originRect.width/2 - 13}px`;
-    coin.style.top = `${originRect.top}px`;
-    document.body.appendChild(coin);
-
-    // Destination (piggy bank slot center)
-    const piggyRect = piggyBank.getBoundingClientRect();
-    const targetX = piggyRect.left + piggyRect.width/2 - 13;
-    const targetY = piggyRect.top + piggyRect.height - 10;
-
-    // Animate with JS: fall down + horizontal drift + scale + fade out
-    const duration = 1000; // 1s
-    const startTime = performance.now();
-
-    function animate(time) {
-      let elapsed = time - startTime;
-      if (elapsed > duration) elapsed = duration;
-
-      const progress = elapsed / duration;
-
-      // Linear fall
-      const currentY = originRect.top + progress * (targetY - originRect.top);
-      // Ease horizontal drift
-      const currentX = originRect.left + (targetX - originRect.left) * easeOutCubic(progress);
-
-      // Scale down near end
-      const scale = 1 - 0.7 * progress;
-
-      coin.style.transform = `translate(${currentX - (originRect.left + originRect.width/2 - 13)}px, ${currentY - originRect.top}px) scale(${scale})`;
-      coin.style.opacity = `${1 - progress}`;
-
-      if (elapsed < duration) {
-        requestAnimationFrame(animate);
-      } else {
-        coin.remove();
-      }
-    }
-    requestAnimationFrame(animate);
-  }
-  function easeOutCubic(t) {
-    return 1 - Math.pow(1 - t, 3);
-  }
-
-  // --- Initialization ---
-  createSetButtons();
+  // Initialize
+  initStartScreen();
 
 </script>
 </body>
