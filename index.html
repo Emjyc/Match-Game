@@ -6,6 +6,7 @@
   <title>Match the words!</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
+    /* Your existing CSS here */
     * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -118,155 +119,157 @@
   </div>
 
   <script>
-    const vocab = [
-      { english: "cat", japanese: "ねこ" },
-      { english: "dog", japanese: "いぬ" },
-      { english: "water", japanese: "みず" },
-      { english: "book", japanese: "ほん" },
-      { english: "school", japanese: "がっこう" },
-      { english: "apple", japanese: "りんご" }
-    ];
+    document.addEventListener("DOMContentLoaded", () => {
+      const vocab = [
+        { english: "cat", japanese: "ねこ" },
+        { english: "dog", japanese: "いぬ" },
+        { english: "water", japanese: "みず" },
+        { english: "book", japanese: "ほん" },
+        { english: "school", japanese: "がっこう" },
+        { english: "apple", japanese: "りんご" }
+      ];
 
-    let selectedEnglish = null;
-    let selectedJapanese = null;
-    let correctMatches = 0;
-    let isChecking = false;
+      let selectedEnglish = null;
+      let selectedJapanese = null;
+      let correctMatches = 0;
+      let isChecking = false;
 
-    function shuffle(array) {
-      let arr = array.slice();
-      for(let i = arr.length -1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i+1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+      function shuffle(array) {
+        let arr = array.slice();
+        for(let i = arr.length -1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i+1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
       }
-      return arr;
-    }
 
-    function speakEnglish(word) {
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = "en-US";
-      speechSynthesis.speak(utterance);
-    }
-
-    function celebrate() {
-      confetti({
-        particleCount: 200,
-        spread: 90,
-        origin: { y: 0.6 }
-      });
-    }
-
-    function checkWinCondition() {
-      if (correctMatches === vocab.length) {
-        setTimeout(() => {
-          celebrate();
-          alert("🎉 Excellent! You've matched all pairs correctly!");
-        }, 300);
+      function speakEnglish(word) {
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = "en-US";
+        speechSynthesis.speak(utterance);
       }
-    }
 
-    function createItem(text, lang, pairId) {
-      const div = document.createElement("div");
-      div.classList.add("item");
-      div.dataset.lang = lang;
-      div.dataset.id = pairId;
+      function celebrate() {
+        confetti({
+          particleCount: 200,
+          spread: 90,
+          origin: { y: 0.6 }
+        });
+      }
 
-      if (lang === "en") {
-        const wordSpan = document.createElement("span");
-        wordSpan.textContent = text;
+      function checkWinCondition() {
+        if (correctMatches === vocab.length) {
+          setTimeout(() => {
+            celebrate();
+            alert("🎉 Excellent! You've matched all pairs correctly!");
+          }, 300);
+        }
+      }
 
-        const speaker = document.createElement("button");
-        speaker.className = "speaker";
-        speaker.textContent = "🔊";
-        speaker.title = `Speak ${text}`;
-        speaker.addEventListener("click", e => {
-          e.stopPropagation();
-          speakEnglish(text);
+      function createItem(text, lang, pairId) {
+        const div = document.createElement("div");
+        div.classList.add("item");
+        div.dataset.lang = lang;
+        div.dataset.id = pairId;
+
+        if (lang === "en") {
+          const wordSpan = document.createElement("span");
+          wordSpan.textContent = text;
+
+          const speaker = document.createElement("button");
+          speaker.className = "speaker";
+          speaker.textContent = "🔊";
+          speaker.title = `Speak ${text}`;
+          speaker.addEventListener("click", e => {
+            e.stopPropagation();
+            speakEnglish(text);
+          });
+
+          div.appendChild(wordSpan);
+          div.appendChild(speaker);
+        } else {
+          div.textContent = text;
+        }
+
+        div.addEventListener("click", () => {
+          if(div.classList.contains("correct") || isChecking) return;
+
+          if(lang === "en") {
+            if(selectedEnglish && selectedEnglish !== div) selectedEnglish.classList.remove("selected");
+            selectedEnglish = div;
+            div.classList.toggle("selected");
+          } else {
+            if(selectedJapanese && selectedJapanese !== div) selectedJapanese.classList.remove("selected");
+            selectedJapanese = div;
+            div.classList.toggle("selected");
+          }
+
+          if(selectedEnglish && selectedJapanese) {
+            isChecking = true;
+            if(selectedEnglish.dataset.id === selectedJapanese.dataset.id) {
+              selectedEnglish.classList.add("correct");
+              selectedJapanese.classList.add("correct");
+              selectedEnglish.classList.remove("selected");
+              selectedJapanese.classList.remove("selected");
+              correctMatches++;
+              checkWinCondition();
+              isChecking = false;
+            } else {
+              selectedEnglish.classList.add("incorrect");
+              selectedJapanese.classList.add("incorrect");
+              setTimeout(() => {
+                selectedEnglish.classList.remove("selected", "incorrect");
+                selectedJapanese.classList.remove("selected", "incorrect");
+                isChecking = false;
+              }, 800);
+            }
+            selectedEnglish = null;
+            selectedJapanese = null;
+          }
         });
 
-        div.appendChild(wordSpan);
-        div.appendChild(speaker);
-      } else {
-        div.textContent = text;
+        return div;
       }
 
-      div.addEventListener("click", () => {
-        if(div.classList.contains("correct") || isChecking) return;
+      function setupGame() {
+        selectedEnglish = null;
+        selectedJapanese = null;
+        correctMatches = 0;
+        isChecking = false;
 
-        if(lang === "en") {
-          if(selectedEnglish && selectedEnglish !== div) selectedEnglish.classList.remove("selected");
-          selectedEnglish = div;
-          div.classList.toggle("selected");
-        } else {
-          if(selectedJapanese && selectedJapanese !== div) selectedJapanese.classList.remove("selected");
-          selectedJapanese = div;
-          div.classList.toggle("selected");
-        }
+        const engCol1 = document.getElementById("english-col-1");
+        const engCol2 = document.getElementById("english-col-2");
+        const japCol1 = document.getElementById("japanese-col-1");
+        const japCol2 = document.getElementById("japanese-col-2");
 
-        if(selectedEnglish && selectedJapanese) {
-          isChecking = true;
-          if(selectedEnglish.dataset.id === selectedJapanese.dataset.id) {
-            selectedEnglish.classList.add("correct");
-            selectedJapanese.classList.add("correct");
-            selectedEnglish.classList.remove("selected");
-            selectedJapanese.classList.remove("selected");
-            correctMatches++;
-            checkWinCondition();
-            isChecking = false;
-          } else {
-            selectedEnglish.classList.add("incorrect");
-            selectedJapanese.classList.add("incorrect");
-            setTimeout(() => {
-              selectedEnglish.classList.remove("selected", "incorrect");
-              selectedJapanese.classList.remove("selected", "incorrect");
-              isChecking = false;
-            }, 800);
-          }
-          selectedEnglish = null;
-          selectedJapanese = null;
-        }
+        [engCol1, engCol2, japCol1, japCol2].forEach(col => col.innerHTML = "");
+
+        const shuffledEnglish = shuffle(vocab);
+        const shuffledJapanese = shuffle(vocab);
+
+        const halfE = Math.ceil(shuffledEnglish.length / 2);
+        shuffledEnglish.forEach((pair, i) => {
+          const col = i < halfE ? engCol1 : engCol2;
+          col.appendChild(createItem(pair.english, "en", pair.english));
+        });
+
+        const halfJ = Math.ceil(shuffledJapanese.length / 2);
+        shuffledJapanese.forEach((pair, i) => {
+          const col = i < halfJ ? japCol1 : japCol2;
+          col.appendChild(createItem(pair.japanese, "ja", pair.english));
+        });
+      }
+
+      document.getElementById("start-btn").addEventListener("click", () => {
+        document.getElementById("start-screen").classList.add("hidden");
+        document.getElementById("game-screen").classList.remove("hidden");
+        setupGame();
       });
 
-      return div;
-    }
-
-    function setupGame() {
-      selectedEnglish = null;
-      selectedJapanese = null;
-      correctMatches = 0;
-      isChecking = false;
-
-      const engCol1 = document.getElementById("english-col-1");
-      const engCol2 = document.getElementById("english-col-2");
-      const japCol1 = document.getElementById("japanese-col-1");
-      const japCol2 = document.getElementById("japanese-col-2");
-
-      [engCol1, engCol2, japCol1, japCol2].forEach(col => col.innerHTML = "");
-
-      const shuffledEnglish = shuffle(vocab);
-      const shuffledJapanese = shuffle(vocab);
-
-      const halfE = Math.ceil(shuffledEnglish.length / 2);
-      shuffledEnglish.forEach((pair, i) => {
-        const col = i < halfE ? engCol1 : engCol2;
-        col.appendChild(createItem(pair.english, "en", pair.english));
+      document.getElementById("reset-btn").addEventListener("click", () => {
+        setupGame();
       });
-
-      const halfJ = Math.ceil(shuffledJapanese.length / 2);
-      shuffledJapanese.forEach((pair, i) => {
-        const col = i < halfJ ? japCol1 : japCol2;
-        col.appendChild(createItem(pair.japanese, "ja", pair.english));
-      });
-    }
-
-    document.getElementById("start-btn").addEventListener("click", () => {
-      document.getElementById("start-screen").classList.add("hidden");
-      document.getElementById("game-screen").classList.remove("hidden");
-      setupGame();
     });
-
-document.getElementById("reset-btn").addEventListener("click", () => {
-  setupGame();
-});
-</script>
+  </script>
 </body>
 </html>
