@@ -6,6 +6,7 @@
   <title>Match the words!</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
+    /* Same styling as before */
     * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -106,7 +107,7 @@
   <div id="start-screen">
     <h1>Match the words!</h1>
     <p>Match each English word with its correct Japanese translation.</p>
-    <button id="start-btn">Start Game</button>
+    <p id="countdown-text" style="font-size: 2rem; font-weight: bold;">Starting in 3...</p>
   </div>
 
   <div id="game-screen" class="hidden">
@@ -263,14 +264,26 @@
       });
     }
 
-    const startBtn = document.getElementById("start-btn");
+    // Countdown logic to replace start button
+    const countdownText = document.getElementById("countdown-text");
+    const startScreen = document.getElementById("start-screen");
+    const gameScreen = document.getElementById("game-screen");
     const resetBtn = document.getElementById("reset-btn");
 
-    startBtn.addEventListener("click", () => {
-      document.getElementById("start-screen").classList.add("hidden");
-      document.getElementById("game-screen").classList.remove("hidden");
-      setupGame();
-    });
+    let countdown = 3;
+    countdownText.textContent = `Starting in ${countdown}...`;
+
+    const countdownInterval = setInterval(() => {
+      countdown--;
+      if(countdown > 0) {
+        countdownText.textContent = `Starting in ${countdown}...`;
+      } else {
+        clearInterval(countdownInterval);
+        startScreen.classList.add("hidden");
+        gameScreen.classList.remove("hidden");
+        setupGame();
+      }
+    }, 1000);
 
     resetBtn.addEventListener("click", () => {
       setupGame();
