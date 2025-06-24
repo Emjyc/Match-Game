@@ -16,8 +16,6 @@
       padding: 2rem;
       text-align: center;
       color: #333;
-
-      /* subtle grid pattern using CSS */
       background-color: #f9f9f9;
       background-image:
         linear-gradient(to right, #ddd 1px, transparent 1px),
@@ -32,6 +30,30 @@
 
     .hidden {
       display: none;
+    }
+
+    .lesson-selection {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .lesson-btn {
+      padding: 1rem 1.5rem;
+      background-color: #00796b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s;
+      user-select: none;
+      min-width: 140px;
+    }
+    .lesson-btn:hover {
+      background-color: #004d40;
     }
 
     .game-container {
@@ -68,27 +90,27 @@
       word-break: break-word;
       user-select: none;
     }
-
-    .item:hover {
+    .item:hover:not(.correct):not(.disabled) {
       background-color: #e0f2f1;
       transform: scale(1.03);
     }
-
     .item.selected {
       background-color: #b2ebf2;
       border-color: #00acc1;
     }
-
     .item.correct {
       background-color: #c8e6c9;
       border-color: #2e7d32;
       color: #2e7d32;
       cursor: default;
     }
-
     .item.incorrect {
       background-color: #ffcdd2;
       border-color: #c62828;
+    }
+    .item.disabled {
+      pointer-events: none;
+      opacity: 0.6;
     }
 
     button {
@@ -103,11 +125,9 @@
       transition: background-color 0.3s;
       user-select: none;
     }
-
     button:hover {
       background-color: #004d40;
     }
-
     button.speaker {
       background: transparent;
       border: none;
@@ -120,6 +140,12 @@
 
     #start-screen, #game-screen {
       animation: fadeIn 0.5s ease-in;
+    }
+
+    #progress {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #00695c;
     }
 
     @keyframes fadeIn {
@@ -140,6 +166,11 @@
         font-size: 0.9rem;
         padding: 0.5rem 1rem;
       }
+      .lesson-btn {
+        min-width: 120px;
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>
@@ -148,172 +179,12 @@
   <!-- Start Screen -->
   <div id="start-screen">
     <h1>Match the words!</h1>
-    <p>Match each English word with its correct Japanese translation.</p>
-    <button id="start-btn">Start Game</button>
+    <p>Select a lesson to begin:</p>
+    <div class="lesson-selection" id="lesson-selection">
+      <!-- Lesson buttons inserted by JS -->
+    </div>
   </div>
 
   <!-- Game Screen -->
   <div id="game-screen" class="hidden">
-    <h2>Match the Words</h2>
-    <div class="game-container">
-      <div class="column" id="english-col-1"></div>
-      <div class="column" id="english-col-2"></div>
-      <div class="column" id="japanese-col-1"></div>
-      <div class="column" id="japanese-col-2"></div>
-    </div>
-    <button id="reset-btn">Reset</button>
-  </div>
-
-  <script>
-    // Vocabulary list
-    const vocab = [
-      { english: "cat", japanese: "ねこ" },
-      { english: "dog", japanese: "いぬ" },
-      { english: "water", japanese: "みず" },
-      { english: "book", japanese: "ほん" },
-      { english: "school", japanese: "がっこう" },
-      { english: "apple", japanese: "りんご" }
-    ];
-
-    let selectedEnglish = null;
-    let selectedJapanese = null;
-    let correctMatches = 0;
-
-    // Shuffle helper
-    function shuffle(array) {
-      return array.sort(() => Math.random() - 0.5);
-    }
-
-    // Speak English word
-    function speakEnglish(word) {
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = "en-US";
-      speechSynthesis.speak(utterance);
-    }
-
-    // Confetti celebration
-    function celebrate() {
-      confetti({
-        particleCount: 200,
-        spread: 90,
-        origin: { y: 0.6 }
-      });
-    }
-
-    // Check if all pairs matched
-    function checkWinCondition() {
-      if (correctMatches === vocab.length) {
-        setTimeout(() => {
-          celebrate();
-          alert("🎉 Excellent! You've matched all pairs correctly!");
-        }, 300);
-      }
-    }
-
-    // Create a card item
-    function createItem(text, lang, pairId) {
-      const div = document.createElement("div");
-      div.classList.add("item");
-      div.dataset.lang = lang;
-      div.dataset.id = pairId;
-
-      if (lang === "en") {
-        const wordSpan = document.createElement("span");
-        wordSpan.textContent = text;
-
-        const speaker = document.createElement("button");
-        speaker.className = "speaker";
-        speaker.textContent = "🔊";
-        speaker.addEventListener("click", (e) => {
-          e.stopPropagation();
-          speakEnglish(text);
-        });
-
-        div.appendChild(wordSpan);
-        div.appendChild(speaker);
-      } else {
-        div.textContent = text;
-      }
-
-      div.addEventListener("click", () => {
-        if (div.classList.contains("correct")) return;
-
-        if (lang === "en") {
-          if (selectedEnglish && selectedEnglish !== div) {
-            selectedEnglish.classList.remove("selected");
-          }
-          selectedEnglish = div;
-          div.classList.toggle("selected");
-        } else {
-          if (selectedJapanese && selectedJapanese !== div) {
-            selectedJapanese.classList.remove("selected");
-          }
-          selectedJapanese = div;
-          div.classList.toggle("selected");
-        }
-
-        if (selectedEnglish && selectedJapanese) {
-          if (selectedEnglish.dataset.id === selectedJapanese.dataset.id) {
-            selectedEnglish.classList.add("correct");
-            selectedJapanese.classList.add("correct");
-            selectedEnglish.classList.remove("selected");
-            selectedJapanese.classList.remove("selected");
-            correctMatches++;
-            checkWinCondition();
-          } else {
-            selectedEnglish.classList.add("incorrect");
-            selectedJapanese.classList.add("incorrect");
-            setTimeout(() => {
-              selectedEnglish.classList.remove("selected", "incorrect");
-              selectedJapanese.classList.remove("selected", "incorrect");
-            }, 800);
-          }
-          selectedEnglish = null;
-          selectedJapanese = null;
-        }
-      });
-
-      return div;
-    }
-
-    // Setup the game board
-    function setupGame() {
-      selectedEnglish = null;
-      selectedJapanese = null;
-      correctMatches = 0;
-
-      const engCol1 = document.getElementById("english-col-1");
-      const engCol2 = document.getElementById("english-col-2");
-      const japCol1 = document.getElementById("japanese-col-1");
-      const japCol2 = document.getElementById("japanese-col-2");
-
-      [engCol1, engCol2, japCol1, japCol2].forEach(col => col.innerHTML = "");
-
-      const shuffledEnglish = shuffle([...vocab]);
-      const shuffledJapanese = shuffle([...vocab]);
-
-      const halfE = Math.ceil(shuffledEnglish.length / 2);
-      shuffledEnglish.forEach((pair, i) => {
-        const col = i < halfE ? engCol1 : engCol2;
-        col.appendChild(createItem(pair.english, "en", pair.english));
-      });
-
-      const halfJ = Math.ceil(shuffledJapanese.length / 2);
-      shuffledJapanese.forEach((pair, i) => {
-        const col = i < halfJ ? japCol1 : japCol2;
-        col.appendChild(createItem(pair.japanese, "ja", pair.english));
-      });
-    }
-
-    // Start button event
-    document.getElementById("start-btn").addEventListener("click", () => {
-      document.getElementById("start-screen").classList.add("hidden");
-      document.getElementById("game-screen").classList.remove("hidden");
-      setupGame();
-    });
-
-    // Reset button event
-    document.getElementById("reset-btn").addEventListener("click", setupGame);
-  </script>
-</body>
-</html>
+    <h2 id
