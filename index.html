@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nico+Moji&display=swap" rel="stylesheet" />
   <style>
+    /* All previous styles unchanged */
     * { box-sizing: border-box; }
     body {
       font-family: 'Comic Neue', cursive;
@@ -27,7 +28,7 @@
     .hidden { display: none; }
     .game-container {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(6, 1fr); /* Changed from 4 to 6 columns */
       gap: 1rem;
       justify-items: center;
       margin-top: 1rem;
@@ -245,8 +246,10 @@
     <div class="game-container">
       <div class="column" id="english-col-1"></div>
       <div class="column" id="english-col-2"></div>
+      <div class="column" id="english-col-3"></div>  <!-- Added third English column -->
       <div class="column" id="japanese-col-1"></div>
       <div class="column" id="japanese-col-2"></div>
+      <div class="column" id="japanese-col-3"></div>  <!-- Added third Japanese column -->
     </div>
     <button id="reset-btn">Reset</button>
   </div>
@@ -259,7 +262,7 @@
     </div>
   </div>
 
-  <script>
+   <script>
     const sets = [
       {
         name: "Set 1",
@@ -467,8 +470,10 @@
     const gameScreen = document.getElementById('game-screen');
     const englishCol1 = document.getElementById('english-col-1');
     const englishCol2 = document.getElementById('english-col-2');
+    const englishCol3 = document.getElementById('english-col-3'); // new col
     const japaneseCol1 = document.getElementById('japanese-col-1');
     const japaneseCol2 = document.getElementById('japanese-col-2');
+    const japaneseCol3 = document.getElementById('japanese-col-3'); // new col
     const resetBtn = document.getElementById('reset-btn');
     const timerDisplay = document.getElementById('timer');
     const progressBar = document.getElementById('progress-bar');
@@ -523,22 +528,26 @@
       // Clear previous columns
       englishCol1.innerHTML = '';
       englishCol2.innerHTML = '';
+      englishCol3.innerHTML = '';
       japaneseCol1.innerHTML = '';
       japaneseCol2.innerHTML = '';
+      japaneseCol3.innerHTML = '';
       progressBar.style.width = '0%';
 
       // Shuffle english and japanese separately
       const englishWords = shuffle([...set.vocab]);
       const japaneseWords = shuffle([...set.vocab]);
 
-      // Split english and japanese into two columns
-      const halfE = Math.ceil(englishWords.length / 2);
-      const engCol1Items = englishWords.slice(0, halfE);
-      const engCol2Items = englishWords.slice(halfE);
+      // Split english and japanese into three columns
+      const thirdE = Math.ceil(englishWords.length / 3);
+      const engCol1Items = englishWords.slice(0, thirdE);
+      const engCol2Items = englishWords.slice(thirdE, 2*thirdE);
+      const engCol3Items = englishWords.slice(2*thirdE);
 
-      const halfJ = Math.ceil(japaneseWords.length / 2);
-      const japCol1Items = japaneseWords.slice(0, halfJ);
-      const japCol2Items = japaneseWords.slice(halfJ);
+      const thirdJ = Math.ceil(japaneseWords.length / 3);
+      const japCol1Items = japaneseWords.slice(0, thirdJ);
+      const japCol2Items = japaneseWords.slice(thirdJ, 2*thirdJ);
+      const japCol3Items = japaneseWords.slice(2*thirdJ);
 
       // Create English draggable items
       engCol1Items.forEach(item => {
@@ -548,6 +557,10 @@
       engCol2Items.forEach(item => {
         const div = createDraggableEnglish(item);
         englishCol2.appendChild(div);
+      });
+      engCol3Items.forEach(item => {
+        const div = createDraggableEnglish(item);
+        englishCol3.appendChild(div);
       });
 
       // Create Japanese drop targets
@@ -559,11 +572,14 @@
         const div = createDropTargetJapanese(item);
         japaneseCol2.appendChild(div);
       });
+      japCol3Items.forEach(item => {
+        const div = createDropTargetJapanese(item);
+        japaneseCol3.appendChild(div);
+      });
 
       updateTimerDisplay();
       startTimer();
     }
-
     function createDraggableEnglish(item) {
       const div = document.createElement('div');
       div.className = 'item';
