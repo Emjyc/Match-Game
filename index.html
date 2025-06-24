@@ -16,6 +16,7 @@
       padding: 2rem;
       text-align: center;
       color: #333;
+
       background-color: #f9f9f9;
       background-image:
         linear-gradient(to right, #ddd 1px, transparent 1px),
@@ -32,16 +33,17 @@
       display: none;
     }
 
+    /* Lesson selection buttons styling */
     .lesson-selection {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 1rem;
-      margin-bottom: 2rem;
+      max-width: 600px;
+      margin: 0 auto 2rem;
     }
 
     .lesson-btn {
-      padding: 1rem 1.5rem;
+      padding: 1rem;
       background-color: #00796b;
       color: white;
       border: none;
@@ -50,7 +52,6 @@
       font-size: 1rem;
       transition: background-color 0.3s;
       user-select: none;
-      min-width: 140px;
     }
     .lesson-btn:hover {
       background-color: #004d40;
@@ -62,6 +63,9 @@
       gap: 2rem;
       justify-items: center;
       margin-top: 2rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .column {
@@ -90,101 +94,22 @@
       word-break: break-word;
       user-select: none;
     }
-    .item:hover:not(.correct):not(.disabled) {
+
+    .item:hover:not(.correct) {
       background-color: #e0f2f1;
       transform: scale(1.03);
     }
+
     .item.selected {
       background-color: #b2ebf2;
       border-color: #00acc1;
     }
+
     .item.correct {
       background-color: #c8e6c9;
       border-color: #2e7d32;
       color: #2e7d32;
       cursor: default;
     }
+
     .item.incorrect {
-      background-color: #ffcdd2;
-      border-color: #c62828;
-    }
-    .item.disabled {
-      pointer-events: none;
-      opacity: 0.6;
-    }
-
-    button {
-      padding: 0.7rem 1.5rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      margin-top: 1.5rem;
-      cursor: pointer;
-      background-color: #00796b;
-      color: white;
-      transition: background-color 0.3s;
-      user-select: none;
-    }
-    button:hover {
-      background-color: #004d40;
-    }
-    button.speaker {
-      background: transparent;
-      border: none;
-      font-size: 1rem;
-      margin-left: 8px;
-      color: #555;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    #start-screen, #game-screen {
-      animation: fadeIn 0.5s ease-in;
-    }
-
-    #progress {
-      margin-top: 1rem;
-      font-weight: bold;
-      color: #00695c;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.98); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-
-    @media (max-width: 600px) {
-      .game-container {
-        grid-template-columns: 1fr 1fr;
-      }
-      .item {
-        width: 140px;
-        height: 50px;
-        font-size: 1rem;
-      }
-      button {
-        font-size: 0.9rem;
-        padding: 0.5rem 1rem;
-      }
-      .lesson-btn {
-        min-width: 120px;
-        padding: 0.7rem 1rem;
-        font-size: 0.9rem;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Start Screen -->
-  <div id="start-screen">
-    <h1>Match the words!</h1>
-    <p>Select a lesson to begin:</p>
-    <div class="lesson-selection" id="lesson-selection">
-      <!-- Lesson buttons inserted by JS -->
-    </div>
-  </div>
-
-  <!-- Game Screen -->
-  <div id="game-screen" class="hidden">
-    <h2 id
