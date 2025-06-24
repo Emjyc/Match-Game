@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Match the words!</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
@@ -17,12 +17,12 @@
       text-align: center;
       color: #333;
 
-      /* subtle grid pattern using CSS */
+      /* subtle grid pattern */
       background-color: #f9f9f9;
       background-image:
         linear-gradient(to right, #ddd 1px, transparent 1px),
         linear-gradient(to bottom, #ddd 1px, transparent 1px);
-      background-size: 40px 40px; /* size of grid squares */
+      background-size: 40px 40px;
     }
 
     h1, h2 {
@@ -34,12 +34,39 @@
       display: none;
     }
 
+    .quiz-selection {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 1rem;
+      max-width: 800px;
+      margin: 0 auto 2rem;
+    }
+
+    .quiz-btn {
+      padding: 0.8rem 1rem;
+      background-color: #00796b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+
+    .quiz-btn:hover {
+      background-color: #004d40;
+    }
+
     .game-container {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 2rem;
       justify-items: center;
       margin-top: 2rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .column {
@@ -66,6 +93,7 @@
       font-size: 1.1rem;
       text-align: center;
       word-break: break-word;
+      user-select: none;
     }
 
     .item:hover {
@@ -100,6 +128,7 @@
       background-color: #00796b;
       color: white;
       transition: background-color 0.3s;
+      user-select: none;
     }
 
     button:hover {
@@ -112,6 +141,8 @@
       font-size: 1rem;
       margin-left: 8px;
       color: #555;
+      cursor: pointer;
+      user-select: none;
     }
 
     #start-screen, #game-screen {
@@ -127,6 +158,22 @@
       .game-container {
         grid-template-columns: 1fr 1fr;
       }
+      .item {
+        width: 140px;
+        height: 50px;
+        font-size: 1rem;
+      }
+      button {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+      }
+      .quiz-selection {
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      }
+      .quiz-btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.8rem;
+      }
     }
   </style>
 </head>
@@ -135,13 +182,15 @@
   <!-- Start Screen -->
   <div id="start-screen">
     <h1>Match the words!</h1>
-    <p>Match each English word with its correct Japanese translation.</p>
-    <button id="start-btn">Start Game</button>
+    <p>Select a lesson to begin:</p>
+    <div class="quiz-selection" id="quiz-selection">
+      <!-- Buttons inserted by JS -->
+    </div>
   </div>
 
   <!-- Game Screen -->
   <div id="game-screen" class="hidden">
-    <h2>Match the Words</h2>
+    <h2 id="lesson-title">Match the Words</h2>
     <div class="game-container">
       <div class="column" id="english-col-1"></div>
       <div class="column" id="english-col-2"></div>
@@ -149,149 +198,53 @@
       <div class="column" id="japanese-col-2"></div>
     </div>
     <button id="reset-btn">Reset</button>
+    <button id="back-btn" style="margin-left:1rem; background:#555;">Back to Lessons</button>
   </div>
 
   <script>
-    const vocab = [
-      { english: "cat", japanese: "ねこ" },
-      { english: "dog", japanese: "いぬ" },
-      { english: "water", japanese: "みず" },
-      { english: "book", japanese: "ほん" },
-      { english: "school", japanese: "がっこう" },
-      { english: "apple", japanese: "りんご" }
-    ];
+    // All lessons data: 
+    // For demo I put just a few lessons with sample vocab, you can add more following the same pattern
+    const quizzes = {
+      "Lesson 1-1": [
+        { english: "cat", japanese: "ねこ" },
+        { english: "dog", japanese: "いぬ" },
+        { english: "bird", japanese: "とり" }
+      ],
+      "Lesson 1-2": [
+        { english: "water", japanese: "みず" },
+        { english: "fire", japanese: "ひ" },
+        { english: "earth", japanese: "つち" }
+      ],
+      "Lesson 1-3": [
+        { english: "book", japanese: "ほん" },
+        { english: "pen", japanese: "ペン" },
+        { english: "paper", japanese: "かみ" }
+      ],
+      "Lesson 2-1": [
+        { english: "apple", japanese: "りんご" },
+        { english: "banana", japanese: "バナナ" },
+        { english: "orange", japanese: "オレンジ" }
+      ],
+      "Lesson 2-2": [
+        { english: "red", japanese: "あか" },
+        { english: "blue", japanese: "あお" },
+        { english: "green", japanese: "みどり" }
+      ],
+      "Lesson 8-3": [
+        { english: "school", japanese: "がっこう" },
+        { english: "teacher", japanese: "せんせい" },
+        { english: "student", japanese: "がくせい" }
+      ]
+      // Add more lessons as needed following this pattern
+    };
 
-    let selectedEnglish = null;
-    let selectedJapanese = null;
-    let correctMatches = 0;
-
-    function shuffle(array) {
-      return array.sort(() => Math.random() - 0.5);
-    }
-
-    function speakEnglish(word) {
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = "en-US";
-      speechSynthesis.speak(utterance);
-    }
-
-    function celebrate() {
-      confetti({
-        particleCount: 200,
-        spread: 90,
-        origin: { y: 0.6 }
-      });
-    }
-
-    function checkWinCondition() {
-      if (correctMatches === vocab.length) {
-        setTimeout(() => {
-          celebrate();
-          alert("🎉 Excellent! You've matched all pairs correctly!");
-        }, 300);
-      }
-    }
-
-    function createItem(text, lang, pairId) {
-      const div = document.createElement("div");
-      div.classList.add("item");
-      div.dataset.lang = lang;
-      div.dataset.id = pairId;
-
-      if (lang === "en") {
-        const wordSpan = document.createElement("span");
-        wordSpan.textContent = text;
-
-        const speaker = document.createElement("button");
-        speaker.className = "speaker";
-        speaker.textContent = "🔊";
-        speaker.addEventListener("click", (e) => {
-          e.stopPropagation();
-          speakEnglish(text);
-        });
-
-        div.appendChild(wordSpan);
-        div.appendChild(speaker);
-      } else {
-        div.textContent = text;
-      }
-
-      div.addEventListener("click", () => {
-        if (div.classList.contains("correct")) return;
-
-        if (lang === "en") {
-          if (selectedEnglish && selectedEnglish !== div) {
-            selectedEnglish.classList.remove("selected");
-          }
-          selectedEnglish = div;
-          div.classList.toggle("selected");
-        } else {
-          if (selectedJapanese && selectedJapanese !== div) {
-            selectedJapanese.classList.remove("selected");
-          }
-          selectedJapanese = div;
-          div.classList.toggle("selected");
-        }
-
-        if (selectedEnglish && selectedJapanese) {
-          if (selectedEnglish.dataset.id === selectedJapanese.dataset.id) {
-            selectedEnglish.classList.add("correct");
-            selectedJapanese.classList.add("correct");
-            selectedEnglish.classList.remove("selected");
-            selectedJapanese.classList.remove("selected");
-            correctMatches++;
-            checkWinCondition();
-          } else {
-            selectedEnglish.classList.add("incorrect");
-            selectedJapanese.classList.add("incorrect");
-            setTimeout(() => {
-              selectedEnglish.classList.remove("selected", "incorrect");
-              selectedJapanese.classList.remove("selected", "incorrect");
-            }, 800);
-          }
-          selectedEnglish = null;
-          selectedJapanese = null;
-        }
-      });
-
-      return div;
-    }
-
-    function setupGame() {
-      selectedEnglish = null;
-      selectedJapanese = null;
-      correctMatches = 0;
-
-      const engCol1 = document.getElementById("english-col-1");
-      const engCol2 = document.getElementById("english-col-2");
-      const japCol1 = document.getElementById("japanese-col-1");
-      const japCol2 = document.getElementById("japanese-col-2");
-
-      [engCol1, engCol2, japCol1, japCol2].forEach(col => col.innerHTML = "");
-
-      const shuffledEnglish = shuffle([...vocab]);
-      const shuffledJapanese = shuffle([...vocab]);
-
-      const halfE = Math.ceil(shuffledEnglish.length / 2);
-      shuffledEnglish.forEach((pair, i) => {
-        const col = i < halfE ? engCol1 : engCol2;
-        col.appendChild(createItem(pair.english, "en", pair.english));
-      });
-
-      const halfJ = Math.ceil(shuffledJapanese.length / 2);
-      shuffledJapanese.forEach((pair, i) => {
-        const col = i < halfJ ? japCol1 : japCol2;
-        col.appendChild(createItem(pair.japanese, "ja", pair.english));
-      });
-    }
-
-    document.getElementById("start-btn").addEventListener("click", () => {
-      document.getElementById("start-screen").classList.add("hidden");
-      document.getElementById("game-screen").classList.remove("hidden");
-      setupGame();
-    });
-
-    document.getElementById("reset-btn").addEventListener("click", setupGame);
-  </script>
-</body>
-</html>
+    // Generate lesson buttons 1-1 to 8-3 automatically for UI
+    function generateLessonButtons() {
+      const container = document.getElementById("quiz-selection");
+      for(let lessonNum=1; lessonNum<=8; lessonNum++) {
+        for(let quizNum=1; quizNum<=3; quizNum++) {
+          const lessonName = `Lesson ${lessonNum}-${quizNum}`;
+          const btn = document.createElement("button");
+          btn.classList.add("quiz-btn");
+          btn.textContent = lessonName;
+          btn.dataset.lesson = lesson
