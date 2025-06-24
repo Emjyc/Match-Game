@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Match Up Vocabulary Game</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,8 +13,12 @@
       padding: 2rem;
     }
 
-    h1 {
-      margin-bottom: 2rem;
+    h1, h2 {
+      margin-bottom: 1.5rem;
+    }
+
+    .hidden {
+      display: none;
     }
 
     .game-container {
@@ -35,8 +40,11 @@
       background-color: white;
       border-radius: 10px;
       cursor: pointer;
-      min-width: 120px;
+      min-width: 140px;
       transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .item.selected {
@@ -54,20 +62,48 @@
       border-color: red;
     }
 
-    #reset-btn {
-      margin-top: 2rem;
+    button {
       padding: 0.6rem 1.2rem;
       font-size: 1rem;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+
+    button.speaker {
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      margin-left: 8px;
+    }
+
+    #start-screen, #game-screen {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <h1>Match the English and Japanese Words</h1>
-  <div class="game-container">
-    <div class="column" id="english-column"></div>
-    <div class="column" id="japanese-column"></div>
+
+  <!-- Start Screen -->
+  <div id="start-screen">
+    <h1>English–Japanese Match Game</h1>
+    <p>Match each English word with its correct Japanese translation.</p>
+    <button id="start-btn">Start Game</button>
   </div>
-  <button id="reset-btn">Reset</button>
+
+  <!-- Game Screen -->
+  <div id="game-screen" class="hidden">
+    <h2>Match the English and Japanese Words</h2>
+    <div class="game-container">
+      <div class="column" id="english-column"></div>
+      <div class="column" id="japanese-column"></div>
+    </div>
+    <button id="reset-btn">Reset</button>
+  </div>
 
   <script>
     const vocab = [
@@ -81,17 +117,58 @@
 
     let selectedEnglish = null;
     let selectedJapanese = null;
+    let correctMatches = 0;
 
     function shuffle(array) {
       return array.sort(() => Math.random() - 0.5);
     }
 
+    function speakEnglish(word) {
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "en-US";
+      speechSynthesis.speak(utterance);
+    }
+
+    function celebrate() {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+
+    function checkWinCondition() {
+      if (correctMatches === vocab.length) {
+        setTimeout(() => {
+          celebrate();
+          alert("🎉 Well done! You matched everything correctly!");
+        }, 300);
+      }
+    }
+
     function createItem(text, lang, pairId) {
       const div = document.createElement("div");
       div.classList.add("item");
-      div.textContent = text;
       div.dataset.lang = lang;
       div.dataset.id = pairId;
+
+      if (lang === "en") {
+        const wordSpan = document.createElement("span");
+        wordSpan.textContent = text;
+
+        const speaker = document.createElement("button");
+        speaker.className = "speaker";
+        speaker.textContent = "🔊";
+        speaker.addEventListener("click", (e) => {
+          e.stopPropagation();
+          speakEnglish(text);
+        });
+
+        div.appendChild(wordSpan);
+        div.appendChild(speaker);
+      } else {
+        div.textContent = text;
+      }
 
       div.addEventListener("click", () => {
         if (div.classList.contains("correct")) return;
@@ -110,13 +187,14 @@
           div.classList.toggle("selected");
         }
 
-        // Check for a match
         if (selectedEnglish && selectedJapanese) {
           if (selectedEnglish.dataset.id === selectedJapanese.dataset.id) {
             selectedEnglish.classList.add("correct");
             selectedJapanese.classList.add("correct");
             selectedEnglish.classList.remove("selected");
             selectedJapanese.classList.remove("selected");
+            correctMatches++;
+            checkWinCondition();
           } else {
             selectedEnglish.classList.add("incorrect");
             selectedJapanese.classList.add("incorrect");
@@ -136,6 +214,8 @@
     function setupGame() {
       selectedEnglish = null;
       selectedJapanese = null;
+      correctMatches = 0;
+
       const englishCol = document.getElementById("english-column");
       const japaneseCol = document.getElementById("japanese-column");
       englishCol.innerHTML = "";
@@ -153,10 +233,13 @@
       });
     }
 
-    document.getElementById("reset-btn").addEventListener("click", setupGame);
+    document.getElementById("start-btn").addEventListener("click", () => {
+      document.getElementById("start-screen").classList.add("hidden");
+      document.getElementById("game-screen").classList.remove("hidden");
+      setupGame();
+    });
 
-    // Start game
-    setupGame();
+    document.getElementById("reset-btn").addEventListener("click", setupGame);
   </script>
 </body>
 </html>
