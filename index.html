@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Match Game</title>
+  <title>Match the words!</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     * {
@@ -12,11 +12,17 @@
 
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #e0f7fa, #f1f8e9);
       margin: 0;
       padding: 2rem;
       text-align: center;
       color: #333;
+
+      /* subtle grid pattern using CSS */
+      background-color: #f9f9f9;
+      background-image:
+        linear-gradient(to right, #ddd 1px, transparent 1px),
+        linear-gradient(to bottom, #ddd 1px, transparent 1px);
+      background-size: 40px 40px; /* size of grid squares */
     }
 
     h1, h2 {
@@ -29,10 +35,10 @@
     }
 
     .game-container {
-      display: flex;
-      justify-content: center;
-      gap: 4rem;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+      justify-items: center;
       margin-top: 2rem;
     }
 
@@ -40,7 +46,8 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      min-width: 150px;
+      min-width: 130px;
+      align-items: center;
     }
 
     .item {
@@ -118,8 +125,7 @@
 
     @media (max-width: 600px) {
       .game-container {
-        flex-direction: column;
-        align-items: center;
+        grid-template-columns: 1fr 1fr;
       }
     }
   </style>
@@ -128,7 +134,7 @@
 
   <!-- Start Screen -->
   <div id="start-screen">
-    <h1>🎌 Match Game</h1>
+    <h1>Match the words!</h1>
     <p>Match each English word with its correct Japanese translation.</p>
     <button id="start-btn">Start Game</button>
   </div>
@@ -137,15 +143,17 @@
   <div id="game-screen" class="hidden">
     <h2>Match the Words</h2>
     <div class="game-container">
-      <div class="column" id="english-column"></div>
-      <div class="column" id="japanese-column"></div>
+      <div class="column" id="english-col-1"></div>
+      <div class="column" id="english-col-2"></div>
+      <div class="column" id="japanese-col-1"></div>
+      <div class="column" id="japanese-col-2"></div>
     </div>
     <button id="reset-btn">Reset</button>
   </div>
 
   <script>
     const vocab = [
-      { english: "drinking water", japanese: "飲み水" },
+      { english: "cat", japanese: "ねこ" },
       { english: "dog", japanese: "いぬ" },
       { english: "water", japanese: "みず" },
       { english: "book", japanese: "ほん" },
@@ -254,20 +262,26 @@
       selectedJapanese = null;
       correctMatches = 0;
 
-      const englishCol = document.getElementById("english-column");
-      const japaneseCol = document.getElementById("japanese-column");
-      englishCol.innerHTML = "";
-      japaneseCol.innerHTML = "";
+      const engCol1 = document.getElementById("english-col-1");
+      const engCol2 = document.getElementById("english-col-2");
+      const japCol1 = document.getElementById("japanese-col-1");
+      const japCol2 = document.getElementById("japanese-col-2");
+
+      [engCol1, engCol2, japCol1, japCol2].forEach(col => col.innerHTML = "");
 
       const shuffledEnglish = shuffle([...vocab]);
       const shuffledJapanese = shuffle([...vocab]);
 
-      shuffledEnglish.forEach(pair => {
-        englishCol.appendChild(createItem(pair.english, "en", pair.english));
+      const halfE = Math.ceil(shuffledEnglish.length / 2);
+      shuffledEnglish.forEach((pair, i) => {
+        const col = i < halfE ? engCol1 : engCol2;
+        col.appendChild(createItem(pair.english, "en", pair.english));
       });
 
-      shuffledJapanese.forEach(pair => {
-        japaneseCol.appendChild(createItem(pair.japanese, "ja", pair.english));
+      const halfJ = Math.ceil(shuffledJapanese.length / 2);
+      shuffledJapanese.forEach((pair, i) => {
+        const col = i < halfJ ? japCol1 : japCol2;
+        col.appendChild(createItem(pair.japanese, "ja", pair.english));
       });
     }
 
