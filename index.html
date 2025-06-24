@@ -75,6 +75,35 @@
       20%, 60% { transform: translateX(-10px); }
       40%, 80% { transform: translateX(10px); }
     }
+    @keyframes sparkle {
+      0% {
+        opacity: 1;
+        transform: scale(0.5) rotate(0deg);
+        filter: brightness(1.5);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(2) rotate(360deg);
+        filter: brightness(0);
+      }
+    }
+    .sparkle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 40px;
+      height: 40px;
+      pointer-events: none;
+      background: radial-gradient(circle at center, #fff8 20%, #00acc1 80%);
+      border-radius: 50%;
+      opacity: 0;
+      transform-origin: center;
+      animation: sparkle 0.8s forwards;
+      transform-style: preserve-3d;
+      z-index: 10;
+      margin-top: -20px; /* center vertically */
+      margin-left: -20px; /* center horizontally */
+    }
     button {
       padding: 0.7rem 1.5rem;
       font-size: 1rem;
@@ -151,7 +180,6 @@
     const japCol1 = document.getElementById("japanese-col-1");
     const japCol2 = document.getElementById("japanese-col-2");
 
-    // Shuffle helper
     function shuffle(array) {
       let arr = array.slice();
       for(let i = arr.length -1; i > 0; i--) {
@@ -169,7 +197,6 @@
       });
     }
 
-    // Create draggable English word
     function createEnglishItem(text, id) {
       const div = document.createElement("div");
       div.classList.add("item");
@@ -177,7 +204,6 @@
       div.draggable = true;
       div.dataset.id = id;
 
-      // Drag events
       div.addEventListener("dragstart", (e) => {
         e.dataTransfer.setData("text/plain", id);
         e.dataTransfer.effectAllowed = "move";
@@ -194,7 +220,6 @@
       return div;
     }
 
-    // Create droppable Japanese word
     function createJapaneseItem(text, id) {
       const div = document.createElement("div");
       div.classList.add("item");
@@ -225,6 +250,16 @@
 
             div.classList.add("correct");
             correctMatches++;
+
+            // Sparkle effect
+            const sparkle = document.createElement("div");
+            sparkle.classList.add("sparkle");
+            div.style.position = "relative";
+            div.appendChild(sparkle);
+            sparkle.addEventListener("animationend", () => {
+              sparkle.remove();
+            });
+
             if(correctMatches === vocab.length) {
               setTimeout(() => {
                 celebrate();
@@ -265,7 +300,7 @@
       });
     }
 
-    // Countdown logic for start screen
+    // Countdown logic
     let countdown = 3;
     countdownText.textContent = `Starting in ${countdown}...`;
 
