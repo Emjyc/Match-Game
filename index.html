@@ -55,9 +55,11 @@
       justify-content: center;
       user-select: none;
       position: relative;
+      transition: box-shadow 0.3s ease;
     }
     .item[data-lang="en"] {
       font-family: 'Comic Neue', cursive;
+      position: relative;
     }
     .item[data-lang="ja"] {
       font-family: 'Nico Moji', sans-serif;
@@ -69,10 +71,14 @@
       cursor: default;
       box-shadow: 0 0 12px 3px #66bb6a;
     }
-    .item.incorrect {
-      animation: shake 0.3s;
-      border-color: #c62828;
-      background-color: #ffcdd2;
+    .item.incorrect-flash {
+      animation: flashRed 0.5s;
+      border-color: #c62828 !important;
+      background-color: #ffcdd2 !important;
+    }
+    @keyframes flashRed {
+      0%, 100% { background-color: #ffcdd2; border-color: #c62828; }
+      50% { background-color: #fff; border-color: #00838f; }
     }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
@@ -166,6 +172,48 @@
       padding: 0.5rem;
       font-size: 0.9rem;
     }
+    /* Modal popup styling */
+    #modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right:0; bottom:0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #modal-overlay.show {
+      visibility: visible;
+      opacity: 1;
+    }
+    #modal-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 320px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      text-align: center;
+      font-family: 'Comic Neue', cursive;
+    }
+    #modal-box h2 {
+      margin-bottom: 1rem;
+      color: #00796b;
+    }
+    #modal-box button {
+      background-color: #00796b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #modal-box button:hover {
+      background-color: #004d40;
+    }
   </style>
 </head>
 <body>
@@ -178,7 +226,6 @@
     <div id="subtitle">Lesson 4 New Words</div>
     <p>Select a set to start:</p>
     <div id="set-buttons">
-      <!-- Buttons for sets 1 to 9 -->
       <button data-set="0">Set 1</button>
       <button data-set="1">Set 2</button>
       <button data-set="2">Set 3</button>
@@ -204,8 +251,15 @@
     <button id="reset-btn">Reset</button>
   </div>
 
+  <!-- Modal for end game messages -->
+  <div id="modal-overlay">
+    <div id="modal-box">
+      <h2 id="modal-message">Message</h2>
+      <button id="modal-close-btn">Close</button>
+    </div>
+  </div>
+
   <script>
-    // All sets with vocab as requested:
     const sets = [
       {
         name: "Set 1",
@@ -358,20 +412,20 @@
           { english: "cut down", japanese: "切り倒す" },
           { english: "building", japanese: "建物" },
           { english: "destroy", japanese: "破壊する" },
-          { english: "shock", japanese: "衝撃" },
+          { english: "shock", japanese: "ショック" },
           { english: "environment", japanese: "環境" },
-          { english: "guide", japanese: "案内する" },
+          { english: "guide", japanese: "案内" },
           { english: "tour", japanese: "ツアー" },
-          { english: "simply", japanese: "単純に" },
-          { english: "nothing", japanese: "何もない" },
+          { english: "simply", japanese: "単に" },
+          { english: "nothing", japanese: "何も" },
           { english: "worry", japanese: "心配する" },
-          { english: "decide to", japanese: "決める" },
+          { english: "decide", japanese: "決める" },
           { english: "major", japanese: "主要な" },
           { english: "less", japanese: "より少ない" },
           { english: "sell", japanese: "売る" },
           { english: "sold", japanese: "売れた" },
           { english: "knowledge", japanese: "知識" },
-          { english: "itself", japanese: "それ自身" },
+          { english: "itself", japanese: "それ自体" },
           { english: "share", japanese: "共有する" },
         ]
       },
@@ -391,26 +445,24 @@
           { english: "step", japanese: "一歩" },
           { english: "situation", japanese: "事態" },
           { english: "one of...", japanese: "の一つ・一人" },
-          { english: "collect", japanese: "集める" },
+          { english: "collect", japanese: "取りに行く" },
           { english: "drinking water", japanese: "飲み水" },
-          { english: "understand", japanese: "理解する" },
+          { english: "undertand", japanese: "理解する" },
           { english: "laundry", japanese: "洗濯物" },
           { english: "available", japanese: "入りてできる" },
           { english: "post", japanese: "郵便" },
           { english: "store", japanese: "店" },
           { english: "office", japanese: "事務所" },
         ]
-      },
+      }
     ];
 
-    // Globals
     let currentSetIndex = null;
     let matchedCount = 0;
     let totalPairs = 0;
     let timerInterval = null;
     let timeLeft = 300; // 5 minutes in seconds
 
-    // Elements
     const startScreen = document.getElementById('start-screen');
     const gameScreen = document.getElementById('game-screen');
     const englishCol1 = document.getElementById('english-col-1');
@@ -421,8 +473,15 @@
     const timerDisplay = document.getElementById('timer');
     const progressBar = document.getElementById('progress-bar');
     const progressContainer = document.getElementById('progress-container');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalMessage = document.getElementById('modal-message');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
 
-    // Initialize buttons
+    // Store original positions for bounce-back
+    let dragOrigin = null;
+    let dragElement = null;
+
+    // Initialize set buttons
     document.querySelectorAll('#set-buttons button').forEach(btn => {
       btn.addEventListener('click', () => {
         currentSetIndex = parseInt(btn.dataset.set);
@@ -434,7 +493,12 @@
       resetGame();
     });
 
-    // Util: shuffle array
+    modalCloseBtn.addEventListener('click', () => {
+      closeModal();
+      resetGame();
+    });
+
+    // Shuffle utility
     function shuffle(array) {
       for (let i = array.length -1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i+1));
@@ -443,7 +507,6 @@
       return array;
     }
 
-    // Start game
     function startGame() {
       matchedCount = 0;
       timeLeft = 300;
@@ -457,28 +520,27 @@
 
       totalPairs = set.vocab.length;
 
-      // Clear previous
+      // Clear previous columns
       englishCol1.innerHTML = '';
       englishCol2.innerHTML = '';
       japaneseCol1.innerHTML = '';
       japaneseCol2.innerHTML = '';
       progressBar.style.width = '0%';
 
-      // Shuffle English and Japanese separately
+      // Shuffle english and japanese separately
       const englishWords = shuffle([...set.vocab]);
       const japaneseWords = shuffle([...set.vocab]);
 
-      // Split english words evenly into two columns
+      // Split english and japanese into two columns
       const halfE = Math.ceil(englishWords.length / 2);
       const engCol1Items = englishWords.slice(0, halfE);
       const engCol2Items = englishWords.slice(halfE);
 
-      // Split japanese words evenly into two columns
       const halfJ = Math.ceil(japaneseWords.length / 2);
       const japCol1Items = japaneseWords.slice(0, halfJ);
       const japCol2Items = japaneseWords.slice(halfJ);
 
-      // Create draggable English items
+      // Create English draggable items
       engCol1Items.forEach(item => {
         const div = createDraggableEnglish(item);
         englishCol1.appendChild(div);
@@ -488,7 +550,7 @@
         englishCol2.appendChild(div);
       });
 
-      // Create drop target Japanese items
+      // Create Japanese drop targets
       japCol1Items.forEach(item => {
         const div = createDropTargetJapanese(item);
         japaneseCol1.appendChild(div);
@@ -502,7 +564,6 @@
       startTimer();
     }
 
-    // Create English draggable item
     function createDraggableEnglish(item) {
       const div = document.createElement('div');
       div.className = 'item';
@@ -512,30 +573,32 @@
       div.dataset.english = item.english;
       div.dataset.japanese = item.japanese;
 
-      // Audio setup for pronunciation
+      div.id = `eng-${item.english.replace(/\s+/g,'-').toLowerCase()}`;
+
       div.addEventListener('dragstart', e => {
-        // Play pronunciation on drag start
         playAudio(item.english);
-        // Store origin for potential bounce back
+        dragElement = div;
+        // Save original position for bounce-back
+        dragOrigin = {
+          parent: div.parentElement,
+          nextSibling: div.nextSibling
+        };
         e.dataTransfer.setData('text/plain', JSON.stringify({
           english: item.english,
-          japanese: item.japanese,
-          originId: div.id
+          japanese: item.japanese
         }));
-        // Add drag class for visual
         setTimeout(() => {
           div.style.visibility = 'hidden';
         }, 0);
       });
+
       div.addEventListener('dragend', e => {
         div.style.visibility = 'visible';
       });
 
-      div.id = `eng-${item.english.replace(/\s+/g,'-').toLowerCase()}`;
       return div;
     }
 
-    // Create Japanese drop target
     function createDropTargetJapanese(item) {
       const div = document.createElement('div');
       div.className = 'item';
@@ -548,10 +611,12 @@
         div.style.borderColor = '#00796b';
         div.style.backgroundColor = '#e0f2f1';
       });
+
       div.addEventListener('dragleave', e => {
         div.style.borderColor = '#00838f';
         div.style.backgroundColor = '#fff';
       });
+
       div.addEventListener('drop', e => {
         e.preventDefault();
         div.style.borderColor = '#00838f';
@@ -562,10 +627,8 @@
         const dragged = JSON.parse(data);
 
         if (dragged.japanese === div.textContent) {
-          // Correct match
           handleCorrectMatch(dragged.english, div);
         } else {
-          // Incorrect match
           handleIncorrectMatch(dragged.english);
         }
       });
@@ -573,10 +636,9 @@
       return div;
     }
 
-    // Handle correct match
     function handleCorrectMatch(englishWord, japaneseDiv) {
       const engDiv = document.getElementById(`eng-${englishWord.replace(/\s+/g,'-').toLowerCase()}`);
-      if (!engDiv || engDiv.classList.contains('correct')) return; // Already matched
+      if (!engDiv || engDiv.classList.contains('correct')) return;
 
       engDiv.classList.add('correct');
       engDiv.draggable = false;
@@ -588,10 +650,7 @@
       matchedCount++;
       updateProgressBar();
 
-      // Sparkle effect
-      createSparkle(englishDivCenter(engDiv));
-
-      // Confetti
+      createSparkleAtElement(engDiv);
       confetti({
         particleCount: 20,
         spread: 70,
@@ -603,46 +662,47 @@
       }
     }
 
-    // Get center position of an English div for sparkle
-    function englishDivCenter(div) {
-      const rect = div.getBoundingClientRect();
-      return {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2
-      };
-    }
-
-    // Create sparkle effect at position (x, y)
-    function createSparkle(position) {
+    function createSparkleAtElement(element) {
+      const rect = element.getBoundingClientRect();
       const sparkle = document.createElement('div');
       sparkle.className = 'sparkle';
       sparkle.style.position = 'fixed';
-      sparkle.style.left = position.x + 'px';
-      sparkle.style.top = position.y + 'px';
+      sparkle.style.left = rect.left + rect.width / 2 + 'px';
+      sparkle.style.top = rect.top + rect.height / 2 + 'px';
       document.body.appendChild(sparkle);
-      setTimeout(() => {
-        sparkle.remove();
-      }, 800);
+      setTimeout(() => sparkle.remove(), 800);
     }
 
-    // Handle incorrect match
     function handleIncorrectMatch(englishWord) {
       const engDiv = document.getElementById(`eng-${englishWord.replace(/\s+/g,'-').toLowerCase()}`);
       if (!engDiv) return;
 
-      engDiv.classList.add('incorrect');
+      // Flash red
+      engDiv.classList.add('incorrect-flash');
+
+      // Bounce back animation: remove from drop and append back to original position
       setTimeout(() => {
-        engDiv.classList.remove('incorrect');
+        engDiv.classList.remove('incorrect-flash');
+
+        // Append back to original position if dragOrigin saved
+        if (dragOrigin && dragElement) {
+          if (!dragOrigin.nextSibling) {
+            dragOrigin.parent.appendChild(dragElement);
+          } else {
+            dragOrigin.parent.insertBefore(dragElement, dragOrigin.nextSibling);
+          }
+          dragElement.style.visibility = 'visible';
+          dragElement = null;
+          dragOrigin = null;
+        }
       }, 500);
     }
 
-    // Update progress bar
     function updateProgressBar() {
       const percent = (matchedCount / totalPairs) * 100;
       progressBar.style.width = percent + '%';
     }
 
-    // Timer functions
     function startTimer() {
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
@@ -654,24 +714,24 @@
         }
       }, 1000);
     }
+
     function updateTimerDisplay() {
       const min = Math.floor(timeLeft / 60);
       const sec = timeLeft % 60;
       timerDisplay.textContent = `Time Left: ${min}:${sec.toString().padStart(2,'0')}`;
     }
 
-    // End game
     function endGame(won) {
       clearInterval(timerInterval);
+      let msg = '';
       if (won) {
-        alert('Congratulations! You matched all words!');
+        msg = '🎉 Congratulations! You matched all words!';
       } else {
-        alert('Time is up! Try again.');
+        msg = '⏰ Time is up! Try again.';
       }
-      resetGame();
+      showModal(msg);
     }
 
-    // Reset game
     function resetGame() {
       clearInterval(timerInterval);
       matchedCount = 0;
@@ -687,12 +747,20 @@
       japaneseCol2.innerHTML = '';
     }
 
+    function showModal(message) {
+      modalMessage.textContent = message;
+      modalOverlay.classList.add('show');
+    }
+    function closeModal() {
+      modalOverlay.classList.remove('show');
+    }
+
     // Speech synthesis for English pronunciation
     function playAudio(text) {
       if (!window.speechSynthesis) return;
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
-      window.speechSynthesis.cancel(); // stop previous utterances
+      window.speechSynthesis.cancel(); // stop any current
       window.speechSynthesis.speak(utterance);
     }
   </script>
