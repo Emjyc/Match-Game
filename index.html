@@ -17,6 +17,7 @@
       text-align: center;
       color: #333;
 
+      /* subtle grid pattern using CSS */
       background-color: #f9f9f9;
       background-image:
         linear-gradient(to right, #ddd 1px, transparent 1px),
@@ -30,86 +31,4 @@
     }
 
     .hidden {
-      display: none;
-    }
-
-    /* Lesson selection buttons styling */
-    .lesson-selection {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 1rem;
-      max-width: 600px;
-      margin: 0 auto 2rem;
-    }
-
-    .lesson-btn {
-      padding: 1rem;
-      background-color: #00796b;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.3s;
-      user-select: none;
-    }
-    .lesson-btn:hover {
-      background-color: #004d40;
-    }
-
-    .game-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 2rem;
-      justify-items: center;
-      margin-top: 2rem;
-      max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .column {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      min-width: 130px;
-      align-items: center;
-    }
-
-    .item {
-      width: 180px;
-      height: 60px;
-      padding: 1rem;
-      border: 2px solid #00838f;
-      background-color: #ffffff;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      box-shadow: 2px 4px 8px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      text-align: center;
-      word-break: break-word;
-      user-select: none;
-    }
-
-    .item:hover:not(.correct) {
-      background-color: #e0f2f1;
-      transform: scale(1.03);
-    }
-
-    .item.selected {
-      background-color: #b2ebf2;
-      border-color: #00acc1;
-    }
-
-    .item.correct {
-      background-color: #c8e6c9;
-      border-color: #2e7d32;
-      color: #2e7d32;
-      cursor: default;
-    }
-
-    .item.incorrect {
+      dis
