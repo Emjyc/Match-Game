@@ -362,9 +362,7 @@
 <!-- Start Screen -->
 <section id="startScreen" class="visible" role="main" aria-labelledby="title">
   <h1 id="title">英語-日本語 ゲーム</h1>
-  <div id="setButtons" role="list" aria-label="Choose your word set">
-    <!-- Buttons added by JS -->
-  </div>
+  <div id="setButtons" role="list" aria-label="Choose your word set"></div>
 </section>
 
 <!-- Game Screen -->
@@ -380,9 +378,7 @@
     <div id="matchProgressText" aria-live="polite" aria-atomic="true"></div>
   </div>
 
-  <div id="gameGrid" aria-label="English and Japanese words grid">
-    <!-- Columns and words added by JS -->
-  </div>
+  <div id="gameGrid" aria-label="English and Japanese words grid"></div>
 </section>
 
 <!-- Popup for end game -->
@@ -398,7 +394,7 @@
 <canvas id="confettiCanvas" style="position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1500;"></canvas>
 
 <script>
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
   const TOTAL_TIME = 300; // 5 minutes in seconds
 
   // Sets data: 5 sets of English-Japanese word pairs
@@ -511,7 +507,7 @@
     return `${m}:${s}`;
   }
 
-  // Update timer UI
+  // Update timer UI and progress bar color
   function updateTimerUI() {
     timerText.textContent = formatTime(timeLeft);
     const percent = (timeLeft / TOTAL_TIME) * 100;
@@ -529,7 +525,17 @@
     }
   }
 
-  // Initialize game grid and variables
+  // Shuffle helper
+  function shuffleArray(arr) {
+    const newArr = [...arr];
+    for (let i = newArr.length -1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i +1));
+      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+    }
+    return newArr;
+  }
+
+  // Start the game with a selected set
   function startGame(setNumber) {
     currentSet = setNumber;
     const pairs = [...setsData[setNumber]];
@@ -538,6 +544,7 @@
     score = 0;
     timeLeft = TOTAL_TIME;
 
+    // Show game screen, hide start
     startScreen.classList.remove('visible');
     gameScreen.classList.add('visible');
     popupOverlay.classList.remove('visible');
@@ -545,27 +552,21 @@
     // Clear grid
     gameGrid.innerHTML = '';
 
-    // Shuffle arrays for random placement
+    // Shuffle words
     const shuffledEnglish = shuffleArray(pairs.map(p => p.english));
     const shuffledJapanese = shuffleArray(pairs.map(p => p.japanese));
 
-    // Create 3 columns each side (english left, japanese right)
-    // split english into 3 equal arrays
+    // Split into 3 columns each side
     const engCols = [[], [], []];
-    shuffledEnglish.forEach((word, i) => {
-      engCols[i % 3].push(word);
-    });
-    // split japanese into 3 equal arrays
+    shuffledEnglish.forEach((word, i) => engCols[i % 3].push(word));
     const japCols = [[], [], []];
-    shuffledJapanese.forEach((word, i) => {
-      japCols[i % 3].push(word);
-    });
+    shuffledJapanese.forEach((word, i) => japCols[i % 3].push(word));
 
     // Create english columns
     for (let i = 0; i < 3; i++) {
       const colDiv = document.createElement('div');
       colDiv.classList.add('column', 'english-column');
-      colDiv.setAttribute('aria-label', `English column ${i+1}`);
+      colDiv.setAttribute('aria-label', `English column ${i + 1}`);
 
       engCols[i].forEach(word => {
         const wordDiv = document.createElement('div');
@@ -576,7 +577,7 @@
         wordDiv.dataset.word = word;
         colDiv.appendChild(wordDiv);
 
-        // Audio on drag start
+        // Play audio on drag start
         wordDiv.addEventListener('dragstart', () => playAudio(word));
         wordDiv.addEventListener('keydown', e => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -585,6 +586,7 @@
           }
         });
       });
+
       gameGrid.appendChild(colDiv);
     }
 
@@ -592,7 +594,7 @@
     for (let i = 0; i < 3; i++) {
       const colDiv = document.createElement('div');
       colDiv.classList.add('column', 'japanese-column');
-      colDiv.setAttribute('aria-label', `Japanese column ${i+1}`);
+      colDiv.setAttribute('aria-label', `Japanese column ${i + 1}`);
 
       japCols[i].forEach(word => {
         const wordDiv = document.createElement('div');
@@ -602,7 +604,7 @@
         wordDiv.dataset.word = word;
         colDiv.appendChild(wordDiv);
 
-        // Drag over and drop handlers for dropping english words
+        // Drag over and drop
         wordDiv.addEventListener('dragover', e => e.preventDefault());
         wordDiv.addEventListener('drop', e => {
           e.preventDefault();
@@ -610,11 +612,12 @@
           handleDrop(draggedWord, wordDiv);
         });
       });
+
       gameGrid.appendChild(colDiv);
     }
 
     updateTimerUI();
-    updateMatchProgress(); // <-- Call here to reset progress bar on new game
+    updateMatchProgress();
 
     // Start timer
     if (timerInterval) clearInterval(timerInterval);
@@ -633,35 +636,27 @@
     const japWord = japaneseDiv.dataset.word;
     const draggedEl = [...document.querySelectorAll('.english-word')].find(el => el.dataset.word === englishWord);
 
-    if (!draggedEl || draggedEl.classList.contains('correct')) {
-      // Already matched or element not found
-      return;
-    }
+    if (!draggedEl || draggedEl.classList.contains('correct')) return;
 
     if (isMatch(englishWord, japWord)) {
-      // Correct match
       draggedEl.classList.add('correct');
       draggedEl.setAttribute('draggable', 'false');
       draggedEl.style.cursor = 'default';
 
       japaneseDiv.classList.add('matched');
 
-      // Move dragged element visually on top of japanese word (optional)
-      // Here we just keep in original place but style as matched
-
       matchedPairs++;
       score += 10;
-      updateMatchProgress(); // <-- update progress on correct match
+      updateMatchProgress();
 
       checkGameCompletion();
     } else {
-      // Incorrect match
       draggedEl.classList.add('incorrect');
       playErrorAnimation(draggedEl);
     }
   }
 
-  // Play audio pronunciation using speech synthesis
+  // Play English audio pronunciation
   function playAudio(text) {
     if (!window.speechSynthesis) return;
     const utterance = new SpeechSynthesisUtterance(text);
@@ -670,7 +665,7 @@
     speechSynthesis.speak(utterance);
   }
 
-  // Bounce and remove incorrect class after animation
+  // Incorrect answer bounce and reset
   function playErrorAnimation(el) {
     el.classList.add('bounce');
     setTimeout(() => {
@@ -678,35 +673,25 @@
     }, 600);
   }
 
-  // Check if the english and japanese word match (from setsData)
+  // Check if words match from setsData
   function isMatch(eng, jap) {
     const pairs = setsData[currentSet];
     return pairs.some(p => p.english === eng && p.japanese === jap);
   }
 
-  // Shuffle helper function
-  function shuffleArray(arr) {
-    const newArr = [...arr];
-    for (let i = newArr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
-    }
-    return newArr;
-  }
-
-  // Update match progress bar and text
+  // Update progress bar and text
   function updateMatchProgress() {
     const percent = (matchedPairs / totalPairs) * 100;
     matchProgressBar.style.width = percent + '%';
     matchProgressText.textContent = `Matched ${matchedPairs} / ${totalPairs}`;
   }
 
-  // Check if all pairs matched - finish game early
+  // Check for game completion
   function checkGameCompletion() {
     if (matchedPairs === totalPairs) {
       clearInterval(timerInterval);
       showConfetti();
-      setTimeout(() => endGame(), 1000); // slight delay for confetti
+      setTimeout(() => endGame(), 1000);
     }
   }
 
@@ -716,14 +701,14 @@
     popupOverlay.classList.add('visible');
   }
 
-  // Restart game - back to start screen
+  // Restart game to start screen
   restartButton.addEventListener('click', () => {
     popupOverlay.classList.remove('visible');
     gameScreen.classList.remove('visible');
     startScreen.classList.add('visible');
   });
 
-  // Confetti effect (simple)
+  // Confetti animation
   function showConfetti() {
     const confetti = confettiCanvas;
     const ctx = confetti.getContext('2d');
@@ -787,8 +772,7 @@
   // Initialize app
   loadDarkMode();
   createSetButtons();
-
-})();
+});
 </script>
 
 </body>
