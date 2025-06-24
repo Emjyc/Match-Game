@@ -109,16 +109,18 @@
         transform: scale(2) rotate(360deg);
       }
     }
-    #timer {
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #c62828;
-      text-align: left;
-      max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+#timer {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #c62828;
+  text-align: left;
+  max-width: 1000px;
+  margin: 0; 
+  z-index: 1000; 
+}
     #progress-container {
       position: fixed;
       top: 10px;
