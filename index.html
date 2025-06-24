@@ -13,29 +13,47 @@
       font-family: 'Comic Neue', cursive;
       margin: 0; padding: 1rem;
       text-align: center;
-      color: #333;
-      background-color: #f0f0f0;
+      color: #556b6e;
+      background-color: #f9f8f6;
     }
     h1, h2 {
-      color: #00695c;
-      margin: 0.5rem 0;
+  color: #3a5a40;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px #b8c1c0;
     }
+    #start-screen {
+  max-width: 480px;
+  margin: 4rem auto 2rem auto;
+  padding: 2rem 2.5rem;
+  background: #e4e9e7;
+  border-radius: 14px;
+  box-shadow: 0 8px 16px rgba(85, 107, 110, 0.2);
+  font-family: 'Comic Neue', cursive;
+  text-align: center;
+    }
+
+#start-screen h1 {
+  font-size: 3rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+  font-weight: 900;
+  color: #3a5a40;
+}
     #subtitle {
       font-size: 1.2rem;
       color: #00796b;
       margin-bottom: 1rem;
     }
     .hidden { display: none; }
-    .game-container {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr); /* Changed from 4 to 6 columns */
-      gap: 1rem;
-      justify-items: center;
-      margin-top: 1rem;
-      max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+    
+  .game-container {
+  background-color: #e9ece8;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  max-width: 960px;
+  margin: 1rem auto;
+  box-shadow: 0 4px 14px rgba(85, 107, 110, 0.15);
+}
     .column {
       display: flex;
       flex-direction: column;
@@ -43,21 +61,20 @@
       align-items: center;
     }
     .item {
-      width: 160px;
-      height: 48px;
-      padding: 0.5rem;
-      border: 2px solid #00838f;
-      background-color: #fff;
-      border-radius: 8px;
-      cursor: grab;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      position: relative;
-      transition: box-shadow 0.3s ease;
-    }
+  background-color: #f3f5f1;
+  border: 2px solid #a3b4a2;
+  color: #4a5a48;
+  font-weight: 600;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.7);
+  transition: all 0.25s ease;
+}
+
+.item:hover:not(.correct) {
+  border-color: #7b8f7a;
+  background-color: #d4dbd3;
+  box-shadow: 0 4px 8px rgba(123, 143, 122, 0.3);
+  cursor: grab;
+}
     .item[data-lang="en"] {
       font-family: 'Comic Neue', cursive;
       position: relative;
@@ -66,11 +83,11 @@
       font-family: 'Nico Moji', sans-serif;
     }
     .item.correct {
-      background-color: #c8e6c9;
-      border-color: #2e7d32;
-      color: #2e7d32;
-      cursor: default;
-      box-shadow: 0 0 12px 3px #66bb6a;
+  background-color: #a2cbb1;
+  border-color: #467f5e;
+  color: #2f5236;
+  box-shadow: 0 0 14px 3px #4c956c;
+  cursor: default;
     }
     .item.incorrect-flash {
       animation: flashRed 0.5s;
@@ -112,13 +129,13 @@
     }
     #timer {
       font-size: 1.2rem;
-      font-weight: bold;
+      font-weight: 600;
+        letter-spacing: 0.05em;
       margin-bottom: 10px;
-      color: #c62828;
+      color: #66796b;
       text-align: left;
       max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
+       margin-bottom: 12px;
     }
     #progress-container {
       position: fixed;
@@ -126,10 +143,10 @@
       left: 10px;
       width: 250px;
       height: 20px;
-      background: #ddd;
-      border-radius: 12px;
+      background: #c8d5c5;
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: inset 0 0 5px #bbb;
+      box-shadow: inset 0 0 5px #a7b8a6;
       font-size: 0.8rem;
       color: #004d40;
       font-weight: bold;
@@ -138,23 +155,30 @@
     }
     #progress-bar {
       height: 100%;
-      background-color: #00796b;
+      background-color: #c8d5c5;
+       border-radius: 14px;
+  box-shadow: inset 0 0 5px #a7b8a6;
       width: 0%;
       transition: width 0.3s ease;
     }
     button {
-      padding: 0.6rem 1.2rem;
-      font-size: 0.95rem;
-      border: none;
-      border-radius: 6px;
-      margin-top: 1rem;
-      cursor: pointer;
-      background-color: #00796b;
-      color: white;
-      transition: background-color 0.3s;
-      font-family: 'Comic Neue', cursive;
+        background-color: #8aa399;
+  color: #f9f8f6;
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(102, 122, 110, 0.3);
     }
-    button:hover { background-color: #004d40; }
+    
+   button:hover {
+  background-color: #6a8478;
+  transform: scale(1.05);
+  box-shadow: 0 5px 12px rgba(102, 122, 110, 0.45);
+}
+
     #start-screen {
       max-width: 500px;
       margin: 3rem auto 0 auto;
@@ -191,11 +215,11 @@
       opacity: 1;
     }
     #modal-box {
-      background: white;
+      background: #e4e9e7;
       padding: 2rem;
       border-radius: 12px;
       max-width: 320px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+       box-shadow: 0 6px 16px rgba(85, 107, 110, 0.3);
       text-align: center;
       font-family: 'Comic Neue', cursive;
     }
@@ -204,7 +228,7 @@
       color: #00796b;
     }
     #modal-box button {
-      background-color: #00796b;
+      background-color: #6a8478;
       color: white;
       border: none;
       border-radius: 8px;
@@ -213,7 +237,7 @@
       cursor: pointer;
     }
     #modal-box button:hover {
-      background-color: #004d40;
+      background-color: #4f645a;
     }
   </style>
 </head>
@@ -224,7 +248,6 @@
 
   <div id="start-screen">
     <h1>Match the Words!</h1>
-    <div id="subtitle">Lesson 4 New Words</div>
     <p>Select a set to start:</p>
     <div id="set-buttons">
       <button data-set="0">Set 1</button>
