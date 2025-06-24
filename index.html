@@ -180,15 +180,12 @@
       // Drag events
       div.addEventListener("dragstart", (e) => {
         e.dataTransfer.setData("text/plain", id);
-        // For Firefox compatibility
         e.dataTransfer.effectAllowed = "move";
-        // Make the dragged element semi-transparent
         setTimeout(() => div.style.visibility = "hidden", 0);
       });
 
       div.addEventListener("dragend", (e) => {
         div.style.visibility = "visible";
-        // If not matched, reset position by removing transform
         if(!div.classList.contains("correct")) {
           div.style.transform = "";
         }
@@ -219,13 +216,11 @@
         div.style.borderColor = "#00838f";
         const draggedId = e.dataTransfer.getData("text/plain");
         if(draggedId === div.dataset.id) {
-          // Correct match
           const draggedEl = document.querySelector(`.item[draggable][data-id='${draggedId}']`);
           if (!draggedEl.classList.contains("correct")) {
             draggedEl.classList.add("correct");
             draggedEl.style.cursor = "default";
             draggedEl.style.transform = `translate(${div.offsetLeft - draggedEl.offsetLeft}px, ${div.offsetTop - draggedEl.offsetTop}px)`;
-            // Disable dragging for matched item
             draggedEl.draggable = false;
 
             div.classList.add("correct");
@@ -233,11 +228,11 @@
             if(correctMatches === vocab.length) {
               setTimeout(() => {
                 celebrate();
+                // alert removed
               }, 300);
             }
           }
         } else {
-          // Incorrect match - animate shake on dragged element
           const draggedEl = document.querySelector(`.item[draggable][data-id='${draggedId}']`);
           if (draggedEl) {
             draggedEl.classList.add("incorrect");
