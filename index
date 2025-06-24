@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Match Up Vocabulary Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      margin-bottom: 2rem;
+    }
+
+    .game-container {
+      display: flex;
+      justify-content: center;
+      gap: 4rem;
+      flex-wrap: wrap;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .item {
+      padding: 1rem;
+      border: 2px solid #0077cc;
+      background-color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      min-width: 120px;
+      transition: background-color 0.3s;
+    }
+
+    .item.selected {
+      background-color: #cceeff;
+    }
+
+    .item.correct {
+      background-color: #c8e6c9;
+      border-color: green;
+      cursor: default;
+    }
+
+    .item.incorrect {
+      background-color: #ffcdd2;
+      border-color: red;
+    }
+
+    #reset-btn {
+      margin-top: 2rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Match the English and Japanese Words</h1>
+  <div class="game-container">
+    <div class="column" id="english-column"></div>
+    <div class="column" id="japanese-column"></div>
+  </div>
+  <button id="reset-btn">Reset</button>
+
+  <script>
+    const vocab = [
+      { english: "cat", japanese: "ねこ" },
+      { english: "dog", japanese: "いぬ" },
+      { english: "water", japanese: "みず" },
+      { english: "book", japanese: "ほん" },
+      { english: "school", japanese: "がっこう" },
+      { english: "apple", japanese: "りんご" }
+    ];
+
+    let selectedEnglish = null;
+    let selectedJapanese = null;
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function createItem(text, lang, pairId) {
+      const div = document.createElement("div");
+      div.classList.add("item");
+      div.textContent = text;
+      div.dataset.lang = lang;
+      div.dataset.id = pairId;
+
+      div.addEventListener("click", () => {
+        if (div.classList.contains("correct")) return;
+
+        if (lang === "en") {
+          if (selectedEnglish && selectedEnglish !== div) {
+            selectedEnglish.classList.remove("selected");
+          }
+          selectedEnglish = div;
+          div.classList.toggle("selected");
+        } else {
+          if (selectedJapanese && selectedJapanese !== div) {
+            selectedJapanese.classList.remove("selected");
+          }
+          selectedJapanese = div;
+          div.classList.toggle("selected");
+        }
+
+        // Check for a match
+        if (selectedEnglish && selectedJapanese) {
+          if (selectedEnglish.dataset.id === selectedJapanese.dataset.id) {
+            selectedEnglish.classList.add("correct");
+            selectedJapanese.classList.add("correct");
+            selectedEnglish.classList.remove("selected");
+            selectedJapanese.classList.remove("selected");
+          } else {
+            selectedEnglish.classList.add("incorrect");
+            selectedJapanese.classList.add("incorrect");
+            setTimeout(() => {
+              selectedEnglish.classList.remove("selected", "incorrect");
+              selectedJapanese.classList.remove("selected", "incorrect");
+            }, 800);
+          }
+          selectedEnglish = null;
+          selectedJapanese = null;
+        }
+      });
+
+      return div;
+    }
+
+    function setupGame() {
+      selectedEnglish = null;
+      selectedJapanese = null;
+      const englishCol = document.getElementById("english-column");
+      const japaneseCol = document.getElementById("japanese-column");
+      englishCol.innerHTML = "";
+      japaneseCol.innerHTML = "";
+
+      const shuffledEnglish = shuffle([...vocab]);
+      const shuffledJapanese = shuffle([...vocab]);
+
+      shuffledEnglish.forEach(pair => {
+        englishCol.appendChild(createItem(pair.english, "en", pair.english));
+      });
+
+      shuffledJapanese.forEach(pair => {
+        japaneseCol.appendChild(createItem(pair.japanese, "ja", pair.english));
+      });
+    }
+
+    document.getElementById("reset-btn").addEventListener("click", setupGame);
+
+    // Start game
+    setupGame();
+  </script>
+</body>
+</html>
