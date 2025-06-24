@@ -45,11 +45,7 @@
       align-items: center;
       justify-content: center;
       user-select: none;
-      transition: transform 0.3s ease;
       position: relative;
-    }
-    .item:active {
-      cursor: grabbing;
     }
     .item.correct {
       background-color: #c8e6c9;
@@ -67,18 +63,6 @@
       20%, 60% { transform: translateX(-8px); }
       40%, 80% { transform: translateX(8px); }
     }
-    @keyframes sparkle {
-      0% {
-        opacity: 1;
-        transform: scale(0.5) rotate(0deg);
-        filter: brightness(1.5);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(2) rotate(360deg);
-        filter: brightness(0);
-      }
-    }
     .sparkle {
       position: absolute;
       top: 50%;
@@ -93,6 +77,22 @@
       transform: translate(-50%, -50%);
       z-index: 10;
     }
+    @keyframes sparkle {
+      0% {
+        opacity: 1;
+        transform: scale(0.5) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(2) rotate(360deg);
+      }
+    }
+    #timer {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #c62828;
+    }
     button {
       padding: 0.6rem 1.2rem;
       font-size: 0.95rem;
@@ -105,10 +105,6 @@
       transition: background-color 0.3s;
     }
     button:hover { background-color: #004d40; }
-    @media (max-width: 700px) {
-      .game-container { grid-template-columns: repeat(2, 1fr); }
-      .item { width: 140px; height: 42px; font-size: 0.9rem; }
-    }
   </style>
 </head>
 <body>
@@ -120,6 +116,7 @@
   </div>
 
   <div id="game-screen" class="hidden">
+    <div id="timer">Time: 05:00</div>
     <h2>Match the Words</h2>
     <div class="game-container">
       <div class="column" id="english-col-1"></div>
@@ -157,23 +154,20 @@
     ];
 
     let correctMatches = 0;
+    let timerInterval;
+    let remainingSeconds = 300;
+    const timerDisplay = document.getElementById("timer");
 
-    const engCol1 = document.getElementById("english-col-1");
-    const engCol2 = document.getElementById("english-col-2");
-    const japCol1 = document.getElementById("japanese-col-1");
-    const japCol2 = document.getElementById("japanese-col-2");
-
-    const startScreen = document.getElementById("start-screen");
-    const gameScreen = document.getElementById("game-screen");
-    const countdownText = document.getElementById("countdown-text");
-    const resetBtn = document.getElementById("reset-btn");
-
-    function shuffle(array) {
-      return array.slice().sort(() => Math.random() - 0.5);
+    function updateTimerDisplay() {
+      const min = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+      const sec = String(remainingSeconds % 60).padStart(2, '0');
+      timerDisplay.textContent = `Time: ${min}:${sec}`;
     }
 
-    function celebrate() {
-      confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+    function speak(word) {
+      const utter = new SpeechSynthesisUtterance(word);
+      utter.lang = 'en-US';
+      speechSynthesis.speak(utter);
     }
 
     function createEnglishItem(text, id) {
@@ -184,6 +178,7 @@
       div.dataset.id = id;
 
       div.addEventListener("dragstart", (e) => {
+        speak(text);
         e.dataTransfer.setData("text/plain", id);
         setTimeout(() => div.style.visibility = "hidden", 0);
       });
@@ -201,24 +196,16 @@
       div.textContent = text;
       div.dataset.id = id;
 
-      div.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        div.style.borderColor = "#00acc1";
-      });
-
-      div.addEventListener("dragleave", () => {
-        div.style.borderColor = "#00838f";
-      });
-
+      div.addEventListener("dragover", (e) => e.preventDefault());
       div.addEventListener("drop", (e) => {
         e.preventDefault();
-        div.style.borderColor = "#00838f";
         const draggedId = e.dataTransfer.getData("text/plain");
         const draggedEl = document.querySelector(`.item[draggable][data-id="${draggedId}"]`);
 
-        if (draggedId === div.dataset.id && draggedEl && !draggedEl.classList.contains("correct")) {
+        if (!draggedEl || draggedEl.classList.contains("correct")) return;
+
+        if (draggedId === div.dataset.id) {
           draggedEl.classList.add("correct");
-          draggedEl.style.cursor = "default";
           draggedEl.draggable = false;
           div.classList.add("correct");
           correctMatches++;
@@ -229,7 +216,8 @@
           sparkle.addEventListener("animationend", () => sparkle.remove());
 
           if (correctMatches === vocab.length) {
-            setTimeout(() => celebrate(), 300);
+            clearInterval(timerInterval);
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
           }
         } else {
           draggedEl.classList.add("incorrect");
@@ -242,23 +230,43 @@
 
     function setupGame() {
       correctMatches = 0;
-      [engCol1, engCol2, japCol1, japCol2].forEach(c => c.innerHTML = "");
+      document.querySelectorAll(".column").forEach(c => c.innerHTML = "");
+      const shuffledEng = vocab.sort(() => 0.5 - Math.random());
+      const shuffledJap = vocab.sort(() => 0.5 - Math.random());
 
-      const shuffledEnglish = shuffle(vocab);
-      const shuffledJapanese = shuffle(vocab);
-
-      shuffledEnglish.forEach((pair, i) => {
-        const col = i % 2 === 0 ? engCol1 : engCol2;
+      shuffledEng.forEach((pair, i) => {
+        const col = i % 2 === 0 ? englishCol1 : englishCol2;
         col.appendChild(createEnglishItem(pair.english, pair.english));
       });
 
-      shuffledJapanese.forEach((pair, i) => {
-        const col = i % 2 === 0 ? japCol1 : japCol2;
+      shuffledJap.forEach((pair, i) => {
+        const col = i % 2 === 0 ? japaneseCol1 : japaneseCol2;
         col.appendChild(createJapaneseItem(pair.japanese, pair.english));
       });
+
+      remainingSeconds = 300;
+      updateTimerDisplay();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        remainingSeconds--;
+        updateTimerDisplay();
+        if (remainingSeconds <= 0) {
+          clearInterval(timerInterval);
+          document.querySelectorAll(".item").forEach(el => el.draggable = false);
+          timerDisplay.textContent = "Time's up!";
+        }
+      }, 1000);
     }
 
-    // Countdown
+    const englishCol1 = document.getElementById("english-col-1");
+    const englishCol2 = document.getElementById("english-col-2");
+    const japaneseCol1 = document.getElementById("japanese-col-1");
+    const japaneseCol2 = document.getElementById("japanese-col-2");
+    const startScreen = document.getElementById("start-screen");
+    const gameScreen = document.getElementById("game-screen");
+    const countdownText = document.getElementById("countdown-text");
+    const resetBtn = document.getElementById("reset-btn");
+
     let countdown = 3;
     countdownText.textContent = `Starting in ${countdown}...`;
     const interval = setInterval(() => {
