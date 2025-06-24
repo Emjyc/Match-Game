@@ -6,8 +6,141 @@
   <title>Match the words!</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    /* (Full styling from your previous version—including grid background, responsive layout, animations etc.) */
-    /* ... Paste your complete CSS here ... */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      text-align: center;
+      color: #333;
+
+      /* subtle grid pattern using CSS */
+      background-color: #f9f9f9;
+      background-image:
+        linear-gradient(to right, #ddd 1px, transparent 1px),
+        linear-gradient(to bottom, #ddd 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    h1, h2 {
+      color: #00695c;
+      margin-bottom: 1rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .game-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+      justify-items: center;
+      margin-top: 2rem;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-width: 130px;
+      align-items: center;
+    }
+
+    .item {
+      width: 180px;
+      height: 60px;
+      padding: 1rem;
+      border: 2px solid #00838f;
+      background-color: #ffffff;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 2px 4px 8px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      text-align: center;
+      word-break: break-word;
+      user-select: none;
+    }
+
+    .item:hover {
+      background-color: #e0f2f1;
+      transform: scale(1.03);
+    }
+
+    .item.selected {
+      background-color: #b2ebf2;
+      border-color: #00acc1;
+    }
+
+    .item.correct {
+      background-color: #c8e6c9;
+      border-color: #2e7d32;
+      color: #2e7d32;
+      cursor: default;
+    }
+
+    .item.incorrect {
+      background-color: #ffcdd2;
+      border-color: #c62828;
+    }
+
+    button {
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      cursor: pointer;
+      background-color: #00796b;
+      color: white;
+      transition: background-color 0.3s;
+      user-select: none;
+    }
+
+    button:hover {
+      background-color: #004d40;
+    }
+
+    button.speaker {
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      margin-left: 8px;
+      color: #555;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #start-screen, #game-screen {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 600px) {
+      .game-container {
+        grid-template-columns: 1fr 1fr;
+      }
+      .item {
+        width: 140px;
+        height: 50px;
+        font-size: 1rem;
+      }
+      button {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -15,225 +148,172 @@
   <!-- Start Screen -->
   <div id="start-screen">
     <h1>Match the words!</h1>
-    <p>Select a lesson to begin:</p>
-    <div class="quiz-selection" id="quiz-selection"></div>
+    <p>Match each English word with its correct Japanese translation.</p>
+    <button id="start-btn">Start Game</button>
   </div>
 
   <!-- Game Screen -->
   <div id="game-screen" class="hidden">
-    <h2 id="lesson-title"></h2>
-    <div id="timer">Time: 0:00</div>
+    <h2>Match the Words</h2>
     <div class="game-container">
-      <div class="column" id="english-col"></div>
-      <div class="column" id="japanese-col"></div>
+      <div class="column" id="english-col-1"></div>
+      <div class="column" id="english-col-2"></div>
+      <div class="column" id="japanese-col-1"></div>
+      <div class="column" id="japanese-col-2"></div>
     </div>
-    <button id="back-btn">Back to Lessons</button>
-    <div id="leaderboard" class="hidden">
-      <h3>Leaderboard</h3>
-      <ul id="leaderboard-list"></ul>
-    </div>
+    <button id="reset-btn">Reset</button>
   </div>
 
   <script>
-    const quizzes = {
-      "Lesson 1-1": [
-        { english: "cat", japanese: "ねこ" },
-        { english: "dog", japanese: "いぬ" },
-        { english: "bird", japanese: "とり" }
-      ],
-      "Lesson 1-2": [
-        { english: "water", japanese: "みず" },
-        { english: "fire", japanese: "ひ" },
-        { english: "earth", japanese: "つち" }
-      ],
-      "Lesson 2-1": [
-        { english: "book", japanese: "ほん" },
-        { english: "pen", japanese: "ペン" },
-        { english: "paper", japanese: "かみ" }
-      ],
-      "Lesson 2-2": [
-        { english: "apple", japanese: "りんご" },
-        { english: "banana", japanese: "バナナ" },
-        { english: "orange", japanese: "オレンジ" }
-      ],
-      "Lesson 3-1": [
-        { english: "red", japanese: "あか" },
-        { english: "blue", japanese: "あお" },
-        { english: "green", japanese: "みどり" }
-      ],
-      "Lesson 3-2": [
-        { english: "school", japanese: "がっこう" },
-        { english: "teacher", japanese: "せんせい" },
-        { english: "student", japanese: "がくせい" }
-      ]
-    };
+    // Vocabulary list
+    const vocab = [
+      { english: "cat", japanese: "ねこ" },
+      { english: "dog", japanese: "いぬ" },
+      { english: "water", japanese: "みず" },
+      { english: "book", japanese: "ほん" },
+      { english: "school", japanese: "がっこう" },
+      { english: "apple", japanese: "りんご" }
+    ];
 
-    function generateLessonButtons() {
-      const container = document.getElementById("quiz-selection");
-      container.innerHTML = "";
-      for (const lesson in quizzes) {
-        const btn = document.createElement("button");
-        btn.className = "quiz-btn";
-        btn.textContent = lesson;
-        btn.dataset.lesson = lesson;
-        container.appendChild(btn);
-      }
+    let selectedEnglish = null;
+    let selectedJapanese = null;
+    let correctMatches = 0;
+
+    // Shuffle helper
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
     }
 
-    let currentVocab = [];
-    let matchedPairs = new Set();
-    let startTime = null;
-    let timerInterval = null;
-
-    function updateTimer() {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const m = Math.floor(elapsed / 60);
-      const s = elapsed % 60;
-      document.getElementById("timer").textContent = `Time: ${m}:${s.toString().padStart(2, '0')}`;
-    }
-
-    function startTimer() {
-      startTime = Date.now();
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 1000);
-    }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-    }
-
+    // Speak English word
     function speakEnglish(word) {
-      const u = new SpeechSynthesisUtterance(word);
-      u.lang = "en-US";
-      speechSynthesis.speak(u);
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "en-US";
+      speechSynthesis.speak(utterance);
     }
 
+    // Confetti celebration
     function celebrate() {
-      confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+      confetti({
+        particleCount: 200,
+        spread: 90,
+        origin: { y: 0.6 }
+      });
     }
 
-    function saveTime(lesson, sec) {
-      const board = JSON.parse(localStorage.getItem("leaderboard") || "{}");
-      board[lesson] = board[lesson] || [];
-      board[lesson].push(sec);
-      board[lesson].sort((a, b) => a - b);
-      board[lesson] = board[lesson].slice(0, 5);
-      localStorage.setItem("leaderboard", JSON.stringify(board));
+    // Check if all pairs matched
+    function checkWinCondition() {
+      if (correctMatches === vocab.length) {
+        setTimeout(() => {
+          celebrate();
+          alert("🎉 Excellent! You've matched all pairs correctly!");
+        }, 300);
+      }
     }
 
-    function showLeaderboard(lesson) {
-      const bElem = document.getElementById("leaderboard");
-      const list = document.getElementById("leaderboard-list");
-      list.innerHTML = "";
-      const board = JSON.parse(localStorage.getItem("leaderboard") || "{}");
-      const arr = board[lesson] || [];
-      if (!arr.length) {
-        list.innerHTML = "<li>No records yet.</li>";
-      } else {
-        arr.forEach(t => {
-          const li = document.createElement("li");
-          const m = Math.floor(t / 60); const s = t % 60;
-          li.textContent = `${m}:${s.toString().padStart(2,'0')}`;
-          list.appendChild(li);
+    // Create a card item
+    function createItem(text, lang, pairId) {
+      const div = document.createElement("div");
+      div.classList.add("item");
+      div.dataset.lang = lang;
+      div.dataset.id = pairId;
+
+      if (lang === "en") {
+        const wordSpan = document.createElement("span");
+        wordSpan.textContent = text;
+
+        const speaker = document.createElement("button");
+        speaker.className = "speaker";
+        speaker.textContent = "🔊";
+        speaker.addEventListener("click", (e) => {
+          e.stopPropagation();
+          speakEnglish(text);
         });
+
+        div.appendChild(wordSpan);
+        div.appendChild(speaker);
+      } else {
+        div.textContent = text;
       }
-      bElem.classList.remove("hidden");
-    }
 
-    function createEnglishItem(text, id) {
-      const d = document.createElement("div");
-      d.className = "item en";
-      d.dataset.id = id;
-      d.draggable = true;
-      d.innerHTML = `<span>${text}</span><button class="speaker">🔊</button>`;
-      d.querySelector("button").onclick = e => { e.stopPropagation(); speakEnglish(text); };
-      d.ondragstart = e => { e.dataTransfer.setData("text/plain", id); setTimeout(() => d.style.visibility = "hidden", 0); };
-      d.ondragend = () => d.style.visibility = "visible";
-      return d;
-    }
+      div.addEventListener("click", () => {
+        if (div.classList.contains("correct")) return;
 
-    function createJapaneseItem(text, id) {
-      const d = document.createElement("div");
-      d.className = "item";
-      d.dataset.id = id;
-      d.ondragover = e => { e.preventDefault(); if (!d.classList.contains("correct")) d.style.background = "#e0f7fa"; };
-      d.ondragleave = () => { if (!d.classList.contains("correct")) d.style.background = ""; };
-      d.ondrop = e => {
-        e.preventDefault();
-        d.style.background = "";
-        const dragId = e.dataTransfer.getData("text/plain");
-        if (dragId === d.dataset.id) markCorrectMatch(dragId)
-        else {
-          d.classList.add("incorrect");
-          setTimeout(() => d.classList.remove("incorrect"), 800);
-          document.querySelector(`.item.en[data-id="${dragId}"]`).classList.add("incorrect");
-          setTimeout(() => document.querySelector(`.item.en[data-id="${dragId}"]`).classList.remove("incorrect"), 800);
+        if (lang === "en") {
+          if (selectedEnglish && selectedEnglish !== div) {
+            selectedEnglish.classList.remove("selected");
+          }
+          selectedEnglish = div;
+          div.classList.toggle("selected");
+        } else {
+          if (selectedJapanese && selectedJapanese !== div) {
+            selectedJapanese.classList.remove("selected");
+          }
+          selectedJapanese = div;
+          div.classList.toggle("selected");
         }
-      };
-      d.textContent = text;
-      return d;
+
+        if (selectedEnglish && selectedJapanese) {
+          if (selectedEnglish.dataset.id === selectedJapanese.dataset.id) {
+            selectedEnglish.classList.add("correct");
+            selectedJapanese.classList.add("correct");
+            selectedEnglish.classList.remove("selected");
+            selectedJapanese.classList.remove("selected");
+            correctMatches++;
+            checkWinCondition();
+          } else {
+            selectedEnglish.classList.add("incorrect");
+            selectedJapanese.classList.add("incorrect");
+            setTimeout(() => {
+              selectedEnglish.classList.remove("selected", "incorrect");
+              selectedJapanese.classList.remove("selected", "incorrect");
+            }, 800);
+          }
+          selectedEnglish = null;
+          selectedJapanese = null;
+        }
+      });
+
+      return div;
     }
 
-    function markCorrectMatch(id) {
-      if (matchedPairs.has(id)) return;
-      matchedPairs.add(id);
-      document.querySelector(`.item.en[data-id="${id}"]`).classList.add("correct");
-      document.querySelector(`.item:not(.en)[data-id="${id}"]`).classList.add("correct");
-      checkFinish();
-    }
-
-    function shuffle(a) {
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-    }
-
+    // Setup the game board
     function setupGame() {
-      matchedPairs.clear();
-      const eng = document.getElementById("english-col");
-      const jap = document.getElementById("japanese-col");
-      eng.innerHTML = jap.innerHTML = "";
-      const eArr = [...currentVocab], jArr = [...currentVocab];
-      shuffle(eArr); shuffle(jArr);
-      eArr.forEach(p => eng.appendChild(createEnglishItem(p.english, p.english)));
-      jArr.forEach(p => jap.appendChild(createJapaneseItem(p.japanese, p.english)));
-      stopTimer(); startTimer();
-      document.getElementById("leaderboard").classList.add("hidden");
+      selectedEnglish = null;
+      selectedJapanese = null;
+      correctMatches = 0;
+
+      const engCol1 = document.getElementById("english-col-1");
+      const engCol2 = document.getElementById("english-col-2");
+      const japCol1 = document.getElementById("japanese-col-1");
+      const japCol2 = document.getElementById("japanese-col-2");
+
+      [engCol1, engCol2, japCol1, japCol2].forEach(col => col.innerHTML = "");
+
+      const shuffledEnglish = shuffle([...vocab]);
+      const shuffledJapanese = shuffle([...vocab]);
+
+      const halfE = Math.ceil(shuffledEnglish.length / 2);
+      shuffledEnglish.forEach((pair, i) => {
+        const col = i < halfE ? engCol1 : engCol2;
+        col.appendChild(createItem(pair.english, "en", pair.english));
+      });
+
+      const halfJ = Math.ceil(shuffledJapanese.length / 2);
+      shuffledJapanese.forEach((pair, i) => {
+        const col = i < halfJ ? japCol1 : japCol2;
+        col.appendChild(createItem(pair.japanese, "ja", pair.english));
+      });
     }
 
-    function checkFinish() {
-      if (matchedPairs.size === currentVocab.length) {
-        stopTimer(); celebrate();
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        alert(`🎉 Completed in ${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')}`);
-        saveTime(document.getElementById("lesson-title").textContent, elapsed);
-        showLeaderboard(document.getElementById("lesson-title").textContent);
-      }
-    }
-
-    function onLessonSelect(e) {
-      if (!e.target.classList.contains("quiz-btn")) return;
-      const l = e.target.dataset.lesson;
-      currentVocab = quizzes[l];
+    // Start button event
+    document.getElementById("start-btn").addEventListener("click", () => {
       document.getElementById("start-screen").classList.add("hidden");
       document.getElementById("game-screen").classList.remove("hidden");
-      document.getElementById("lesson-title").textContent = l;
       setupGame();
-    }
-
-    function backToLessons() {
-      stopTimer();
-      document.getElementById("game-screen").classList.add("hidden");
-      document.getElementById("start-screen").classList.remove("hidden");
-      document.getElementById("leaderboard").classList.add("hidden");
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      generateLessonButtons();
-      document.getElementById("quiz-selection").addEventListener("click", onLessonSelect);
-      document.getElementById("back-btn").addEventListener("click", backToLessons);
     });
+
+    // Reset button event
+    document.getElementById("reset-btn").addEventListener("click", setupGame);
   </script>
 </body>
 </html>
