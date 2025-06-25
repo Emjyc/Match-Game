@@ -2,841 +2,931 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Vocabulary Match Game</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
   <style>
-    /* ===== Body and base styles ===== */
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Comic Neue', cursive;
       margin: 0;
       padding: 0;
-      background: #fefefe;
-      color: #333;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      user-select: none;
+      background-color: #fff8f4;
+      transition: background 0.4s, color 0.4s;
     }
     body.dark {
-      background: #121212;
-      color: #ddd;
+      background-color: #1e1e1e;
+      color: #fefefe;
     }
-
-    /* ===== Start Menu Styling ===== */
+    button {
+      font-family: 'Comic Neue', cursive;
+      padding: 10px 20px;
+      font-size: 1.2em;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #ffccdc;
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background-color: #ffbcd0;
+    }
+    .title {
+      text-align: center;
+      font-size: 2.5em;
+      margin: 20px 0;
+    }
     #start-menu {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 40px 20px;
-      gap: 15px;
-      box-sizing: border-box;
-      background: #fff;
-      transition: background-color 0.3s, color 0.3s;
+      gap: 10px;
+      padding: 20px;
     }
-    #start-menu.dark {
-      background: #121212;
-      color: #ddd;
-    }
-    .title {
-      font-size: 2.5em;
-      margin: 0 0 12px;
-      text-align: center;
-      color: inherit;
-      user-select: text;
-    }
-    #start-menu p {
-      max-width: 360px;
-      margin: 0 auto 20px;
-      font-size: 1.2em;
-      color: #555;
-    }
-    body.dark #start-menu p {
-      color: #bbb;
-    }
-
     #lesson-buttons {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 14px;
-      width: 100%;
-      max-width: 640px;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      width: 90%;
+      max-width: 800px;
     }
-    #lesson-buttons button {
-      padding: 14px 0;
-      font-size: 1.15em;
-      font-weight: 600;
-      border-radius: 10px;
-      border: none;
-      background-color: #ffcae6;
-      color: #880048;
-      box-shadow: 0 3px 8px rgba(255, 192, 210, 0.6);
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-      user-select: none;
-      width: 100%;
-      text-align: center;
-    }
-    #lesson-buttons button:hover,
-    #lesson-buttons button:focus-visible {
-      background-color: #f993ca;
-      outline: none;
-      transform: translateY(-3px);
-      box-shadow: 0 5px 12px rgba(255, 105, 150, 0.8);
-    }
-    #lesson-buttons button.dark {
-      background-color: #a15b7c;
-      color: #eee;
-      box-shadow: 0 3px 8px rgba(161, 91, 124, 0.7);
-    }
-    #lesson-buttons button.dark:hover,
-    #lesson-buttons button.dark:focus-visible {
-      background-color: #9c5072;
-      box-shadow: 0 5px 12px rgba(156, 80, 114, 0.8);
-    }
-
-    #extra-buttons {
-      margin-top: 30px;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      width: 100%;
-      max-width: 400px;
-    }
-    #challenge-btn,
-    #dark-mode-toggle {
-      min-width: 180px;
-      font-weight: 700;
-      border-radius: 12px;
-      border: none;
-      background-color: #ff85b7;
-      color: white;
-      box-shadow: 0 4px 10px rgba(255, 85, 140, 0.7);
-      cursor: pointer;
-      user-select: none;
-      padding: 12px 0;
-      font-size: 1.1em;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-    #challenge-btn:hover,
-    #dark-mode-toggle:hover,
-    #challenge-btn:focus-visible,
-    #dark-mode-toggle:focus-visible {
-      background-color: #ff3b82;
-      outline: none;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 15px rgba(255, 59, 130, 0.9);
-    }
-
-    /* ===== Game container and grid ===== */
     #game-container {
       display: none;
-      max-width: 900px;
-      margin: 20px auto 50px;
-      padding: 0 10px;
+      padding: 20px;
     }
-
     #game-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      user-select: none;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 20px;
     }
-
-    .draggable,
-    .droppable {
-      background: #f9f9ff;
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-      font-size: 1.2em;
+    .draggable, .droppable {
+      padding: 10px;
+      border: 2px solid #ccc;
+      background-color: #fff;
       text-align: center;
-      line-height: 2.2;
-      cursor: grab;
-      padding: 12px;
+      border-radius: 8px;
       user-select: none;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      border: 2px solid transparent;
+      transition: all 0.3s;
+      font-size: 1.1em;
+    }
+    .draggable {
+      background-color: #f9f9ff;
+      cursor: grab;
+      position: relative;
     }
     .droppable {
-      cursor: default;
-      background-color: #f0f0f0;
-      min-height: 44px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background-color: #eef6ff;
+      min-height: 40px;
     }
     .matched {
-      background-color: #c1f0c1 !important;
-      border-color: #4caf50 !important;
-      box-shadow: 0 0 12px #4caf50aa !important;
-      cursor: default !important;
+      background-color: #c8f7c5 !important;
+      border-color: #8ed18d !important;
     }
-    .draggable.matched {
-      cursor: default !important;
-    }
-    .draggable:active {
-      cursor: grabbing;
-    }
-
-    /* Bounce animation for incorrect */
-    @keyframes bounce {
-      0% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-20px);
-      }
-      100% {
-        transform: translateY(0);
-      }
+    .hide {
+      visibility: hidden;
     }
     .bounce {
-      animation: bounce 0.4s ease;
-    }
-
-    /* Flash red on incorrect */
-    @keyframes flashRed {
-      0%,
-      100% {
-        background-color: #f9f9ff;
-      }
-      50% {
-        background-color: #ff4c4c;
-      }
+      animation: bounce 0.3s;
     }
     .flash-red {
-      animation: flashRed 0.5s ease;
+      background-color: #ffb3b3 !important;
+      border-color: red !important;
     }
-
-    /* Sparkle effect on correct */
-    @keyframes sparkle {
-      0% {
-        box-shadow: 0 0 0px #ff85b7;
-      }
-      50% {
-        box-shadow: 0 0 10px #ff85b7;
-      }
-      100% {
-        box-shadow: 0 0 0px #ff85b7;
-      }
+    @keyframes bounce {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
     }
-    .sparkle {
-      animation: sparkle 0.7s ease;
-    }
-
-    /* Progress bar */
-    #progress-container {
-      width: 90%;
-      max-width: 600px;
-      height: 14px;
-      background: #eee;
-      border-radius: 12px;
-      margin: 25px auto 10px;
-      overflow: hidden;
-      display: none;
-      box-shadow: inset 0 1px 3px #ccc;
+    #progress-container, #streak-counter {
+      margin-top: 10px;
+      text-align: center;
     }
     #progress-bar {
-      height: 100%;
-      width: 0;
-      background: #ff85b7;
-      border-radius: 12px;
-      transition: width 0.3s ease;
+      height: 10px;
+      background-color: #4caf50;
+      width: 0%;
+      transition: width 0.5s;
+      border-radius: 5px;
     }
-
-    /* Streak counter */
-    #streak-counter {
-      text-align: center;
-      font-weight: 700;
-      font-size: 1.25em;
-      color: #ff3b82;
-      margin-bottom: 15px;
-      display: none;
-      user-select: none;
-    }
-
-    /* End screen */
     #end-screen {
       display: none;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      background: #ffcae6;
-      border-radius: 14px;
-      box-shadow: 0 4px 12px rgba(255, 105, 150, 0.6);
       text-align: center;
-      font-size: 1.25em;
-      user-select: none;
+      padding: 30px;
     }
-    #end-screen.dark {
-      background: #9c5072;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(156, 80, 114, 0.8);
-    }
-    #end-title {
-      font-weight: 700;
-      font-size: 1.6em;
-      margin-bottom: 8px;
-    }
-    #end-summary,
-    #end-score {
-      margin-bottom: 18px;
-    }
-    #end-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    #end-buttons button {
-      background: #ff85b7;
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-weight: 700;
-      font-size: 1.1em;
-      padding: 12px 20px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(255, 85, 140, 0.7);
-      transition: background-color 0.3s ease, transform 0.2s ease;
-      user-select: none;
-      min-width: 140px;
-    }
-    #end-buttons button:hover,
-    #end-buttons button:focus-visible {
-      background-color: #ff3b82;
-      outline: none;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 15px rgba(255, 59, 130, 0.9);
-    }
-
-    /* Dark mode adjustments for buttons on end screen */
-    #end-screen.dark #end-buttons button {
-      background-color: #9c5072;
-      box-shadow: 0 4px 10px rgba(156, 80, 114, 0.8);
-    }
-    #end-screen.dark #end-buttons button:hover,
-    #end-screen.dark #end-buttons button:focus-visible {
-      background-color: #7a3e5b;
-      box-shadow: 0 6px 15px rgba(122, 62, 91, 0.9);
-    }
-
-    /* Confetti canvas */
-    #confetti-canvas {
+    canvas#confetti-canvas {
       position: fixed;
+      pointer-events: none;
       top: 0;
       left: 0;
-      pointer-events: none;
-      width: 100vw;
-      height: 100vh;
-      z-index: 9999;
-      display: none;
+      z-index: 1000;
+    }
+    .dark .draggable,
+    .dark .droppable {
+      background-color: #333;
+      border-color: #666;
+      color: #fff;
+    }
+    .dark .droppable {
+      background-color: #444;
+    }
+    .sparkle {
+      animation: sparkle 1.2s ease-in-out infinite;
+    }
+    @keyframes sparkle {
+      0%, 100% { text-shadow: 0 0 6px #fff, 0 0 12px #ff66cc, 0 0 18px #ff66cc; }
+      50% { text-shadow: 0 0 3px #fff, 0 0 6px #ff66cc, 0 0 9px #ff66cc; }
     }
   </style>
 </head>
 <body>
-  <!-- Start Menu -->
-  <div id="start-menu" role="main" aria-label="Start menu">
+  <div id="start-menu">
     <h1 class="title">Vocabulary Match Game</h1>
-    <p>
-      Select a lesson to begin. Challenge mode is a timed 2-minute game!
-    </p>
-    <div id="lesson-buttons" aria-label="Lesson selection" role="list"></div>
-    <div id="extra-buttons">
-      <button id="challenge-btn" aria-label="Start challenge mode (2 minutes)">
-        Challenge Mode 🔥 (2 min)
-      </button>
-      <button id="dark-mode-toggle" aria-pressed="false" aria-label="Toggle dark mode">
-        🌓 Toggle Dark Mode
-      </button>
-    </div>
+    <div id="lesson-buttons"></div>
+    <button id="challenge-btn">🔥 Challenge Mode</button>
+    <button id="dark-mode-toggle">🌓 Toggle Dark Mode</button>
   </div>
 
-  <!-- Game Container -->
   <div id="game-container">
-    <div id="progress-container" aria-hidden="true">
-      <div id="progress-bar"></div>
-    </div>
-    <div id="streak-counter" aria-live="polite" aria-atomic="true"></div>
-    <div id="game-grid" role="grid" aria-label="Matching game grid"></div>
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="streak-counter"></div>
+    <div id="game-grid"></div>
   </div>
 
-  <!-- End Screen -->
-  <div id="end-screen" role="region" aria-live="polite" aria-atomic="true">
-    <div id="end-title"></div>
-    <div id="end-summary"></div>
-    <div id="end-score"></div>
-    <div id="end-buttons">
-      <button id="restart-btn">Play Again</button>
-      <button id="back-to-menu-btn">Back to Menu</button>
-    </div>
+  <div id="end-screen">
+    <h2 id="end-title"></h2>
+    <p id="end-summary"></p>
+    <p id="end-score"></p>
+    <button id="restart-btn">🔁 Try Again</button>
+    <button id="back-to-menu-btn">🔙 Back to Menu</button>
   </div>
 
-  <!-- Confetti canvas -->
   <canvas id="confetti-canvas"></canvas>
-
-  <script>
-    (() => {
-      const lessons = [
-        {
-          name: "Lesson 1",
-          words: [
-            { english: "minute", japanese: "分" },
-            { english: "before", japanese: "の前に" },
-            { english: "photography", japanese: "写真撮影" },
-            { english: "tournament", japanese: "トーナメント" },
-            { english: "against", japanese: "に対抗して" },
-            { english: "lost", japanese: "負けった" },
-            { english: "lose", japanese: "負ける" },
-            { english: "final", japanese: "最後の" },
-            { english: "second", japanese: "秒" },
-            { english: "broke", japanese: "壊した" },
-            { english: "surely", japanese: "確かに" },
-            { english: "until", japanese: "。。。まで" },
-            { english: "half", japanese: "半分の" },
-            { english: "hour", japanese: "１時間" },
-            { english: "tomorrow", japanese: "明日" },
-            { english: "today", japanese: "今日" },
-            { english: "yesterday", japanese: "昨日" },
-            { english: "ago", japanese: "～前に" },
-            { english: "spread", japanese: "広める" },
-            { english: "stadium", japanese: "スタジアム" }
-          ]
-        },
-        {
-          name: "Lesson 2",
-          words: [
-            { english: "delicious", japanese: "おいしい" },
-            { english: "happy", japanese: "幸せ" },
-            { english: "run", japanese: "走る" },
-            { english: "draw", japanese: "描く" },
-            { english: "build", japanese: "建てる" },
-            { english: "carry", japanese: "運ぶ" },
-            { english: "open", japanese: "開ける" },
-            { english: "close", japanese: "閉じる" },
-            { english: "wake up", japanese: "目を覚ます" },
-            { english: "sleep", japanese: "眠る" },
-            { english: "stand", japanese: "立つ" },
-            { english: "sit", japanese: "座る" },
-            { english: "jump", japanese: "跳ぶ" },
-            { english: "swim", japanese: "泳ぐ" },
-            { english: "drive", japanese: "運転する" },
-            { english: "listen", japanese: "聞く" },
-            { english: "write", japanese: "書く" },
-            { english: "read", japanese: "読む" },
-            { english: "speak", japanese: "話す" },
-            { english: "learn", japanese: "学ぶ" }
-          ]
-        },
-        // You can add lessons 3 - 14 here similarly
-      ];
-
-      // DOM Elements
-      const startMenu = document.getElementById("start-menu");
-      const lessonButtons = document.getElementById("lesson-buttons");
-      const challengeBtn = document.getElementById("challenge-btn");
-      const darkModeToggle = document.getElementById("dark-mode-toggle");
-      const gameContainer = document.getElementById("game-container");
-      const gameGrid = document.getElementById("game-grid");
-      const progressContainer = document.getElementById("progress-container");
-      const progressBar = document.getElementById("progress-bar");
-      const streakCounter = document.getElementById("streak-counter");
-      const endScreen = document.getElementById("end-screen");
-      const endTitle = document.getElementById("end-title");
-      const endSummary = document.getElementById("end-summary");
-      const endScore = document.getElementById("end-score");
-      const restartBtn = document.getElementById("restart-btn");
-      const backToMenuBtn = document.getElementById("back-to-menu-btn");
-      const confettiCanvas = document.getElementById("confetti-canvas");
-      const ctx = confettiCanvas.getContext("2d");
-
-      let currentLessonIndex = 0;
-      let words = [];
-      let matchedPairs = 0;
-      let draggedElement = null;
-      let streak = 0;
-      let maxStreak = 0;
-      let challengeMode = false;
-      let challengeTimer = null;
-      let timeLeft = 0;
-      let confettiParticles = [];
-
-      // Setup lesson buttons on start screen
-      function setupLessonButtons() {
-        lessonButtons.innerHTML = "";
-        lessons.forEach((lesson, i) => {
-          const btn = document.createElement("button");
-          btn.textContent = lesson.name;
-          btn.setAttribute("role", "listitem");
-          btn.onclick = () => startGame(i, false);
-          lessonButtons.appendChild(btn);
-        });
-      }
-
-      // Start game with lesson index and mode (challenge or not)
-      function startGame(index, isChallenge = false) {
-        currentLessonIndex = index;
-        challengeMode = isChallenge;
-        words = lessons[index].words;
-        matchedPairs = 0;
-        streak = 0;
-        maxStreak = 0;
-
-        // UI changes
-        startMenu.style.display = "none";
-        endScreen.style.display = "none";
-        gameContainer.style.display = "block";
-
-        progressContainer.style.display = challengeMode ? "block" : "none";
-        streakCounter.style.display = challengeMode ? "block" : "none";
-
-        progressBar.style.width = "0%";
-        streakCounter.textContent = "";
-
-        setupGrid();
-
-        if (challengeMode) {
-          startChallengeTimer(120); // 2 minutes
-        } else {
-          stopChallengeTimer();
-        }
-      }
-
-      // Setup grid with English on left 2 columns, Japanese on right 2 columns
-      function setupGrid() {
-        gameGrid.innerHTML = "";
-        const shuffledEnglish = [...words].sort(() => Math.random() - 0.5);
-        const shuffledJapanese = [...words].sort(() => Math.random() - 0.5);
-
-        // Create English draggable divs in first two columns
-        shuffledEnglish.forEach((pair) => {
-          const engDiv = document.createElement("div");
-          engDiv.className = "draggable";
-          engDiv.textContent = pair.english;
-          engDiv.dataset.word = pair.english;
-          engDiv.setAttribute("draggable", "true");
-          engDiv.setAttribute("aria-grabbed", "false");
-          engDiv.tabIndex = 0;
-          engDiv.addEventListener("dragstart", dragStart);
-          engDiv.addEventListener("dragend", dragEnd);
-          engDiv.addEventListener("touchstart", handleTouchStart, {
-            passive: false,
-          });
-          gameGrid.appendChild(engDiv);
-        });
-
-        // Create Japanese droppable divs in last two columns
-        shuffledJapanese.forEach((pair) => {
-          const japDiv = document.createElement("div");
-          japDiv.className = "droppable";
-          japDiv.textContent = pair.japanese;
-          japDiv.dataset.match = pair.english;
-          japDiv.tabIndex = 0;
-          japDiv.addEventListener("dragover", (e) => e.preventDefault());
-          japDiv.addEventListener("drop", handleDrop);
-          gameGrid.appendChild(japDiv);
-        });
-
-        // Adjust grid to 4 columns: first 2 for English, last 2 for Japanese
-        gameGrid.style.gridTemplateColumns = "repeat(4, 1fr)";
-      }
-
-      // Drag & Drop handlers
-      function dragStart(e) {
-        draggedElement = e.target;
-        draggedElement.setAttribute("aria-grabbed", "true");
-        e.dataTransfer?.setData("text/plain", draggedElement.dataset.word);
-        setTimeout(() => draggedElement.classList.add("hide"), 0);
-      }
-      function dragEnd(e) {
-        if (!draggedElement) return;
-        draggedElement.classList.remove("hide");
-        draggedElement.setAttribute("aria-grabbed", "false");
-        draggedElement = null;
-      }
-      function handleDrop(e) {
-        e.preventDefault();
-        const dropTarget = e.target.closest(".droppable");
-        if (!dropTarget || !draggedElement) return;
-        const draggedWord = draggedElement.dataset.word;
-        if (dropTarget.dataset.match === draggedWord) {
-          onCorrectMatch(dropTarget, draggedElement);
-        } else {
-          onIncorrectMatch(draggedElement);
-        }
-      }
-
-      // Touch handlers for drag-drop
-      function handleTouchStart(e) {
-        e.preventDefault();
-        draggedElement = e.target;
-        draggedElement.setAttribute("aria-grabbed", "true");
-        draggedElement.style.position = "absolute";
-        draggedElement.style.zIndex = "1000";
-        draggedElement.initialX = e.touches[0].clientX - draggedElement.getBoundingClientRect().left;
-        draggedElement.initialY = e.touches[0].clientY - draggedElement.getBoundingClientRect().top;
-        document.addEventListener("touchmove", handleTouchMove, { passive: false });
-        document.addEventListener("touchend", handleTouchEnd);
-      }
-      function handleTouchMove(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        draggedElement.style.left = `${touch.clientX - draggedElement.initialX}px`;
-        draggedElement.style.top = `${touch.clientY - draggedElement.initialY}px`;
-      }
-      function handleTouchEnd(e) {
-        e.preventDefault();
-        const touch = e.changedTouches[0];
-        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (dropTarget && dropTarget.classList.contains("droppable")) {
-          if (dropTarget.dataset.match === draggedElement.dataset.word) {
-            onCorrectMatch(dropTarget, draggedElement);
-          } else {
-            onIncorrectMatch(draggedElement);
-            resetDraggedPosition();
-          }
-        } else {
-          onIncorrectMatch(draggedElement);
-          resetDraggedPosition();
-        }
-        draggedElement.style.position = "";
-        draggedElement.style.zIndex = "";
-        draggedElement.style.left = "";
-        draggedElement.style.top = "";
-        draggedElement.setAttribute("aria-grabbed", "false");
-        draggedElement = null;
-        document.removeEventListener("touchmove", handleTouchMove);
-        document.removeEventListener("touchend", handleTouchEnd);
-      }
-      function resetDraggedPosition() {
-        if (!draggedElement) return;
-        draggedElement.style.transition = "transform 0.4s ease";
-        draggedElement.style.transform = "translateY(-20px)";
-        setTimeout(() => {
-          draggedElement.style.transform = "translateY(0)";
-          setTimeout(() => {
-            draggedElement.style.transition = "";
-          }, 300);
-        }, 200);
-      }
-
-      // Handle correct match
-      function onCorrectMatch(dropTarget, draggedEl) {
-        dropTarget.classList.add("matched", "sparkle");
-        draggedEl.classList.add("matched", "sparkle");
-        dropTarget.textContent = "";
-        dropTarget.appendChild(draggedEl);
-        draggedEl.setAttribute("draggable", "false");
-        draggedEl.style.cursor = "default";
-
-        matchedPairs++;
-        streak++;
-        if (streak > maxStreak) maxStreak = streak;
-
-        // Show streak if 3 or more
-        if (streak >= 3) {
-          streakCounter.textContent = `🔥 Streak: ${streak} 🔥`;
-          streakCounter.classList.add("sparkle");
-          setTimeout(() => streakCounter.classList.remove("sparkle"), 800);
-        } else {
-          streakCounter.textContent = "";
-        }
-
-        updateProgress();
-
-        // Play correct audio
-        playWordAudio(draggedEl.dataset.word);
-
-        if (matchedPairs === words.length) {
-          // Game complete
-          showConfetti();
-          setTimeout(() => {
-            showEndScreen();
-          }, 1400);
-        }
-      }
-
-      // Handle incorrect match
-      function onIncorrectMatch(draggedEl) {
-        streak = 0;
-        streakCounter.textContent = "";
-        // Flash red effect
-        draggedEl.classList.add("flash-red");
-        setTimeout(() => draggedEl.classList.remove("flash-red"), 600);
-
-        resetDraggedPosition();
-        // Optionally play error sound here
-      }
-
-      // Progress update
-      function updateProgress() {
-        if (!challengeMode) return;
-        const progressPercent = (matchedPairs / words.length) * 100;
-        progressBar.style.width = `${progressPercent}%`;
-      }
-
-      // Challenge timer
-      function startChallengeTimer(seconds) {
-        timeLeft = seconds;
-        progressContainer.style.display = "block";
-        streakCounter.style.display = "block";
-        updateTimerUI();
-
-        if (challengeTimer) clearInterval(challengeTimer);
-        challengeTimer = setInterval(() => {
-          timeLeft--;
-          updateTimerUI();
-          if (timeLeft <= 0) {
-            clearInterval(challengeTimer);
-            showEndScreen(true); // time over
-          }
-        }, 1000);
-      }
-      function stopChallengeTimer() {
-        if (challengeTimer) clearInterval(challengeTimer);
-        progressContainer.style.display = "none";
-        streakCounter.style.display = "none";
-        progressBar.style.width = "0%";
-      }
-      function updateTimerUI() {
-        const progressPercent = ((120 - timeLeft) / 120) * 100;
-        progressBar.style.width = `${progressPercent}%`;
-      }
-
-      // Show end screen
-      function showEndScreen(timeOver = false) {
-        gameContainer.style.display = "none";
-        endScreen.style.display = "block";
-        endScreen.classList.toggle("dark", document.body.classList.contains("dark"));
-        if (timeOver) {
-          endTitle.textContent = "Time's up!";
-          endSummary.textContent = `You matched ${matchedPairs} out of ${words.length} words.`;
-        } else {
-          endTitle.textContent = "Well done!";
-          endSummary.textContent = `You matched all ${words.length} words!`;
-        }
-        endScore.textContent = `Longest Streak: ${maxStreak}`;
-      }
-
-      // Restart & Back to Menu buttons
-      restartBtn.onclick = () => {
-        startGame(currentLessonIndex, challengeMode);
-        endScreen.style.display = "none";
+<script>
+  // Confetti helper library (simple version)
+  // Source: https://www.kirilv.com/canvas-confetti/
+  class Confetti {
+    constructor(canvas) {
+      this.canvas = canvas;
+      this.ctx = canvas.getContext('2d');
+      this.particles = [];
+      this.width = window.innerWidth;
+      this.height = window.innerHeight;
+      canvas.width = this.width;
+      canvas.height = this.height;
+      window.addEventListener('resize', () => {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        canvas.width = this.width;
+        canvas.height = this.height;
+      });
+    }
+    createParticle() {
+      const colors = ['#ff66cc', '#ffb3d9', '#cc3399', '#ff99cc', '#ff4d94'];
+      return {
+        x: Math.random() * this.width,
+        y: Math.random() * this.height - this.height,
+        size: Math.random() * 7 + 3,
+        speedY: Math.random() * 3 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        opacity: 1,
+        decay: Math.random() * 0.01 + 0.005,
       };
-      backToMenuBtn.onclick = () => {
-        endScreen.style.display = "none";
-        gameContainer.style.display = "none";
-        startMenu.style.display = "flex";
-      };
+    }
+    start() {
+      for(let i=0; i<150; i++) this.particles.push(this.createParticle());
+      this.animate();
+    }
+    animate() {
+      this.ctx.clearRect(0, 0, this.width, this.height);
+      this.particles.forEach((p, i) => {
+        p.y += p.speedY;
+        p.opacity -= p.decay;
+        if (p.opacity <= 0) {
+          this.particles[i] = this.createParticle();
+        }
+        this.ctx.fillStyle = `rgba(${this.hexToRgb(p.color)},${p.opacity})`;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        this.ctx.fill();
+      });
+      this.animFrame = requestAnimationFrame(this.animate.bind(this));
+    }
+    stop() {
+      cancelAnimationFrame(this.animFrame);
+      this.ctx.clearRect(0,0,this.width,this.height);
+      this.particles = [];
+    }
+    hexToRgb(hex) {
+      hex = hex.replace('#','');
+      const bigint = parseInt(hex,16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `${r},${g},${b}`;
+    }
+  }
 
-      // Dark mode toggle
-      darkModeToggle.onclick = () => {
-        document.body.classList.toggle("dark");
-        startMenu.classList.toggle("dark");
-        endScreen.classList.toggle("dark");
-        // Update button aria-pressed
-        const pressed = darkModeToggle.getAttribute("aria-pressed") === "true";
-        darkModeToggle.setAttribute("aria-pressed", !pressed);
-        // Update lesson buttons styles for dark mode
-        [...lessonButtons.children].forEach((btn) =>
-          btn.classList.toggle("dark")
-        );
-      };
+  // Vocabulary data for 14 lessons (sample for 2 lessons shown; add more as needed)
+  const lessons = [
+  {
+    name: "Lesson 1",
+    words: [
+      {english: "minute", japanese: "分"},
+      {english: "before", japanese: "の前に"},
+      {english: "photography", japanese: "写真撮影"},
+      {english: "tournament", japanese: "トーナメント"},
+      {english: "against", japanese: "に対抗して"},
+      {english: "lost", japanese: "負けった"},
+      {english: "lose", japanese: "負ける"},
+      {english: "final", japanese: "最後の"},
+      {english: "second", japanese: "秒"},
+      {english: "broke", japanese: "壊した"},
+      {english: "surely", japanese: "確かに"},
+      {english: "until", japanese: "。。。まで"},
+      {english: "half", japanese: "半分の"},
+      {english: "hour", japanese: "１時間"},
+      {english: "tomorrow", japanese: "明日"},
+      {english: "today", japanese: "今日"},
+      {english: "yesterday", japanese: "昨日"},
+      {english: "ago", japanese: "～前に"},
+      {english: "spread", japanese: "広める"},
+      {english: "stadium", japanese: "スタジアム"}
+    ]
+  },
+  {
+    name: "Lesson 2",
+    words: [
+      {english: "delicious", japanese: "おいしい"},
+      {english: "happy", japanese: "幸せ"},
+      {english: "run", japanese: "走る"},
+      {english: "draw", japanese: "描く"},
+      {english: "build", japanese: "建てる"},
+      {english: "carry", japanese: "運ぶ"},
+      {english: "open", japanese: "開ける"},
+      {english: "close", japanese: "閉じる"},
+      {english: "wake up", japanese: "目を覚ます"},
+      {english: "sleep", japanese: "眠る"},
+      {english: "stand", japanese: "立つ"},
+      {english: "sit", japanese: "座る"},
+      {english: "jump", japanese: "跳ぶ"},
+      {english: "swim", japanese: "泳ぐ"},
+      {english: "drive", japanese: "運転する"},
+      {english: "listen", japanese: "聞く"},
+      {english: "write", japanese: "書く"},
+      {english: "read", japanese: "読む"},
+      {english: "speak", japanese: "話す"},
+      {english: "learn", japanese: "学ぶ"}
+    ]
+  },
+  {
+    name: "Lesson 3",
+    words: [
+      {english: "teacher", japanese: "先生"},
+      {english: "student", japanese: "生徒"},
+      {english: "classroom", japanese: "教室"},
+      {english: "library", japanese: "図書館"},
+      {english: "desk", japanese: "机"},
+      {english: "chair", japanese: "椅子"},
+      {english: "blackboard", japanese: "黒板"},
+      {english: "homework", japanese: "宿題"},
+      {english: "test", japanese: "テスト"},
+      {english: "question", japanese: "質問"},
+      {english: "answer", japanese: "答え"},
+      {english: "listen", japanese: "聞く"},
+      {english: "read", japanese: "読む"},
+      {english: "write", japanese: "書く"},
+      {english: "speak", japanese: "話す"},
+      {english: "understand", japanese: "理解する"},
+      {english: "learn", japanese: "学ぶ"},
+      {english: "practice", japanese: "練習する"},
+      {english: "study", japanese: "勉強する"},
+      {english: "remember", japanese: "覚える"}
+    ]
+  },
+  {
+    name: "Lesson 4",
+    words: [
+      {english: "apple", japanese: "りんご"},
+      {english: "banana", japanese: "バナナ"},
+      {english: "grape", japanese: "ぶどう"},
+      {english: "orange", japanese: "オレンジ"},
+      {english: "watermelon", japanese: "スイカ"},
+      {english: "strawberry", japanese: "いちご"},
+      {english: "peach", japanese: "もも"},
+      {english: "pineapple", japanese: "パイナップル"},
+      {english: "cherry", japanese: "さくらんぼ"},
+      {english: "melon", japanese: "メロン"},
+      {english: "pear", japanese: "なし"},
+      {english: "lemon", japanese: "レモン"},
+      {english: "mango", japanese: "マンゴー"},
+      {english: "blueberry", japanese: "ブルーベリー"},
+      {english: "kiwi", japanese: "キウイ"},
+      {english: "coconut", japanese: "ココナッツ"},
+      {english: "fig", japanese: "いちじく"},
+      {english: "date", japanese: "なつめやし"},
+      {english: "papaya", japanese: "パパイヤ"},
+      {english: "plum", japanese: "うめ"}
+    ]
+  },
+  {
+    name: "Lesson 5",
+    words: [
+      {english: "cat", japanese: "猫"},
+      {english: "dog", japanese: "犬"},
+      {english: "bird", japanese: "鳥"},
+      {english: "fish", japanese: "魚"},
+      {english: "rabbit", japanese: "うさぎ"},
+      {english: "horse", japanese: "馬"},
+      {english: "cow", japanese: "牛"},
+      {english: "pig", japanese: "豚"},
+      {english: "sheep", japanese: "羊"},
+      {english: "chicken", japanese: "鶏"},
+      {english: "duck", japanese: "アヒル"},
+      {english: "turtle", japanese: "亀"},
+      {english: "frog", japanese: "カエル"},
+      {english: "lion", japanese: "ライオン"},
+      {english: "tiger", japanese: "トラ"},
+      {english: "elephant", japanese: "象"},
+      {english: "bear", japanese: "クマ"},
+      {english: "monkey", japanese: "サル"},
+      {english: "wolf", japanese: "オオカミ"},
+      {english: "fox", japanese: "キツネ"}
+    ]
+  },
+  {
+    name: "Lesson 6",
+    words: [
+      {english: "car", japanese: "車"},
+      {english: "bicycle", japanese: "自転車"},
+      {english: "bus", japanese: "バス"},
+      {english: "train", japanese: "電車"},
+      {english: "airplane", japanese: "飛行機"},
+      {english: "boat", japanese: "ボート"},
+      {english: "truck", japanese: "トラック"},
+      {english: "motorcycle", japanese: "オートバイ"},
+      {english: "subway", japanese: "地下鉄"},
+      {english: "taxi", japanese: "タクシー"},
+      {english: "helicopter", japanese: "ヘリコプター"},
+      {english: "scooter", japanese: "スクーター"},
+      {english: "van", japanese: "バン"},
+      {english: "tram", japanese: "路面電車"},
+      {english: "ferry", japanese: "フェリー"},
+      {english: "cruise", japanese: "クルーズ"},
+      {english: "rocket", japanese: "ロケット"},
+      {english: "skateboard", japanese: "スケートボード"},
+      {english: "rollerblades", japanese: "ローラーブレード"},
+      {english: "hoverboard", japanese: "ホバーボード"}
+    ]
+  },
+  {
+    name: "Lesson 7",
+    words: [
+      {english: "red", japanese: "赤"},
+      {english: "blue", japanese: "青"},
+      {english: "green", japanese: "緑"},
+      {english: "yellow", japanese: "黄色"},
+      {english: "black", japanese: "黒"},
+      {english: "white", japanese: "白"},
+      {english: "pink", japanese: "ピンク"},
+      {english: "orange", japanese: "オレンジ"},
+      {english: "purple", japanese: "紫"},
+      {english: "brown", japanese: "茶色"},
+      {english: "gray", japanese: "灰色"},
+      {english: "gold", japanese: "金色"},
+      {english: "silver", japanese: "銀色"},
+      {english: "beige", japanese: "ベージュ"},
+      {english: "turquoise", japanese: "ターコイズ"},
+      {english: "navy", japanese: "ネイビー"},
+      {english: "lavender", japanese: "ラベンダー"},
+      {english: "maroon", japanese: "マルーン"},
+      {english: "teal", japanese: "ティール"},
+      {english: "magenta", japanese: "マゼンタ"}
+    ]
+  },
+  {
+    name: "Lesson 8",
+    words: [
+      {english: "happy", japanese: "幸せ"},
+      {english: "sad", japanese: "悲しい"},
+      {english: "angry", japanese: "怒っている"},
+      {english: "tired", japanese: "疲れた"},
+      {english: "excited", japanese: "興奮している"},
+      {english: "nervous", japanese: "緊張している"},
+      {english: "scared", japanese: "怖い"},
+      {english: "bored", japanese: "退屈している"},
+      {english: "surprised", japanese: "驚いた"},
+      {english: "proud", japanese: "誇りに思う"},
+      {english: "calm", japanese: "落ち着いた"},
+      {english: "confused", japanese: "混乱した"},
+      {english: "jealous", japanese: "嫉妬している"},
+      {english: "lonely", japanese: "孤独"},
+      {english: "relaxed", japanese: "リラックスした"},
+      {english: "hopeful", japanese: "希望に満ちた"},
+      {english: "grateful", japanese: "感謝している"},
+      {english: "shy", japanese: "恥ずかしがり屋"},
+      {english: "friendly", japanese: "友好的な"},
+      {english: "kind", japanese: "親切な"}
+    ]
+  },
+  {
+    name: "Lesson 9",
+    words: [
+      {english: "Monday", japanese: "月曜日"},
+      {english: "Tuesday", japanese: "火曜日"},
+      {english: "Wednesday", japanese: "水曜日"},
+      {english: "Thursday", japanese: "木曜日"},
+      {english: "Friday", japanese: "金曜日"},
+      {english: "Saturday", japanese: "土曜日"},
+      {english: "Sunday", japanese: "日曜日"},
+      {english: "week", japanese: "週"},
+      {english: "month", japanese: "月"},
+      {english: "year", japanese: "年"},
+      {english: "today", japanese: "今日"},
+      {english: "tomorrow", japanese: "明日"},
+      {english: "yesterday", japanese: "昨日"},
+      {english: "holiday", japanese: "休日"},
+      {english: "season", japanese: "季節"},
+      {english: "spring", japanese: "春"},
+      {english: "summer", japanese: "夏"},
+      {english: "autumn", japanese: "秋"},
+      {english: "winter", japanese: "冬"},
+      {english: "calendar", japanese: "カレンダー"}
+    ]
+  },
+  {
+    name: "Lesson 10",
+    words: [
+      {english: "food", japanese: "食べ物"},
+      {english: "water", japanese: "水"},
+      {english: "bread", japanese: "パン"},
+      {english: "rice", japanese: "ご飯"},
+      {english: "meat", japanese: "肉"},
+      {english: "fish", japanese: "魚"},
+      {english: "vegetables", japanese: "野菜"},
+      {english: "fruit", japanese: "果物"},
+      {english: "soup", japanese: "スープ"},
+      {english: "salad", japanese: "サラダ"},
+      {english: "dessert", japanese: "デザート"},
+      {english: "coffee", japanese: "コーヒー"},
+      {english: "tea", japanese: "お茶"},
+      {english: "milk", japanese: "牛乳"},
+      {english: "juice", japanese: "ジュース"},
+      {english: "breakfast", japanese: "朝食"},
+      {english: "lunch", japanese: "昼食"},
+      {english: "dinner", japanese: "夕食"},
+      {english: "snack", japanese: "おやつ"},
+      {english: "restaurant", japanese: "レストラン"}
+    ]
+  },
+  {
+    name: "Lesson 11",
+    words: [
+      {english: "family", japanese: "家族"},
+      {english: "mother", japanese: "母"},
+      {english: "father", japanese: "父"},
+      {english: "brother", japanese: "兄弟"},
+      {english: "sister", japanese: "姉妹"},
+      {english: "grandmother", japanese: "祖母"},
+      {english: "grandfather", japanese: "祖父"},
+      {english: "uncle", japanese: "おじ"},
+      {english: "aunt", japanese: "おば"},
+      {english: "cousin", japanese: "いとこ"},
+      {english: "child", japanese: "子供"},
+      {english: "baby", japanese: "赤ちゃん"},
+      {english: "husband", japanese: "夫"},
+      {english: "wife", japanese: "妻"},
+      {english: "parent", japanese: "親"},
+      {english: "relative", japanese: "親戚"},
+      {english: "neighbor", japanese: "隣人"},
+      {english: "friend", japanese: "友達"},
+      {english: "teacher", japanese: "先生"},
+      {english: "student", japanese: "学生"}
+    ]
+  },
+  {
+    name: "Lesson 12",
+    words: [
+      {english: "school", japanese: "学校"},
+      {english: "class", japanese: "クラス"},
+      {english: "teacher", japanese: "先生"},
+      {english: "student", japanese: "学生"},
+      {english: "lesson", japanese: "授業"},
+      {english: "homework", japanese: "宿題"},
+      {english: "test", japanese: "テスト"},
+      {english: "book", japanese: "本"},
+      {english: "notebook", japanese: "ノート"},
+      {english: "pen", japanese: "ペン"},
+      {english: "pencil", japanese: "鉛筆"},
+      {english: "eraser", japanese: "消しゴム"},
+      {english: "desk", japanese: "机"},
+      {english: "chair", japanese: "椅子"},
+      {english: "blackboard", japanese: "黒板"},
+      {english: "library", japanese: "図書館"},
+      {english: "computer", japanese: "コンピューター"},
+      {english: "teacher", japanese: "教師"},
+      {english: "student", japanese: "生徒"},
+      {english: "grade", japanese: "成績"}
+    ]
+  },
+  {
+    name: "Lesson 13",
+    words: [
+      {english: "weather", japanese: "天気"},
+      {english: "sunny", japanese: "晴れ"},
+      {english: "rainy", japanese: "雨"},
+      {english: "cloudy", japanese: "曇り"},
+      {english: "snowy", japanese: "雪"},
+      {english: "windy", japanese: "風が強い"},
+      {english: "hot", japanese: "暑い"},
+      {english: "cold", japanese: "寒い"},
+      {english: "storm", japanese: "嵐"},
+      {english: "temperature", japanese: "気温"},
+      {english: "season", japanese: "季節"},
+      {english: "spring", japanese: "春"},
+      {english: "summer", japanese: "夏"},
+      {english: "autumn", japanese: "秋"},
+      {english: "winter", japanese: "冬"},
+      {english: "foggy", japanese: "霧がかかった"},
+      {english: "hail", japanese: "雹"},
+      {english: "thunder", japanese: "雷"},
+      {english: "lightning", japanese: "稲妻"},
+      {english: "humidity", japanese: "湿度"}
+    ]
+  },
+  {
+    name: "Lesson 14",
+    words: [
+      {english: "family", japanese: "家族"},
+      {english: "friend", japanese: "友達"},
+      {english: "love", japanese: "愛"},
+      {english: "hate", japanese: "憎しみ"},
+      {english: "joy", japanese: "喜び"},
+      {english: "sadness", japanese: "悲しみ"},
+      {english: "anger", japanese: "怒り"},
+      {english: "fear", japanese: "恐れ"},
+      {english: "hope", japanese: "希望"},
+      {english: "peace", japanese: "平和"},
+      {english: "trust", japanese: "信頼"},
+      {english: "dream", japanese: "夢"},
+      {english: "luck", japanese: "運"},
+      {english: "success", japanese: "成功"},
+      {english: "failure", japanese: "失敗"},
+      {english: "courage", japanese: "勇気"},
+      {english: "honesty", japanese: "正直"},
+      {english: "kindness", japanese: "親切"},
+      {english: "patience", japanese: "忍耐"},
+      {english: "wisdom", japanese: "知恵"}
+    ]
+  }
+];
 
-      // Challenge mode button
-      challengeBtn.onclick = () => {
-        startGame(0, true);
-      };
+  // Elements references
+  const lessonButtons = document.getElementById('lesson-buttons');
+  const startMenu = document.getElementById('start-menu');
+  const gameContainer = document.getElementById('game-container');
+  const gameGrid = document.getElementById('game-grid');
+  const progressBar = document.getElementById('progress-bar');
+  const streakCounter = document.getElementById('streak-counter');
+  const endScreen = document.getElementById('end-screen');
+  const endTitle = document.getElementById('end-title');
+  const endSummary = document.getElementById('end-summary');
+  const endScore = document.getElementById('end-score');
+  const restartBtn = document.getElementById('restart-btn');
+  const backToMenuBtn = document.getElementById('back-to-menu-btn');
+  const challengeBtn = document.getElementById('challenge-btn');
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  const confettiCanvas = document.getElementById('confetti-canvas');
+  const confetti = new Confetti(confettiCanvas);
 
-      // Play word audio using speech synthesis AI voice
-      function playWordAudio(word) {
-        if (!window.speechSynthesis) return;
-        const utterance = new SpeechSynthesisUtterance(word);
-        utterance.lang = "en-US";
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
-        window.speechSynthesis.cancel(); // Cancel any previous
-        window.speechSynthesis.speak(utterance);
+  let currentLesson = null;
+  let pairsMatched = 0;
+  let totalPairs = 0;
+  let streak = 0;
+  let challengeMode = false;
+  let challengeTimer = null;
+  let challengeTimeLeft = 120; // seconds
+
+  // Audio synthesis for English words
+  function speak(word) {
+    if (!window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  }
+
+  // Setup lesson buttons
+  function setupLessonButtons() {
+    lessonButtons.innerHTML = '';
+    lessons.forEach((lesson, i) => {
+      const btn = document.createElement('button');
+      btn.textContent = lesson.name;
+      btn.addEventListener('click', () => startGame(i, false));
+      lessonButtons.appendChild(btn);
+    });
+  }
+
+  // Start game with lesson index and challenge mode flag
+  function startGame(index, isChallenge) {
+    currentLesson = lessons[index];
+    challengeMode = !!isChallenge;
+    pairsMatched = 0;
+    streak = 0;
+    updateStreakDisplay();
+    startMenu.style.display = 'none';
+    endScreen.style.display = 'none';
+    gameContainer.style.display = 'block';
+    gameGrid.innerHTML = '';
+    progressBar.style.width = '0%';
+
+    const shuffledEnglish = shuffleArray(currentLesson.words.map(w => w.english));
+    const shuffledJapanese = shuffleArray(currentLesson.words.map(w => w.japanese));
+
+    totalPairs = currentLesson.words.length;
+
+    // Create English draggable boxes
+    shuffledEnglish.forEach(word => {
+      const div = document.createElement('div');
+      div.className = 'draggable';
+      div.textContent = word;
+      div.setAttribute('draggable', true);
+      div.dataset.word = word;
+      addDragAndTouchHandlers(div);
+      gameGrid.appendChild(div);
+    });
+
+    // Create Japanese droppable boxes
+    shuffledJapanese.forEach(word => {
+      const div = document.createElement('div');
+      div.className = 'droppable';
+      div.textContent = word;
+      const pair = currentLesson.words.find(w => w.japanese === word);
+      div.dataset.match = pair ? pair.english : '';
+      gameGrid.appendChild(div);
+    });
+
+    if (challengeMode) {
+      startChallengeTimer();
+    } else {
+      stopChallengeTimer();
+    }
+  }
+
+  // Shuffle helper
+  function shuffleArray(arr) {
+    const copy = arr.slice();
+    for (let i = copy.length -1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i+1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  // Update progress bar
+  function updateProgress() {
+    const percent = (pairsMatched / totalPairs) * 100;
+    progressBar.style.width = percent + '%';
+  }
+
+  // Update streak display
+  function updateStreakDisplay() {
+    if (streak >= 3) {
+      streakCounter.innerHTML = `🔥 Streak: <span class="sparkle">${streak}</span>`;
+    } else if (streak > 0) {
+      streakCounter.textContent = `Streak: ${streak}`;
+    } else {
+      streakCounter.textContent = '';
+    }
+  }
+  // Add drag and touch event listeners to English draggable divs
+  function addDragAndTouchHandlers(div) {
+    // Mouse drag
+    div.addEventListener('dragstart', dragStart);
+    div.addEventListener('dragend', dragEnd);
+
+    // Touch drag
+    div.addEventListener('touchstart', touchStart, {passive:false});
+  }
+
+  let draggedElement = null;
+  let originalX = 0;
+  let originalY = 0;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  function dragStart(e) {
+    draggedElement = e.target;
+    speak(draggedElement.textContent);
+    e.dataTransfer.setData('text/plain', draggedElement.dataset.word);
+    setTimeout(() => {
+      draggedElement.classList.add('hide');
+    }, 0);
+  }
+
+  function dragEnd(e) {
+    if (draggedElement) {
+      draggedElement.classList.remove('hide');
+      draggedElement.style.position = '';
+      draggedElement.style.zIndex = '';
+      draggedElement.style.left = '';
+      draggedElement.style.top = '';
+      draggedElement = null;
+    }
+  }
+
+  gameGrid.addEventListener('dragover', e => {
+    e.preventDefault();
+  });
+
+  gameGrid.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!draggedElement) return;
+    const dropTarget = e.target.closest('.droppable');
+    if (!dropTarget) return;
+    const draggedWord = draggedElement.dataset.word;
+    if (dropTarget.dataset.match === draggedWord) {
+      onCorrectMatch(draggedElement, dropTarget);
+    } else {
+      onWrongMatch(draggedElement);
+    }
+  });
+
+  // Touch drag functions
+  function touchStart(e) {
+    e.preventDefault();
+    draggedElement = e.target;
+    speak(draggedElement.textContent);
+    draggedElement.style.position = 'absolute';
+    draggedElement.style.zIndex = 1000;
+    const touch = e.touches[0];
+    originalX = draggedElement.offsetLeft;
+    originalY = draggedElement.offsetTop;
+    offsetX = touch.clientX - originalX;
+    offsetY = touch.clientY - originalY;
+    moveAt(touch.pageX, touch.pageY);
+    document.addEventListener('touchmove', touchMove, {passive:false});
+    document.addEventListener('touchend', touchEnd);
+  }
+
+  function moveAt(pageX, pageY) {
+    if (!draggedElement) return;
+    draggedElement.style.left = (pageX - offsetX) + 'px';
+    draggedElement.style.top = (pageY - offsetY) + 'px';
+  }
+
+  function touchMove(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    moveAt(touch.pageX, touch.pageY);
+  }
+
+  function touchEnd(e) {
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    const dropElem = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (dropElem && dropElem.classList.contains('droppable')) {
+      const draggedWord = draggedElement.dataset.word;
+      if (dropElem.dataset.match === draggedWord) {
+        onCorrectMatch(draggedElement, dropElem);
+      } else {
+        onWrongMatch(draggedElement);
       }
+    } else {
+      onWrongMatch(draggedElement);
+    }
+    resetDraggedElement();
+    document.removeEventListener('touchmove', touchMove);
+    document.removeEventListener('touchend', touchEnd);
+  }
 
-      // Confetti effect
-      function showConfetti() {
-        confettiCanvas.width = window.innerWidth;
-        confettiCanvas.height = window.innerHeight;
-        confettiCanvas.style.display = "block";
+  function resetDraggedElement() {
+    if (!draggedElement) return;
+    draggedElement.style.position = '';
+    draggedElement.style.zIndex = '';
+    draggedElement.style.left = '';
+    draggedElement.style.top = '';
+    draggedElement = null;
+  }
 
-        confettiParticles = [];
-        const colors = ["#ff85b7", "#ffcae6", "#f993ca", "#ff3b82"];
-        const count = 150;
+  // Correct match handler
+  function onCorrectMatch(dragEl, dropEl) {
+    dropEl.classList.add('matched');
+    dragEl.classList.add('matched');
+    dragEl.setAttribute('draggable', 'false');
+    dropEl.textContent = ''; // clear Japanese text
+    dropEl.appendChild(dragEl);
+    pairsMatched++;
+    streak++;
+    updateProgress();
+    updateStreakDisplay();
+    animateCorrectMatch(dragEl);
+    checkGameComplete();
+  }
 
-        for (let i = 0; i < count; i++) {
-          confettiParticles.push({
-            x: Math.random() * confettiCanvas.width,
-            y: Math.random() * confettiCanvas.height - confettiCanvas.height,
-            r: Math.random() * 6 + 4,
-            d: Math.random() * count,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            tilt: Math.random() * 10 - 10,
-            tiltAngle: 0,
-            tiltAngleIncrement: Math.random() * 0.1 + 0.05,
-          });
-        }
+  // Wrong match handler
+  function onWrongMatch(dragEl) {
+    streak = 0;
+    updateStreakDisplay();
+    animateWrongMatch(dragEl);
+  }
 
-        function draw() {
-          ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-          confettiParticles.forEach((p) => {
-            ctx.beginPath();
-            ctx.lineWidth = p.r / 2;
-            ctx.strokeStyle = p.color;
-            ctx.moveTo(p.x + p.tilt + p.r / 3, p.y);
-            ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 3);
-            ctx.stroke();
-          });
-          update();
-        }
-        function update() {
-          confettiParticles.forEach((p, i) => {
-            p.tiltAngle += p.tiltAngleIncrement;
-            p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
-            p.x += Math.sin(p.d);
-            p.tilt = Math.sin(p.tiltAngle) * 12;
+  // Animate correct match (small sparkle effect)
+  function animateCorrectMatch(el) {
+    el.classList.add('sparkle');
+    setTimeout(() => {
+      el.classList.remove('sparkle');
+    }, 1200);
+  }
 
-            if (p.y > confettiCanvas.height) {
-              confettiParticles[i] = {
-                x: Math.random() * confettiCanvas.width,
-                y: -20,
-                r: p.r,
-                d: p.d,
-                color: p.color,
-                tilt: p.tilt,
-                tiltAngle: p.tiltAngle,
-                tiltAngleIncrement: p.tiltAngleIncrement,
-              };
-            }
-          });
-        }
+  // Animate wrong match (red flash + bounce)
+  function animateWrongMatch(el) {
+    el.classList.add('flash-red');
+    el.classList.add('bounce');
+    setTimeout(() => {
+      el.classList.remove('flash-red');
+      el.classList.remove('bounce');
+    }, 600);
+  }
 
-        let confettiAnimation = null;
-        function runConfetti() {
-          draw();
-          confettiAnimation = requestAnimationFrame(runConfetti);
-        }
-        runConfetti();
+  // Check if all pairs matched
+  function checkGameComplete() {
+    if (pairsMatched === totalPairs) {
+      showEndScreen(true);
+    }
+  }
+  // Show end screen
+  function showEndScreen(won) {
+    confetti.start();
+    setTimeout(() => confetti.stop(), 6000);
+    gameContainer.style.display = 'none';
+    endScreen.style.display = 'block';
+    if (won) {
+      endTitle.textContent = "🎉 Congratulations! 🎉";
+      endSummary.textContent = `You matched all ${totalPairs} pairs!`;
+    } else {
+      endTitle.textContent = "⏰ Time's Up!";
+      endSummary.textContent = `You matched ${pairsMatched} out of ${totalPairs} pairs.`;
+    }
+    endScore.textContent = `Final Score: ${pairsMatched}`;
+  }
 
-        setTimeout(() => {
-          cancelAnimationFrame(confettiAnimation);
-          confettiCanvas.style.display = "none";
-        }, 4000);
+  // Restart buttons
+  restartBtn.addEventListener('click', () => {
+    startGame(lessons.indexOf(currentLesson), challengeMode);
+  });
+
+  backToMenuBtn.addEventListener('click', () => {
+    endScreen.style.display = 'none';
+    startMenu.style.display = 'flex';
+    stopChallengeTimer();
+  });
+
+  challengeBtn.addEventListener('click', () => {
+    startGame(0, true);
+  });
+
+  // Challenge mode timer
+  const progressContainer = document.getElementById('progress-container');
+  function startChallengeTimer() {
+    challengeTimeLeft = 120;
+    progressContainer.style.display = 'block';
+    progressBar.style.backgroundColor = '#e74c3c';
+    updateChallengeProgress();
+    challengeTimer = setInterval(() => {
+      challengeTimeLeft--;
+      updateChallengeProgress();
+      if (challengeTimeLeft <= 0) {
+        clearInterval(challengeTimer);
+        showEndScreen(false);
       }
+    }, 1000);
+  }
 
-      // Initialization
-      setupLessonButtons();
-    })();
-  </script>
+  function updateChallengeProgress() {
+    const percent = (challengeTimeLeft / 120) * 100;
+    progressBar.style.width = percent + '%';
+  }
+
+  function stopChallengeTimer() {
+    if (challengeTimer) {
+      clearInterval(challengeTimer);
+      challengeTimer = null;
+    }
+    progressContainer.style.display = 'none';
+    progressBar.style.width = '0%';
+  }
+
+  // Dark mode toggle
+  darkModeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+  });
+
+  // Initialize
+  setupLessonButtons();
+</script>
 </body>
 </html>
