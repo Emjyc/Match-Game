@@ -1,3 +1,4 @@
+<!-- Full updated game with sparkle on correct match, progress bar, and streak counter -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,10 +101,24 @@
       background: var(--match) !important;
       pointer-events: none;
     }
-    #timer {
+    #timer, #streak-message {
       font-size: 1.2rem;
       color: var(--accent);
-      margin-bottom: 15px;
+      margin: 5px;
+    }
+    #progress-container {
+      width: 80%;
+      height: 20px;
+      background: #eee;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    #progress-bar {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
     }
   </style>
 </head>
@@ -119,6 +134,8 @@
   <div id="game-screen">
     <h2 class="title">🎯 Drag English Words to Match</h2>
     <div id="timer"></div>
+    <div id="streak-message"></div>
+    <div id="progress-container"><div id="progress-bar"></div></div>
     <div class="grid-container">
       <div class="grid-column" id="english-column"></div>
       <div class="grid-column" id="japanese-column"></div>
@@ -137,8 +154,10 @@
   <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <script>
-    let countdown, selectedSet, matchedPairs, startTime, mistakeCount, isChallenge = false;
+    let countdown, selectedSet, matchedPairs, startTime, mistakeCount, isChallenge = false, streak = 0;
     const timerDisplay = document.getElementById('timer');
+    const progressBar = document.getElementById('progress-bar');
+    const streakMsg = document.getElementById('streak-message');
 
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
@@ -152,8 +171,11 @@
       document.getElementById('end-screen').classList.remove('active');
       matchedPairs = 0;
       mistakeCount = 0;
+      streak = 0;
       startTime = Date.now();
       timerDisplay.textContent = "";
+      streakMsg.textContent = "";
+      progressBar.style.width = "0%";
       buildGrid();
       if (isChallenge) {
         let timeLeft = 120;
@@ -221,12 +243,22 @@
             clone.style.pointerEvents = 'none';
             clone.style.cursor = 'default';
             clone.draggable = false;
-
-            card.textContent = word.japanese;
+            card.innerHTML = word.japanese;
             card.appendChild(clone);
             matchCard.remove();
 
             matchedPairs++;
+            streak++;
+            const progressPercent = (matchedPairs / selectedSet.words.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            if (streak >= 3) {
+              streakMsg.textContent = `🌟 ${streak} in a row! Great job! 🌟`;
+              confetti({ particleCount: 30, spread: 50, origin: { y: 0.4 } });
+            }
+
+            confetti({ particleCount: 15, spread: 40, origin: { y: 0.3 } });
+
             if (matchedPairs === selectedSet.words.length) {
               if (isChallenge) clearInterval(countdown);
               const timeTaken = Math.floor((Date.now() - startTime) / 1000);
@@ -241,6 +273,8 @@
             }
           } else {
             mistakeCount++;
+            streak = 0;
+            streakMsg.textContent = "";
             card.style.backgroundColor = '#ffcccc';
             matchCard.style.transition = 'transform 0.2s ease';
             matchCard.style.transform = 'translateX(-25px)';
