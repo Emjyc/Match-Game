@@ -7,235 +7,240 @@
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
 <style>
   /* Reset & base */
-  * {
-    box-sizing: border-box;
-  }
   body {
-    font-family: 'Comic Neue', cursive;
     margin: 0; padding: 0;
+    font-family: 'Comic Neue', cursive;
     background: #fefefe;
     color: #222;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     user-select: none;
-    overflow-x: hidden;
   }
   h1.title {
+    font-size: 2.5rem;
+    margin: 20px 0 30px;
     text-align: center;
-    font-size: 2.8rem;
-    margin: 24px 0;
-    font-weight: 700;
-    color: #d6336c;
   }
+
+  /* Start Menu */
   #start-menu {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 16px;
+    gap: 16px;
+    padding: 20px 10px 40px;
+    background-color: #fff;
+    min-height: 100vh;
+    box-sizing: border-box;
   }
   #lesson-buttons {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 12px;
+    gap: 14px;
     max-width: 720px;
   }
-  #lesson-buttons button, #start-menu button {
-    background-color: #ffe0f0;
+  #lesson-buttons button {
+    background-color: #d6336c;
+    color: #fff;
     border: none;
     border-radius: 10px;
-    padding: 12px 22px;
-    font-size: 1.15rem;
+    padding: 14px 28px;
+    font-size: 1.25rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.25s, transform 0.2s;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    min-width: 120px;
+    box-shadow: 0 4px 8px rgba(214,51,108,0.35);
+    transition: background-color 0.25s ease, transform 0.2s ease;
+    min-width: 140px;
+    user-select: none;
   }
-  #lesson-buttons button:hover, #start-menu button:hover {
-    background-color: #ffbad4;
+  #lesson-buttons button:hover {
+    background-color: #ff799b;
     transform: scale(1.05);
   }
   #dark-mode-toggle {
-    margin-top: 16px;
-    background-color: #dcdcdc;
-    color: #333;
+    background: #38b0de;
+    color: white;
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(56,176,222,0.5);
+    user-select: none;
+    transition: background-color 0.25s ease, transform 0.2s ease;
   }
+  #dark-mode-toggle:hover {
+    background-color: #64b8e6;
+    transform: scale(1.05);
+  }
+
+  /* Game Grid */
   #game-grid {
-    max-width: 900px;
-    margin: 0 auto 40px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    padding: 0 16px 24px;
+    grid-template-columns: 1fr 1fr; /* English left, Japanese right */
+    gap: 12px 20px;
+    max-width: 800px;
+    margin: 30px auto 50px;
   }
-  .droppable {
-    border: 2px dashed #ccc;
-    background-color: #f7f7f7;
+  .draggable, .droppable {
+    user-select: none;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    padding: 14px 20px;
     min-height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
-    border-radius: 8px;
-    position: relative;
-    user-select: none;
-  }
-  .droppable.matched {
-    border-style: solid;
-    border-color: #57d26f;
-    background-color: #dbf7dc;
-  }
-  .draggable {
-    background-color: #fff;
-    border: 1.8px solid #ccc;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 1.2rem;
-    text-align: center;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     cursor: grab;
-    user-select: none;
-    position: relative;
-    transition: box-shadow 0.2s, transform 0.2s;
+    background: #fafafa;
+    border: 2px solid transparent;
+    transition: box-shadow 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
   }
   .draggable:active {
     cursor: grabbing;
   }
-  .draggable.matched {
-    border-color: #57d26f;
-    background-color: #dbf7dc;
-    cursor: default;
+  .droppable {
+    background: #f0f0f0;
+    border: 2px dashed #ccc;
+  }
+  .matched {
+    background-color: #c1f0c1 !important;
+    box-shadow: 0 0 15px 3px #57d26f;
+    border-color: #57d26f !important;
+    cursor: default !important;
   }
   .hide {
-    visibility: hidden;
+    visibility: hidden !important;
   }
-  /* Red shake animation on wrong drop */
-  @keyframes shake {
-    0% { transform: translateX(0); border-color: #ccc;}
-    20% { transform: translateX(-8px); border-color: #ff4c4c;}
-    40% { transform: translateX(8px); border-color: #ff4c4c;}
-    60% { transform: translateX(-8px); border-color: #ff4c4c;}
-    80% { transform: translateX(8px); border-color: #ff4c4c;}
-    100% { transform: translateX(0); border-color: #ccc;}
+
+  /* Bounce back & shake animation for incorrect drops */
+  .bounce-back {
+    animation: bounceBack 0.4s ease forwards;
   }
   .shake {
-    animation: shake 0.4s;
-    border-color: #ff4c4c !important;
+    animation: shakeAnim 0.4s ease forwards;
   }
-  /* Confetti canvas */
-  #confetti-canvas {
-    pointer-events: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    z-index: 9999;
+  @keyframes bounceBack {
+    0% { transform: translateY(-20px); }
+    50% { transform: translateY(10px); }
+    100% { transform: translateY(0); }
   }
-  /* Progress bar */
-  #progress-container {
-    max-width: 900px;
-    margin: 0 auto 20px;
-    background-color: #eee;
-    border-radius: 12px;
-    height: 20px;
-    overflow: hidden;
+  @keyframes shakeAnim {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    50% { transform: translateX(8px); }
+    75% { transform: translateX(-8px); }
+    100% { transform: translateX(0); }
   }
-  #progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #d6336c 0%, #ff96b8 100%);
-    width: 0%;
-    transition: width 0.4s ease;
-  }
-  /* Streak counter */
-  #streak-counter {
-    text-align: center;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #d6336c;
-    margin-bottom: 10px;
-  }
-  /* Dark mode */
-  body.dark-mode {
-    background: #1c1c1c;
-    color: #ddd;
-  }
-  body.dark-mode #start-menu button,
-  body.dark-mode #lesson-buttons button {
-    background-color: #444;
-    color: #eee;
-  }
-  body.dark-mode #start-menu button:hover,
-  body.dark-mode #lesson-buttons button:hover {
-    background-color: #666;
-  }
-  body.dark-mode #game-grid {
-    background-color: #121212;
-  }
-  body.dark-mode .droppable {
-    border-color: #555;
-    background-color: #222;
-    color: #eee;
-  }
-  body.dark-mode .droppable.matched {
-    background-color: #2a4d2a;
-    border-color: #57d26f;
-  }
-  body.dark-mode .draggable {
-    background-color: #333;
-    border-color: #555;
-    color: #eee;
-  }
-  body.dark-mode .draggable.matched {
-    background-color: #2a4d2a;
-    border-color: #57d26f;
-  }
-  body.dark-mode #progress-container {
-    background-color: #333;
-  }
-  /* Sparkle effect for correct */
+
+  /* Sparkle effect */
   .sparkle {
     position: absolute;
     pointer-events: none;
-    width: 40px;
-    height: 40px;
-    background: radial-gradient(circle, #fff, rgba(255,255,255,0));
+    width: 12px;
+    height: 12px;
+    background: #ffd23f;
     border-radius: 50%;
+    box-shadow: 0 0 6px 2px #ffd23f;
     animation: sparkleAnim 0.8s ease forwards;
-    top: -15px;
-    right: -15px;
   }
   @keyframes sparkleAnim {
-    0% {
-      opacity: 1;
-      transform: scale(0.5) rotate(0deg);
-    }
-    100% {
-      opacity: 0;
-      transform: scale(2) rotate(360deg);
-    }
+    0% { transform: scale(0.3); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+
+  /* Progress Bar & Streak */
+  #progress-container {
+    width: 80%;
+    max-width: 800px;
+    margin: 10px auto 0;
+    background: #eee;
+    border-radius: 8px;
+    height: 14px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  }
+  #progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #d6336c;
+    border-radius: 8px;
+    transition: width 0.3s ease;
+  }
+  #streak-counter {
+    max-width: 800px;
+    margin: 6px auto 30px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-align: center;
+    color: #777;
+  }
+
+  /* Dark mode */
+  body.dark-mode {
+    background: #222;
+    color: #ddd;
+  }
+  body.dark-mode #start-menu {
+    background-color: #222;
+  }
+  body.dark-mode #lesson-buttons button {
+    background-color: #b6457a;
+    color: #eee;
+    box-shadow: 0 4px 8px rgba(182,69,122,0.5);
+  }
+  body.dark-mode #lesson-buttons button:hover {
+    background-color: #d16b9c;
+  }
+  body.dark-mode #dark-mode-toggle {
+    background: #8db4ff;
+    color: #222;
+    box-shadow: 0 4px 8px rgba(141,180,255,0.6);
+  }
+  body.dark-mode #dark-mode-toggle:hover {
+    background-color: #a6c6ff;
+  }
+  body.dark-mode #game-grid .draggable,
+  body.dark-mode #game-grid .droppable {
+    background: #333;
+    border-color: #555;
+    color: #ddd;
+  }
+  body.dark-mode #game-grid .droppable {
+    border-style: dashed;
+  }
+  body.dark-mode #game-grid .matched {
+    background-color: #4caf50 !important;
+    box-shadow: 0 0 15px 3px #7ed57e !important;
+    border-color: #7ed57e !important;
   }
 </style>
 </head>
 <body>
 
-<div id="start-menu" class="active">
-  <h1 class="title">Vocabulary Match Game</h1>
-  <div id="lesson-buttons"></div>
-  <button id="dark-mode-toggle" title="Toggle Dark Mode">🌓 Toggle Dark Mode</button>
-</div>
+  <div id="start-menu" class="active">
+    <h1 class="title">Vocabulary Match Game</h1>
+    <div id="lesson-buttons"></div>
+    <button id="dark-mode-toggle" title="Toggle Dark Mode">🌓 Toggle Dark Mode</button>
+  </div>
 
-<div id="progress-container" style="display:none;">
-  <div id="progress-bar"></div>
-</div>
+  <div id="game-grid" style="display:none;"></div>
 
-<div id="streak-counter" style="display:none;">Streak: 0 🔥</div>
+  <div id="progress-container" style="display:none;">
+    <div id="progress-bar"></div>
+  </div>
+  <div id="streak-counter" style="display:none;">Streak: 0</div>
 
-<div id="game-grid" style="display:none;"></div>
-
-<canvas id="confetti-canvas"></canvas>
+  <canvas id="confetti-canvas" style="position:fixed; pointer-events:none; top:0; left:0; width:100vw; height:100vh; z-index:9999;"></canvas>
 
 <script>
+  
   const lessons = [
     {
-      name: "Lesson 1",
-       1: [
+      1: [
       {english:"minute", japanese:"分"},
       {english:"before", japanese:"の前に"},
       {english:"photography", japanese:"写真撮影"},
@@ -530,316 +535,326 @@
     ],
   };
 
-  // Globals
-  const lessonButtonsDiv = document.getElementById('lesson-buttons');
-  const gameGrid = document.getElementById('game-grid');
+  // Elements
   const startMenu = document.getElementById('start-menu');
-  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  const lessonButtonsContainer = document.getElementById('lesson-buttons');
+  const gameGrid = document.getElementById('game-grid');
   const progressContainer = document.getElementById('progress-container');
   const progressBar = document.getElementById('progress-bar');
   const streakCounter = document.getElementById('streak-counter');
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
   const confettiCanvas = document.getElementById('confetti-canvas');
   const confettiCtx = confettiCanvas.getContext('2d');
 
+  // Game state variables
   let draggedElement = null;
-  let originalPos = {x:0, y:0};
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
   let matchesMade = 0;
   let totalMatches = 0;
-  let streak = 0;
+  let currentStreak = 0;
   let confettiActive = false;
 
-  // Initialize lesson buttons dynamically
-  function createLessonButtons() {
-    lessonButtonsDiv.innerHTML = '';
-    lessons.forEach((lesson,i) => {
-      const btn = document.createElement('button');
-      btn.textContent = lesson.name;
-      btn.onclick = () => startGame(i);
-      lessonButtonsDiv.appendChild(btn);
-    });
-  }
-  createLessonButtons();
+  // Confetti variables
+  let confettiParticles = [];
+  let confettiAnimationId = null;
 
-  // Dark mode toggle logic
+  // Populate lesson buttons
+  lessons.forEach((lesson, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = lesson.name;
+    btn.dataset.index = i;
+    btn.addEventListener('click', () => startGame(i));
+    lessonButtonsContainer.appendChild(btn);
+  });
+
+  // Dark mode toggle
   darkModeToggle.addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
   });
 
-  // Start game
   function startGame(index) {
+    // Reset game state
+    matchesMade = 0;
+    currentStreak = 0;
+    updateProgress();
+    updateStreak(0);
+
+    // Clear game grid & show
+    gameGrid.innerHTML = '';
     startMenu.style.display = 'none';
     gameGrid.style.display = 'grid';
     progressContainer.style.display = 'block';
     streakCounter.style.display = 'block';
-    gameGrid.innerHTML = '';
-    streak = 0;
-    updateStreak(0);
 
     const words = lessons[index].words;
     totalMatches = words.length;
-    matchesMade = 0;
-    updateProgress();
 
-    // Shuffle words array
-    const shuffled = [...words].sort(() => Math.random() - 0.5);
+    // Shuffle English and Japanese separately for challenge
+    const shuffledEnglish = [...words].sort(() => Math.random() - 0.5);
+    const shuffledJapanese = [...words].sort(() => Math.random() - 0.5);
 
-    // Create English draggable boxes (left 2 columns)
-    shuffled.forEach(pair => {
+    // Create English draggable boxes - left column
+    shuffledEnglish.forEach(pair => {
       const engDiv = document.createElement('div');
       engDiv.className = 'draggable';
       engDiv.textContent = pair.english;
-      engDiv.setAttribute('draggable', 'true');
       engDiv.dataset.word = pair.english;
-      engDiv.style.touchAction = 'none';
+      engDiv.setAttribute('draggable', 'true');
 
+      // Mouse drag events
       engDiv.addEventListener('dragstart', dragStart);
       engDiv.addEventListener('dragend', dragEnd);
-      engDiv.addEventListener('touchstart', touchStart, {passive:false});
+
+      // Touch events
+      engDiv.addEventListener('touchstart', touchStart, { passive: false });
+
       gameGrid.appendChild(engDiv);
     });
 
-    // Create Japanese droppable boxes (right 2 columns)
-    shuffled.forEach(pair => {
+    // Create Japanese droppable boxes - right column
+    shuffledJapanese.forEach(pair => {
       const japDiv = document.createElement('div');
       japDiv.className = 'droppable';
       japDiv.textContent = pair.japanese;
       japDiv.dataset.match = pair.english;
+
+      // Drag and touch drop events
       japDiv.addEventListener('dragover', e => e.preventDefault());
       japDiv.addEventListener('drop', dropHandler);
+
       gameGrid.appendChild(japDiv);
     });
   }
 
-  // Drag handlers for mouse
+  // Drag & Drop handlers for mouse
   function dragStart(e) {
     draggedElement = e.target;
-    originalPos = {
-      x: draggedElement.offsetLeft,
-      y: draggedElement.offsetTop
-    };
+    dragOffsetX = e.offsetX;
+    dragOffsetY = e.offsetY;
     e.dataTransfer.setData('text/plain', draggedElement.dataset.word);
     setTimeout(() => draggedElement.classList.add('hide'), 0);
 
-    // Play audio of English word using speech synthesis
-    playAudio(draggedElement.dataset.word);
+    // Play audio for English word
+    playAudio(draggedElement.textContent);
   }
-
   function dragEnd(e) {
-    if (draggedElement) draggedElement.classList.remove('hide');
-    draggedElement = null;
+    if(draggedElement){
+      draggedElement.classList.remove('hide');
+      draggedElement.style.position = '';
+      draggedElement.style.left = '';
+      draggedElement.style.top = '';
+      draggedElement.style.zIndex = '';
+      draggedElement = null;
+    }
   }
-
-  // Drop handler for mouse drag
   function dropHandler(e) {
     e.preventDefault();
-    if (!draggedElement) return;
-
     const dropTarget = e.target.closest('.droppable');
-    if (!dropTarget) return;
+    if (!dropTarget || !draggedElement) return;
 
-    if (dropTarget.dataset.match === draggedElement.dataset.word) {
-      handleCorrectMatch(draggedElement, dropTarget);
+    const draggedWord = draggedElement.dataset.word;
+    if (dropTarget.dataset.match === draggedWord) {
+      onCorrectMatch(dropTarget, draggedElement);
     } else {
-      handleIncorrectMatch(draggedElement);
+      onIncorrectMatch(draggedElement);
     }
   }
 
   // Touch drag handlers
-  let touchData = null;
-
   function touchStart(e) {
     e.preventDefault();
     draggedElement = e.target;
-    draggedElement.classList.add('dragging-touch');
-    draggedElement.style.position = 'absolute';
-    draggedElement.style.zIndex = 1000;
-
     const touch = e.touches[0];
+
     const rect = draggedElement.getBoundingClientRect();
+    dragOffsetX = touch.clientX - rect.left;
+    dragOffsetY = touch.clientY - rect.top;
 
-    touchData = {
-      startX: touch.clientX,
-      startY: touch.clientY,
-      offsetX: touch.clientX - rect.left,
-      offsetY: touch.clientY - rect.top
-    };
-
+    draggedElement.style.position = 'absolute';
+    draggedElement.style.zIndex = 10000;
+    draggedElement.style.width = `${rect.width}px`;
+    draggedElement.style.height = `${rect.height}px`;
     moveAt(touch.clientX, touch.clientY);
 
-    document.addEventListener('touchmove', touchMove, {passive:false});
+    document.addEventListener('touchmove', touchMove, { passive: false });
     document.addEventListener('touchend', touchEnd);
-
-    // Play audio
-    playAudio(draggedElement.dataset.word);
   }
-
   function touchMove(e) {
     e.preventDefault();
     const touch = e.touches[0];
     moveAt(touch.clientX, touch.clientY);
   }
-
-  function moveAt(clientX, clientY) {
-    if (!draggedElement) return;
-    draggedElement.style.left = (clientX - touchData.offsetX) + 'px';
-    draggedElement.style.top = (clientY - touchData.offsetY) + 'px';
-  }
-
   function touchEnd(e) {
-    e.preventDefault();
-    if (!draggedElement) return;
-    draggedElement.classList.remove('dragging-touch');
-
     const touch = e.changedTouches[0];
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.droppable');
-
-    if (dropTarget && dropTarget.dataset.match === draggedElement.dataset.word) {
-      handleCorrectMatch(draggedElement, dropTarget);
-    } else {
-      handleIncorrectMatch(draggedElement);
+    const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!elemBelow) {
+      cancelTouchDrag();
+      return;
     }
-
-    resetDraggedElementStyles();
+    const dropTarget = elemBelow.closest('.droppable');
+    if (dropTarget && draggedElement) {
+      if (dropTarget.dataset.match === draggedElement.dataset.word) {
+        onCorrectMatch(dropTarget, draggedElement);
+      } else {
+        onIncorrectMatch(draggedElement);
+      }
+    } else {
+      onIncorrectMatch(draggedElement);
+    }
+    cancelTouchDrag();
   }
-
-  // Helpers
-  function resetDraggedElementStyles() {
+  function cancelTouchDrag() {
     if (!draggedElement) return;
     draggedElement.style.position = '';
     draggedElement.style.left = '';
     draggedElement.style.top = '';
     draggedElement.style.zIndex = '';
+    draggedElement.style.width = '';
+    draggedElement.style.height = '';
     draggedElement = null;
+    document.removeEventListener('touchmove', touchMove);
+    document.removeEventListener('touchend', touchEnd);
+  }
+  function moveAt(pageX, pageY) {
+    if (!draggedElement) return;
+    draggedElement.style.left = pageX - dragOffsetX + 'px';
+    draggedElement.style.top = pageY - dragOffsetY + 'px';
   }
 
-  // Correct match handler
-  function handleCorrectMatch(draggable, droppable) {
-    // Append draggable to droppable, snap with animation
-    droppable.innerHTML = '';
-    droppable.appendChild(draggable);
-    droppable.classList.add('matched');
-    draggable.classList.add('matched');
-    draggable.setAttribute('draggable', 'false');
+  // Match handlers
+  function onCorrectMatch(dropTarget, draggedEl) {
+    dropTarget.classList.add('matched');
+    draggedEl.classList.add('matched');
+    draggedEl.setAttribute('draggable', 'false');
 
-    // Reset styles for positioning
-    draggable.style.position = '';
-    draggable.style.left = '';
-    draggable.style.top = '';
-    draggable.style.zIndex = '';
-    draggable.style.transition = 'transform 0.3s ease';
+    // Snap English box on top of Japanese
+    const dropRect = dropTarget.getBoundingClientRect();
+    const parentRect = gameGrid.getBoundingClientRect();
 
-    // Snap visually: reset transform
-    draggable.style.transform = 'translate(0,0)';
+    draggedEl.style.position = 'absolute';
+    draggedEl.style.left = (dropRect.left - parentRect.left) + 'px';
+    draggedEl.style.top = (dropRect.top - parentRect.top) + 'px';
+    draggedEl.style.width = dropRect.width + 'px';
+    draggedEl.style.height = dropRect.height + 'px';
+    draggedEl.style.zIndex = 500;
 
-    // Play sparkle animation
-    createSparkle(droppable);
+    // Remove event listeners to disable drag after matched
+    draggedEl.removeEventListener('dragstart', dragStart);
+    draggedEl.removeEventListener('touchstart', touchStart);
 
     matchesMade++;
+    currentStreak++;
     updateProgress();
+    updateStreak(currentStreak);
+    playAudio(draggedEl.textContent);
+    createSparkle(draggedEl);
 
-    // Update streak
-    streak++;
-    updateStreak(streak);
-
-    // Check if all matched
-    if (matchesMade >= totalMatches) {
-      triggerConfetti();
-      setTimeout(() => alert('🎉 Congratulations! All matched! 🎉'), 500);
+    if (matchesMade === totalMatches) {
+      launchConfetti();
+      setTimeout(() => alert('🎉 Congratulations! You matched all words!'), 100);
     }
   }
-
-  // Incorrect match handler
-  function handleIncorrectMatch(draggable) {
-    streak = 0;
-    updateStreak(streak);
-    shakeAndBounceBack(draggable);
-  }
-
-  // Shake red and bounce back animation
-  function shakeAndBounceBack(el) {
-    if (!el) return;
-
+  function onIncorrectMatch(el) {
+    currentStreak = 0;
+    updateStreak(currentStreak);
+    // Shake & bounce animation
     el.classList.add('shake');
-    el.style.transition = 'transform 0.5s ease';
-
-    // Bounce back to original position (for touch drag)
-    el.style.transform = 'translate(0, 0)';
-
     setTimeout(() => {
       el.classList.remove('shake');
+      bounceBack(el);
+    }, 400);
+    playErrorSound();
+  }
+
+  // Bounce back animation
+  function bounceBack(el) {
+    el.style.transition = 'transform 0.4s ease';
+    el.style.transform = 'translateY(-20px)';
+    setTimeout(() => {
+      el.style.transform = 'translateY(0)';
+    }, 200);
+    setTimeout(() => {
       el.style.transition = '';
       el.style.transform = '';
-    }, 500);
+      // Reset position for touch drag
+      if(el.style.position === 'absolute' && !el.classList.contains('matched')){
+        el.style.position = '';
+        el.style.left = '';
+        el.style.top = '';
+        el.style.width = '';
+        el.style.height = '';
+        el.style.zIndex = '';
+      }
+    }, 400);
   }
 
-  // Update progress bar
+  // Progress & streak
   function updateProgress() {
-    const percent = (matchesMade / totalMatches) * 100;
-    progressBar.style.width = percent + '%';
+    const pct = (matchesMade / totalMatches) * 100;
+    progressBar.style.width = pct + '%';
+  }
+  function updateStreak(count) {
+    streakCounter.textContent = count >= 3 ? `🔥 Streak: ${count}` : `Streak: ${count}`;
+    if (count >= 3) createSparkle(streakCounter);
   }
 
-  // Update streak display
-  function updateStreak(value) {
-    if (value > 0) {
-      streakCounter.textContent = `Streak: ${value} 🔥`;
-      streakCounter.style.color = '#d6336c';
-    } else {
-      streakCounter.textContent = 'Streak: 0';
-      streakCounter.style.color = '#777';
-    }
-  }
-
-  // Play audio for English word using SpeechSynthesis
-  function playAudio(text) {
-    if (!window.speechSynthesis) return;
-    const utterance = new SpeechSynthesisUtterance(text);
+  // Audio: Use speech synthesis to say English word
+  function playAudio(word) {
+    if (!('speechSynthesis' in window)) return;
+    const utterance = new SpeechSynthesisUtterance(word);
     utterance.lang = 'en-US';
-    window.speechSynthesis.cancel(); // cancel previous
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }
+  // Play error sound using Web Audio API
+  function playErrorSound() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+    oscillator.connect(audioCtx.destination);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.1);
+  }
 
-  // Sparkle effect creation
+  // Sparkle effect
   function createSparkle(parent) {
     const sparkle = document.createElement('div');
-    sparkle.className = 'sparkle';
+    sparkle.classList.add('sparkle');
     parent.appendChild(sparkle);
     setTimeout(() => sparkle.remove(), 800);
   }
 
-  // Confetti implementation
-  let confettiParticles = [];
-  let confettiAnimationId = null;
-
-  function triggerConfetti() {
+  // Confetti launcher & animation (simple)
+  function launchConfetti() {
     if (confettiActive) return;
     confettiActive = true;
     confettiCanvas.width = window.innerWidth;
     confettiCanvas.height = window.innerHeight;
 
+    const colors = ['#d6336c', '#fcd5ce', '#f9a8d4', '#ff80ab', '#c9184a'];
     confettiParticles = [];
-    const colors = ['#d6336c', '#ff96b8', '#57d26f', '#38b0de', '#ffd23f'];
-
     for (let i = 0; i < 150; i++) {
       confettiParticles.push({
         x: Math.random() * confettiCanvas.width,
         y: Math.random() * confettiCanvas.height - confettiCanvas.height,
-        r: (Math.random() * 6) + 4,
-        d: (Math.random() * 20) + 10,
+        r: Math.random() * 7 + 3,
+        d: Math.random() * 30 + 10,
         color: colors[Math.floor(Math.random() * colors.length)],
-        tilt: Math.floor(Math.random() * 10) - 10,
-        tiltAngleIncremental: (Math.random() * 0.07) + 0.05,
-        tiltAngle: 0
+        tilt: Math.random() * 10 - 10,
+        tiltAngle: 0,
+        tiltAngleIncrement: (Math.random() * 0.07) + 0.05
       });
     }
     animateConfetti();
   }
-
   function animateConfetti() {
     confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
     confettiParticles.forEach(p => {
-      p.tiltAngle += p.tiltAngleIncremental;
+      p.tiltAngle += p.tiltAngleIncrement;
       p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
-      p.x += Math.sin(p.tiltAngle) * 2;
+      p.x += Math.sin(p.tiltAngle);
       p.tilt = Math.sin(p.tiltAngle) * 15;
 
       confettiCtx.beginPath();
@@ -855,21 +870,19 @@
       }
     });
     confettiAnimationId = requestAnimationFrame(animateConfetti);
-    // Stop confetti after 6 seconds
-    setTimeout(stopConfetti, 6000);
-  }
-  function stopConfetti() {
-    confettiActive = false;
-    cancelAnimationFrame(confettiAnimationId);
-    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    // Stop confetti after 5 seconds
+    setTimeout(() => {
+      cancelAnimationFrame(confettiAnimationId);
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettiActive = false;
+    }, 5000);
   }
 
-  // Resize canvas on window resize
+  // Resize confetti canvas on window resize
   window.addEventListener('resize', () => {
     confettiCanvas.width = window.innerWidth;
     confettiCanvas.height = window.innerHeight;
   });
-
 </script>
 
 </body>
