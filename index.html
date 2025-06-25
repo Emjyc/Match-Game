@@ -109,51 +109,108 @@
     transition: width 0.5s ease;
   }
 
+  /* Timer bar */
+  #timer-container {
+    width: 100%;
+    height: 18px;
+    background: #fef3c7;
+    border-radius: 30px;
+    overflow: hidden;
+    margin-bottom: 1.6rem;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.07);
+    display: none;
+  }
+  #timer-bar {
+    height: 100%;
+    width: 100%;
+    background: #fbbf24;
+    border-radius: 30px 0 0 30px;
+    transition: width 0.2s linear;
+  }
+  #timer-text {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #92400e;
+    margin-bottom: 1.8rem;
+    text-align: center;
+    display: none;
+  }
+
+  /* Practice / Challenge toggle */
+  #mode-toggle {
+    margin: 0 auto 2.8rem;
+    text-align: center;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+  #mode-toggle label {
+    cursor: pointer;
+    user-select: none;
+  }
+  #mode-toggle input {
+    margin-left: 0.8rem;
+    transform: scale(1.2);
+    cursor: pointer;
+  }
+
   /* Matching Grid */
   .matching-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2.2rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: nowrap;
+    max-width: 100%;
   }
-  #english-words,
-  #japanese-words {
+  #english-words, #japanese-words {
     display: grid;
-    /* grid columns dynamically adjusted in JS */
-    gap: 1.4rem;
+    grid-auto-flow: row; /* left-to-right reading */
+    gap: 1rem;
+    flex-shrink: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+    user-select: none;
+    /* widths set dynamically by JS */
   }
 
   /* Word Tiles */
-  .word-tile {
-    background: #fef9f9;
+  .word-tile, .drop-target {
+    aspect-ratio: 1 / 1; /* square tiles */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    padding: 0;
+    min-width: 60px;
+    min-height: 60px;
+    max-width: 120px;
+    max-height: 120px;
+    box-sizing: border-box;
     border-radius: 18px;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
-    padding: 1.5rem;
-    font-size: 1.4rem;
-    font-weight: 700;
-    text-align: center;
     user-select: none;
-    cursor: grab;
     font-family: 'Noto Sans JP', sans-serif;
-    color: #334155;
     transition:
       transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
       box-shadow 0.28s ease,
       background-color 0.35s ease;
-    will-change: transform;
-    min-height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  }
+  .word-tile {
+    background: #fef9f9;
+    font-weight: 700;
+    color: #334155;
+    cursor: grab;
   }
   .word-tile:active {
     cursor: grabbing;
   }
-  /* Dragging scale */
   .dragging {
     transform: scale(1.14);
     box-shadow: 0 10px 26px rgba(51, 65, 85, 0.3);
     z-index: 20;
   }
+
   /* Bounce animation for correct drop */
   .bounce-correct {
     animation: bounceCorrect 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -181,24 +238,13 @@
     cursor: pointer;
     background: #fff;
     border: 3.5px solid #cbd5e1;
-    border-radius: 18px;
-    padding: 1.6rem;
     font-size: 1.9rem;
     font-weight: 900;
     text-align: center;
-    transition:
-      border-color 0.35s ease,
-      background-color 0.35s ease,
-      box-shadow 0.3s ease;
     min-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Noto Sans JP', sans-serif;
-    user-select: none;
-    position: relative;
     color: #475569;
     box-shadow: 0 4px 8px rgba(99, 102, 241, 0.07);
+    position: relative;
   }
   .drop-target.drag-over {
     border-color: #6366f1;
@@ -209,7 +255,6 @@
     background-color: #dcfce7;
     border-color: #22c55e;
     color: #166534;
-    font-weight: 900;
     box-shadow: 0 0 20px 6px #4ade8055;
   }
   .drop-target.incorrect {
@@ -219,7 +264,6 @@
     color: #b91c1c;
     box-shadow: 0 0 18px 5px #ef444455;
   }
-  /* Shake animation for wrong drop */
   @keyframes shake {
     0%, 100% { transform: translateX(0);}
     20%, 60% { transform: translateX(-8px);}
@@ -276,14 +320,41 @@
     z-index: 9999;
   }
 
-  /* Responsive */
-  @media (max-width: 640px) {
-    #english-words,
-    #japanese-words {
-      grid-template-columns: repeat(2, 1fr) !important;
+  /* Motivational popup */
+  #popup-message {
+    position: fixed;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4ade80;
+    color: #166534;
+    padding: 14px 28px;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px #4ade8055;
+    font-weight: 700;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    font-family: 'Noto Sans JP', sans-serif;
+    user-select: none;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 700px) {
+    main {
+      max-width: 100vw;
+      padding: 0 1rem;
     }
-    #title-screen button {
-      width: 48vw;
+    .matching-grid {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    #english-words, #japanese-words {
+      width: 100% !important;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+      max-height: 40vh !important;
+      overflow-y: auto !important;
     }
   }
 </style>
@@ -300,6 +371,19 @@
   <section id="game-screen" aria-label="Matching game">
     <h2 id="set-title"></h2>
 
+    <div id="mode-toggle" aria-label="Toggle practice or time challenge mode">
+      Practice Mode
+      <label>
+        <input type="checkbox" id="challenge-toggle" />
+        Time Challenge Mode
+      </label>
+    </div>
+
+    <div id="timer-text" aria-live="polite" aria-atomic="true"></div>
+    <div id="timer-container" aria-hidden="true">
+      <div id="timer-bar"></div>
+    </div>
+
     <div id="progress-container" aria-label="Progress of matched words">
       <div id="progress-bar"></div>
     </div>
@@ -311,6 +395,9 @@
 
     <button id="back-button" aria-label="Back to title screen">Back</button>
   </section>
+
+  <!-- Motivational popup -->
+  <div id="popup-message" role="alert" aria-live="assertive" aria-atomic="true"></div>
 </main>
 
 <!-- Confetti container -->
@@ -359,7 +446,6 @@
         {english: "vegetable", japanese: "やさい"},
       ]
     },
-    // Additional sets truncated for brevity — add more sets as needed
   ];
 
   const titleScreen = document.getElementById('title-screen');
@@ -369,12 +455,23 @@
   const japaneseWordsContainer = document.getElementById('japanese-words');
   const backButton = document.getElementById('back-button');
   const progressBar = document.getElementById('progress-bar');
-  const confettiContainer = document.getElementById('confetti-container');
+  const popupMessage = document.getElementById('popup-message');
+
+  const timerContainer = document.getElementById('timer-container');
+  const timerBar = document.getElementById('timer-bar');
+  const timerText = document.getElementById('timer-text');
+  const challengeToggle = document.getElementById('challenge-toggle');
 
   let currentSet = null;
   let matchedCount = 0;
   let totalPairs = 0;
   let draggedEl = null;
+  let progressMilestones = [0.25, 0.5, 0.75, 1];
+  let milestonesReached = [];
+  let timerInterval = null;
+  let timerDuration = 90; // seconds for challenge
+  let timerTimeLeft = timerDuration;
+  let timeChallengeActive = false;
 
   function createSetButtons() {
     sets.forEach((set, i) => {
@@ -396,119 +493,123 @@
     return array;
   }
 
-  // Play English audio on drag start immediately
-  function playAudio(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
-  }
-
-  function startSet(setIndex) {
-    currentSet = sets[setIndex];
+  function startSet(index) {
+    currentSet = sets[index];
     matchedCount = 0;
+    milestonesReached = [];
     totalPairs = currentSet.words.length;
 
+    setTitle.textContent = currentSet.name;
     titleScreen.style.display = 'none';
     gameScreen.style.display = 'flex';
-    setTitle.textContent = currentSet.name;
 
     englishWordsContainer.innerHTML = '';
     japaneseWordsContainer.innerHTML = '';
     resetProgress();
 
-    let englishWords = [...currentSet.words];
-    let japaneseWords = [...currentSet.words];
-    shuffle(englishWords);
-    shuffle(japaneseWords);
+    challengeToggle.checked = false;
+    timerContainer.style.display = 'none';
+    timerText.style.display = 'none';
+    timeChallengeActive = false;
+    stopTimer();
 
-    // Dynamically set grid columns for English & Japanese areas
-    const columns = totalPairs <= 6 ? 3 : totalPairs <= 10 ? 4 : 5;
+    // Shuffle words separately
+    const englishWords = shuffle(currentSet.words.map(w => w.english));
+    const japaneseWords = shuffle(currentSet.words.map(w => w.japanese));
+
+    // Determine columns count based on container width & word count
+    const containerWidth = 960; // px (matches CSS max-width)
+    const tileMaxWidthWithGap = 110; // approx tile width + gap
+    let columns = Math.floor(containerWidth / tileMaxWidthWithGap);
+    columns = Math.min(columns, totalPairs);
+
+    // Set grid templates & widths dynamically
     englishWordsContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
     japaneseWordsContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
 
-    englishWords.forEach(({english}) => {
-      const div = document.createElement('div');
-      div.classList.add('word-tile');
-      div.textContent = english;
-      div.setAttribute('draggable', 'true');
-      div.setAttribute('role', 'listitem');
-      div.setAttribute('aria-grabbed', 'false');
-      div.dataset.word = english;
+    // Each side takes about half container width minus gap
+    const halfWidth = containerWidth / 2 - 20;
+    englishWordsContainer.style.width = `${halfWidth}px`;
+    japaneseWordsContainer.style.width = `${halfWidth}px`;
 
-      addEnglishWordDragHandlers(div);
-
-      englishWordsContainer.appendChild(div);
+    // Populate English words (draggable)
+    englishWords.forEach(word => {
+      const el = document.createElement('div');
+      el.textContent = word;
+      el.className = 'word-tile';
+      el.setAttribute('draggable', 'true');
+      el.setAttribute('role', 'listitem');
+      englishWordsContainer.appendChild(el);
+      addEnglishWordDragHandlers(el);
     });
 
-    japaneseWords.forEach(({japanese, english}) => {
-      const div = document.createElement('div');
-      div.classList.add('drop-target');
-      div.textContent = japanese;
-      div.setAttribute('role', 'listitem');
-      div.dataset.matchWord = english;
-      div.addEventListener('dragover', dragOver);
-      div.addEventListener('drop', drop);
-      div.addEventListener('dragleave', dragLeave);
-      japaneseWordsContainer.appendChild(div);
+    // Populate Japanese words (drop targets)
+    japaneseWords.forEach(word => {
+      const el = document.createElement('div');
+      el.textContent = word;
+      el.className = 'drop-target';
+      el.setAttribute('role', 'listitem');
+      el.setAttribute('aria-dropeffect', 'none');
+      japaneseWordsContainer.appendChild(el);
+      addJapaneseDropHandlers(el);
     });
   }
 
-  // Drag and Drop handlers
+  // Drag and drop handlers
   function dragStart(e) {
     draggedEl = e.target;
-    e.dataTransfer.setData('text/plain', draggedEl.dataset.word);
-    e.dataTransfer.effectAllowed = 'move';
-    draggedEl.classList.add('dragging');
-    draggedEl.setAttribute('aria-grabbed', 'true');
-    playAudio(draggedEl.dataset.word);
+    e.dataTransfer.setData('text/plain', draggedEl.textContent);
+    setTimeout(() => draggedEl.classList.add('dragging'), 10);
+    playAudio(draggedEl.textContent);
   }
-
   function dragEnd(e) {
-    if (draggedEl) {
-      draggedEl.classList.remove('dragging');
-      draggedEl.setAttribute('aria-grabbed', 'false');
-      draggedEl = null;
-    }
+    if(draggedEl) draggedEl.classList.remove('dragging');
+    draggedEl = null;
   }
 
   function dragOver(e) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    this.classList.add('drag-over');
+    if (!this.classList.contains('correct')) {
+      this.classList.add('drag-over');
+      this.setAttribute('aria-dropeffect', 'copy');
+    }
   }
-
   function dragLeave(e) {
-    this.classList.remove('drag-over');
+    if (!this.classList.contains('correct')) {
+      this.classList.remove('drag-over');
+      this.setAttribute('aria-dropeffect', 'none');
+    }
   }
-
   function drop(e) {
     e.preventDefault();
     this.classList.remove('drag-over');
+    this.setAttribute('aria-dropeffect', 'none');
+    if (this.classList.contains('correct')) return;
     if (!draggedEl) return;
 
-    const draggedWord = draggedEl.dataset.word;
-    const targetMatch = this.dataset.matchWord;
+    const draggedWord = draggedEl.textContent;
+    const dropWord = this.textContent;
 
-    if (draggedWord === targetMatch) {
-      // Correct
+    const pairIndex = currentSet.words.findIndex(w => w.english === draggedWord && w.japanese === dropWord);
+
+    if (pairIndex !== -1) {
       this.classList.add('correct');
       draggedEl.classList.add('matched');
       draggedEl.setAttribute('draggable', 'false');
-      this.style.cursor = 'default';
-
-      this.textContent = `${this.textContent} — ${draggedWord}`;
-
-      draggedEl.classList.add('bounce-correct');
-      setTimeout(() => draggedEl.style.display = 'none', 500);
+      this.setAttribute('aria-dropeffect', 'none');
 
       matchedCount++;
       updateProgress();
+      checkMilestones();
+
+      // Animate matched English word then hide it
+      draggedEl.classList.add('bounce-correct');
+      setTimeout(() => draggedEl.style.display = 'none', 600);
 
       if (matchedCount === totalPairs) {
         runConfetti();
-        setTimeout(() => alert('🎉 All matched! Great job!'), 400);
+        setTimeout(() => alert('🎉 All matched! Great job!'), 500);
+        stopTimer();
       }
     } else {
       // Incorrect feedback
@@ -523,7 +624,29 @@
     }
   }
 
-  // Progress bar update
+  function checkMilestones() {
+    const progress = matchedCount / totalPairs;
+    for (const milestone of progressMilestones) {
+      if (progress >= milestone && !milestonesReached.includes(milestone)) {
+        milestonesReached.push(milestone);
+        let message = '';
+        switch (milestone) {
+          case 0.25: message = "Keep it up!"; break;
+          case 0.5: message = "Halfway there!"; break;
+          case 0.75: message = "Almost done!"; break;
+          case 1: message = "You did it!"; break;
+        }
+        showPopup(message);
+      }
+    }
+  }
+  function showPopup(text) {
+    popupMessage.textContent = text;
+    popupMessage.style.opacity = '1';
+    setTimeout(() => {
+      popupMessage.style.opacity = '0';
+    }, 1600);
+  }
   function updateProgress() {
     const percent = (matchedCount / totalPairs) * 100;
     progressBar.style.width = `${percent}%`;
@@ -531,8 +654,6 @@
   function resetProgress() {
     progressBar.style.width = '0%';
   }
-
-  // Sound effect for incorrect drop
   function playIncorrectSound() {
     const ctx = new AudioContext();
     const oscillator = ctx.createOscillator();
@@ -542,40 +663,73 @@
     oscillator.start();
     oscillator.stop(ctx.currentTime + 0.1);
   }
-
-  // Confetti function (basic lightweight confetti)
-  function runConfetti() {
-    const confettiCount = 150;
-    const colors = ['#a5b4fc', '#6366f1', '#4ade80', '#16a34a', '#facc15', '#f59e0b', '#ef4444', '#dc2626'];
-    for(let i = 0; i < confettiCount; i++) {
-      const confetto = document.createElement('div');
-      confetto.style.position = 'fixed';
-      confetto.style.width = '8px';
-      confetto.style.height = '8px';
-      confetto.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-      confetto.style.top = Math.random() * window.innerHeight + 'px';
-      confetto.style.left = Math.random() * window.innerWidth + 'px';
-      confetto.style.borderRadius = '50%';
-      confetto.style.opacity = '0.9';
-      confetto.style.pointerEvents = 'none';
-      confetto.style.zIndex = '9999';
-      confetto.style.animation = `confetti-fall 3s ease forwards`;
-      confettiContainer.appendChild(confetto);
-      setTimeout(() => confetto.remove(), 3000);
+  function playAudio(text) {
+    if (!text) return;
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
     }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 1;
+    window.speechSynthesis.speak(utterance);
   }
 
-  // Confetti fall animation keyframes injection
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes confetti-fall {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1;}
-      100% { transform: translateY(400px) rotate(720deg); opacity: 0;}
+  // Timer Functions
+  function startTimer() {
+    timerTimeLeft = timerDuration;
+    timerContainer.style.display = 'block';
+    timerText.style.display = 'block';
+    updateTimerUI();
+
+    timerInterval = setInterval(() => {
+      timerTimeLeft -= 0.2;
+      if (timerTimeLeft <= 0) {
+        timerTimeLeft = 0;
+        updateTimerUI();
+        stopTimer();
+        alert("⏰ Time's up! Try again.");
+        resetGameAfterTimeout();
+      } else {
+        updateTimerUI();
+      }
+    }, 200);
+  }
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
     }
-  `;
-  document.head.appendChild(style);
+    timerContainer.style.display = 'none';
+    timerText.style.display = 'none';
+  }
+  function updateTimerUI() {
+    const percent = (timerTimeLeft / timerDuration) * 100;
+    timerBar.style.width = `${percent}%`;
+    timerText.textContent = `Time left: ${timerTimeLeft.toFixed(1)}s`;
+  }
+  function resetGameAfterTimeout() {
+    englishWordsContainer.innerHTML = '';
+    japaneseWordsContainer.innerHTML = '';
+    resetProgress();
+    matchedCount = 0;
+    milestonesReached = [];
+    startSet(sets.indexOf(currentSet));
+  }
+
+  // Add drag event listeners for English words
+  function addEnglishWordDragHandlers(el) {
+    el.addEventListener('dragstart', dragStart);
+    el.addEventListener('dragend', dragEnd);
+  }
+  // Add drop event listeners for Japanese words
+  function addJapaneseDropHandlers(el) {
+    el.addEventListener('dragover', dragOver);
+    el.addEventListener('dragleave', dragLeave);
+    el.addEventListener('drop', drop);
+  }
 
   backButton.addEventListener('click', () => {
+    stopTimer();
     gameScreen.style.display = 'none';
     titleScreen.style.display = 'flex';
     englishWordsContainer.innerHTML = '';
@@ -583,19 +737,54 @@
     resetProgress();
   });
 
-  // Initialize
+  challengeToggle.addEventListener('change', () => {
+    if (challengeToggle.checked) {
+      timeChallengeActive = true;
+      startTimer();
+    } else {
+      timeChallengeActive = false;
+      stopTimer();
+    }
+  });
+
+  // Confetti animation (simple)
+  function runConfetti() {
+    const container = document.getElementById('confetti-container');
+    for (let i = 0; i < 100; i++) {
+      const confetti = document.createElement('div');
+      confetti.style.position = 'absolute';
+      confetti.style.width = '8px';
+      confetti.style.height = '8px';
+      confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 80%, 60%)`;
+      confetti.style.left = `${Math.random() * window.innerWidth}px`;
+      confetti.style.top = '-10px';
+      confetti.style.opacity = '0.8';
+      confetti.style.borderRadius = '3px';
+      confetti.style.pointerEvents = 'none';
+      confetti.style.zIndex = '10000';
+      confetti.style.animation = `confetti-fall 2.8s linear forwards`;
+      confetti.style.animationDelay = `${Math.random()}s`;
+      container.appendChild(confetti);
+
+      confetti.addEventListener('animationend', () => {
+        confetti.remove();
+      });
+    }
+  }
+  // Confetti keyframes
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = `
+  @keyframes confetti-fall {
+    0% {transform: translateY(0) rotate(0deg);}
+    100% {transform: translateY(110vh) rotate(360deg);}
+  }`;
+  document.head.appendChild(styleSheet);
+
+  // Init
   function init() {
     createSetButtons();
   }
-
-  // English word drag handlers
-  function addEnglishWordDragHandlers(el) {
-    el.addEventListener('dragstart', dragStart);
-    el.addEventListener('dragend', dragEnd);
-  }
-
   init();
-
 })();
 </script>
 
