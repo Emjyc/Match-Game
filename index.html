@@ -238,18 +238,22 @@
             card.classList.add('matched');
             matchCard.classList.add('matched');
 
-            // Append English card inside Japanese card and style it to sit on top
-            matchCard.style.position = 'absolute';
-            matchCard.style.left = 0;
-            matchCard.style.top = 0;
-            matchCard.style.width = '100%';
-            matchCard.style.height = '100%';
-            matchCard.style.margin = 0;
-            matchCard.style.cursor = 'default';
-            matchCard.draggable = false;
+            // Keep original size and center English card on Japanese card
+            const rect = matchCard.getBoundingClientRect();
 
             card.style.position = 'relative';
             card.appendChild(matchCard);
+
+            matchCard.style.position = 'absolute';
+            matchCard.style.top = '50%';
+            matchCard.style.left = '50%';
+            matchCard.style.transform = 'translate(-50%, -50%)';
+            matchCard.style.width = `${rect.width}px`;
+            matchCard.style.height = `${rect.height}px`;
+            matchCard.style.margin = '0';
+            matchCard.style.cursor = 'default';
+            matchCard.style.pointerEvents = 'none'; // prevent interaction
+            matchCard.draggable = false;
 
             matchedPairs++;
             if (matchedPairs === selectedSet.words.length) {
@@ -267,25 +271,14 @@
           } else {
             mistakeCount++;
             card.style.backgroundColor = '#ffcccc';
-            matchCard.style.position = 'absolute';
-            matchCard.style.top = '50%';
-            matchCard.style.left = '50%';
-            matchCard.style.width = `${rect.width}px`;
-            matchCard.style.height = `${rect.height}px`;
-            matchCard.style.margin = '0';
-            matchCard.style.cursor = 'default';
-            matchCard.style.pointerEvents = 'none'; 
-            matchCard.draggable = false;
             matchCard.style.transition = 'transform 0.3s ease';
-            matchCard.style.transform = 'translate(-50%, -50%)';
+            matchCard.style.transform = 'translateX(-40px)';
             setTimeout(() => {
               matchCard.style.transform = 'translateX(40px)';
               setTimeout(() => {
                 matchCard.style.transform = 'translateX(0)';
                 matchCard.style.transition = '';
                 card.style.backgroundColor = '';
-
-                
               }, 200);
             }, 200);
           }
