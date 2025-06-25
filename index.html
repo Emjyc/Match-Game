@@ -267,14 +267,25 @@
           } else {
             mistakeCount++;
             card.style.backgroundColor = '#ffcccc';
+            matchCard.style.position = 'absolute';
+            matchCard.style.top = '50%';
+            matchCard.style.left = '50%';
+            matchCard.style.width = `${rect.width}px`;
+            matchCard.style.height = `${rect.height}px`;
+            matchCard.style.margin = '0';
+            matchCard.style.cursor = 'default';
+            matchCard.style.pointerEvents = 'none'; 
+            matchCard.draggable = false;
             matchCard.style.transition = 'transform 0.3s ease';
-            matchCard.style.transform = 'translateX(-40px)';
+            matchCard.style.transform = 'translate(-50%, -50%)';
             setTimeout(() => {
               matchCard.style.transform = 'translateX(40px)';
               setTimeout(() => {
                 matchCard.style.transform = 'translateX(0)';
                 matchCard.style.transition = '';
                 card.style.backgroundColor = '';
+
+                
               }, 200);
             }, 200);
           }
