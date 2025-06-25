@@ -1,286 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vocabulary Match Game</title>
-<link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
-<style>
-  * {
-    box-sizing: border-box;
-  }
-  body {
-    font-family: 'Comic Neue', cursive, sans-serif;
-    margin: 0; padding: 0;
-    background: #fefefe;
-    color: #333;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  h1.title {
-    font-size: 2.6rem;
-    text-align: center;
-    margin: 1rem 0 1.5rem;
-  }
-  button {
-    font-size: 1.15rem;
-    padding: 0.7rem 1.5rem;
-    margin: 0.25rem;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    background: #ffccdd;
-    color: #600026;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
-    transition: background-color 0.25s ease, transform 0.2s ease;
-  }
-  button:hover, button:focus {
-    background: #ffb6ce;
-    outline: none;
-    transform: scale(1.05);
-  }
-  #start-menu {
-    max-width: 600px;
-    margin: auto;
-    padding: 1rem 1.5rem 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.6rem 1rem;
-  }
-  #start-menu button {
-    flex: 1 1 120px;
-    max-width: 140px;
-    text-align: center;
-  }
-
-  /* Game Screen */
-  #game-screen {
-    display: none;
-    max-width: 900px;
-    margin: 1rem auto 2rem;
-    padding: 0 1rem;
-  }
-  #game-screen h2 {
-    text-align: center;
-    font-size: 2rem;
-    margin-bottom: 1rem;
-  }
-
-  /* Grid container for pairs - 4 columns */
-  #pairs-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem 1.5rem;
-    max-width: 900px;
-    margin: auto;
-  }
-
-  /* Each word box */
-  .english-word, .japanese-word {
-    font-size: 1.25rem;
-    background: #f8f8ff;
-    border: 2px solid #ccc;
-    border-radius: 10px;
-    padding: 12px 15px;
-    text-align: center;
-    user-select: none;
-    box-shadow: 0 3px 6px rgb(0 0 0 / 0.06);
-    position: relative;
-  }
-  .english-word {
-    cursor: grab;
-    background: #ffe0f0;
-    border-color: #f4a1c4;
-  }
-  .english-word.dragging {
-    cursor: grabbing;
-    opacity: 0.7;
-    box-shadow: 0 8px 15px rgb(0 0 0 / 0.2);
-  }
-  .japanese-word.droppable {
-    border-style: dashed;
-    background: #f0f0f8;
-    border-color: #999;
-  }
-  .matched {
-    background-color: #c1f0c1 !important;
-    border-color: #3e903e !important;
-    cursor: default !important;
-  }
-
-  .bounce-red {
-    animation: bounceRed 0.5s ease forwards;
-  }
-  @keyframes bounceRed {
-    0% { transform: translateY(0) scale(1); border-color: #cc0000; background-color: #ffc0c0; }
-    50% { transform: translateY(-15px) scale(1.05); border-color: #ff0000; background-color: #ffb0b0; }
-    100% { transform: translateY(0) scale(1); border-color: #cc0000; background-color: #ffc0c0; }
-  }
-
-  #confetti-canvas {
-    position: fixed;
-    pointer-events: none;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 10000;
-  }
-
-  #progress-container {
-    max-width: 700px;
-    margin: 15px auto 10px;
-    background: #eee;
-    border-radius: 20px;
-    overflow: hidden;
-    height: 18px;
-    box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.1);
-  }
-  #progress-bar {
-    height: 100%;
-    background: #ff8dcf;
-    width: 0%;
-    transition: width 0.3s ease;
-  }
-
-  #streak-counter {
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.2rem;
-    margin-top: 10px;
-    color: #d44a87;
-    user-select: none;
-    position: relative;
-  }
-  #streak-counter.sparkle {
-    animation: sparkle 1.2s ease infinite;
-  }
-  @keyframes sparkle {
-    0%, 100% { text-shadow: 0 0 5px #ff66cc, 0 0 10px #ff66cc, 0 0 15px #ff66cc; }
-    50% { text-shadow: 0 0 15px #ff0088, 0 0 25px #ff0088, 0 0 35px #ff0088; }
-  }
-
-  #review-screen {
-    display: none;
-    max-width: 700px;
-    margin: auto;
-    padding: 1rem 1rem 2rem;
-  }
-  #review-screen h3 {
-    text-align: center;
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-  }
-  #review-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 auto;
-    max-width: 480px;
-  }
-  #review-list li {
-    background: #ffe0f0;
-    border-radius: 8px;
-    margin: 6px 0;
-    padding: 12px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1.2rem;
-    cursor: pointer;
-  }
-  #review-list li.incorrect {
-    background: #ffdede;
-    border-color: #cc0000;
-  }
-  #review-list li button {
-    background: #d44a87;
-    color: white;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-  #review-list li button:hover {
-    background: #ff66cc;
-  }
-
-  body.dark {
-    background: #1a1a2e;
-    color: #ddd;
-  }
-  body.dark button {
-    background: #55194a;
-    color: #f8c6e0;
-    box-shadow: 0 2px 5px rgb(255 255 255 / 0.15);
-  }
-  body.dark button:hover {
-    background: #7a2572;
-  }
-  body.dark .english-word {
-    background: #33184f;
-    border-color: #55194a;
-    color: #f8c6e0;
-  }
-  body.dark .japanese-word.droppable {
-    background: #22223b;
-    border-color: #6f42c1;
-    color: #dcd6f7;
-  }
-  body.dark .matched {
-    background-color: #2a7f2a !important;
-    border-color: #66bb66 !important;
-    color: #defade !important;
-  }
-  body.dark #progress-container {
-    background: #333;
-    box-shadow: inset 0 2px 5px rgb(255 255 255 / 0.1);
-  }
-  body.dark #progress-bar {
-    background: #e061cc;
-  }
-  body.dark #streak-counter {
-    color: #e061cc;
-  }
-  body.dark #review-list li {
-    background: #55194a;
-    color: #f8c6e0;
-  }
-  body.dark #review-list li.incorrect {
-    background: #772133;
-  }
-  body.dark #review-list li button {
-    background: #e061cc;
-  }
-  body.dark #review-list li button:hover {
-    background: #ff66cc;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vocabulary Match Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Comic Neue', cursive;
+      margin: 0;
+      padding: 0;
+      background: #fefefe;
+      color: #333;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark {
+      background: #121212;
+      color: #ddd;
+    }
+    .title {
+      text-align: center;
+      font-size: 2.5em;
+      margin: 20px 0;
+    }
+    #start-menu {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px;
+      min-height: 100vh;
+      justify-content: center;
+    }
+    #start-menu button {
+      padding: 10px 20px;
+      font-size: 1.2em;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #ffe0f0;
+      transition: transform 0.2s, background-color 0.3s;
+      min-width: 180px;
+    }
+    #start-menu button:hover {
+      transform: scale(1.05);
+      background-color: #ffd2ea;
+    }
+    #start-menu button.dark {
+      background-color: #bb3366;
+      color: #fff;
+    }
+    #start-menu button.dark:hover {
+      background-color: #cc4477;
+    }
+    #game-container {
+      display: none;
+      padding: 20px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    #game-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .draggable, .droppable {
+      font-size: 1.15em;
+      padding: 14px 10px;
+      border-radius: 8px;
+      user-select: none;
+      text-align: center;
+      box-sizing: border-box;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+    .draggable {
+      background-color: #f9f9ff;
+      border: 2px solid #aaa;
+      cursor: grab;
+      position: relative;
+    }
+    .draggable:active {
+      cursor: grabbing;
+    }
+    .draggable.matched {
+      background-color: #c1f0c1 !important;
+      border-color: #3c9a3c !important;
+      cursor: default;
+    }
+    .droppable {
+      background-color: #f0f0f0;
+      border: 2px dashed #ccc;
+      min-height: 52px;
+    }
+    .droppable.matched {
+      border-style: solid;
+      border-color: #3c9a3c;
+      background-color: #c1f0c1;
+    }
+    .hide {
+      visibility: hidden !important;
+    }
+    .flash-red {
+      animation: flashRed 0.4s;
+    }
+    @keyframes flashRed {
+      0%, 100% { background-color: #f9f9ff; }
+      50% { background-color: #ff6666; }
+    }
+    .bounce {
+      animation: bounce 0.4s;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+    .sparkle {
+      animation: sparkle 0.7s ease forwards;
+      box-shadow: 0 0 10px 3px #ff85b7;
+    }
+    @keyframes sparkle {
+      0% { box-shadow: 0 0 0 0 transparent; }
+      50% { box-shadow: 0 0 12px 5px #ff85b7; }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+    #progress-container {
+      width: 100%;
+      height: 20px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+      display: none;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0;
+      background: #ff85b7;
+      transition: width 0.3s ease;
+    }
+    #streak-counter {
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 1.1em;
+      display: none;
+      color: #a50062;
+      text-align: center;
+    }
+    #end-screen {
+      display: none;
+      max-width: 600px;
+      margin: 50px auto;
+      text-align: center;
+      padding: 20px;
+      border-radius: 12px;
+      background-color: #ffe0f0;
+      color: #a50062;
+    }
+    #end-screen.dark {
+      background-color: #330022;
+      color: #f8c9dc;
+    }
+    #end-screen h2 {
+      margin-top: 0;
+    }
+    #buttons-container {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    #buttons-container button {
+      min-width: 140px;
+      font-weight: bold;
+    }
+    canvas#confetti-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+  </style>
 </head>
 <body>
   <div id="start-menu">
     <h1 class="title">Vocabulary Match Game</h1>
+    <div id="lesson-buttons"></div>
+    <button id="challenge-btn">Challenge Mode 🔥 (2 min)</button>
+    <button id="dark-mode-toggle" aria-pressed="false" aria-label="Toggle dark mode">🌓 Toggle Dark Mode</button>
   </div>
 
-  <div id="game-screen" aria-live="polite" aria-atomic="true">
-    <h2 id="game-title"></h2>
-    <div id="progress-container" aria-label="Progress of matched pairs">
-      <div id="progress-bar"></div>
-    </div>
-    <div id="streak-counter" aria-live="polite" aria-atomic="true"></div>
-    <div id="pairs-container"></div>
-    <div style="text-align:center; margin-top: 1rem;">
-      <button id="btn-review" style="display:none;">Review Answers</button>
-      <button id="btn-back" style="margin-left: 15px;">Back to Menu</button>
-    </div>
+  <div id="game-container">
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="streak-counter">Streak: 0</div>
+    <div id="game-grid"></div>
   </div>
 
-  <div id="review-screen" style="display:none;">
-    <h3>Review Your Answers</h3>
-    <ul id="review-list" tabindex="0"></ul>
-    <div style="text-align:center; margin-top: 1rem;">
-      <button id="btn-back-from-review">Back to Menu</button>
+  <div id="end-screen" role="dialog" aria-modal="true" aria-labelledby="end-title" aria-describedby="end-summary">
+    <h2 id="end-title">Lesson Complete!</h2>
+    <p id="end-summary"></p>
+    <p id="end-score"></p>
+    <div id="buttons-container">
+      <button id="restart-btn">Restart Lesson</button>
+      <button id="back-menu-btn">Back to Menu</button>
     </div>
   </div>
 
@@ -288,487 +217,518 @@
 
 <script>
 (() => {
-  // Data: only first two lessons shown here; add all as needed
+  // Vocabulary data example with 2 lessons - add more lessons here
   const lessons = [
     {
       name: "Lesson 1",
       words: [
-        {english:"minute", japanese:"分"},
-        {english:"before", japanese:"の前に"},
-        {english:"photography", japanese:"写真撮影"},
-        {english:"tournament", japanese:"トーナメント"},
-        {english:"against", japanese:"に対抗して"},
-        {english:"lost", japanese:"負けった"},
-        {english:"lose", japanese:"負ける"},
-        {english:"final", japanese:"最後の"},
-        {english:"second", japanese:"秒"},
-        {english:"broke", japanese:"壊した"},
-        {english:"surely", japanese:"確かに"},
-        {english:"until", japanese:"。。。まで"},
-        {english:"half", japanese:"半分の"},
-        {english:"hour", japanese:"１時間"},
-        {english:"tomorrow", japanese:"明日"},
-        {english:"today", japanese:"今日"},
-        {english:"yesterday", japanese:"昨日"},
-        {english:"ago", japanese:"～前に"},
-        {english:"spread", japanese:"広める"},
-        {english:"stadium", japanese:"スタジアム"}
+        { english: "minute", japanese: "分" },
+        { english: "before", japanese: "の前に" },
+        { english: "photography", japanese: "写真撮影" },
+        { english: "tournament", japanese: "トーナメント" },
+        { english: "against", japanese: "に対抗して" },
+        { english: "lost", japanese: "負けった" },
+        { english: "lose", japanese: "負ける" },
+        { english: "final", japanese: "最後の" },
+        { english: "second", japanese: "秒" },
+        { english: "broke", japanese: "壊した" },
+        { english: "surely", japanese: "確かに" },
+        { english: "until", japanese: "。。。まで" },
+        { english: "half", japanese: "半分の" },
+        { english: "hour", japanese: "１時間" },
+        { english: "tomorrow", japanese: "明日" },
+        { english: "today", japanese: "今日" },
+        { english: "yesterday", japanese: "昨日" },
+        { english: "ago", japanese: "～前に" },
+        { english: "spread", japanese: "広める" },
+        { english: "stadium", japanese: "スタジアム" }
       ]
     },
     {
       name: "Lesson 2",
       words: [
-        {english:"delicious", japanese:"おいしい"},
-        {english:"happy", japanese:"幸せ"},
-        {english:"run", japanese:"走る"},
-        {english:"draw", japanese:"描く"},
-        {english:"build", japanese:"建てる"},
-        {english:"carry", japanese:"運ぶ"},
-        {english:"open", japanese:"開ける"},
-        {english:"close", japanese:"閉じる"},
-        {english:"wake up", japanese:"目を覚ます"},
-        {english:"sleep", japanese:"眠る"},
-        {english:"stand", japanese:"立つ"},
-        {english:"sit", japanese:"座る"},
-        {english:"jump", japanese:"跳ぶ"},
-        {english:"swim", japanese:"泳ぐ"},
-        {english:"drive", japanese:"運転する"},
-        {english:"listen", japanese:"聞く"},
-        {english:"write", japanese:"書く"},
-        {english:"read", japanese:"読む"},
-        {english:"speak", japanese:"話す"},
-        {english:"learn", japanese:"学ぶ"}
+        { english: "delicious", japanese: "おいしい" },
+        { english: "happy", japanese: "幸せ" },
+        { english: "run", japanese: "走る" },
+        { english: "draw", japanese: "描く" },
+        { english: "build", japanese: "建てる" },
+        { english: "carry", japanese: "運ぶ" },
+        { english: "open", japanese: "開ける" },
+        { english: "close", japanese: "閉じる" },
+        { english: "wake up", japanese: "目を覚ます" },
+        { english: "sleep", japanese: "眠る" },
+        { english: "stand", japanese: "立つ" },
+        { english: "sit", japanese: "座る" },
+        { english: "jump", japanese: "跳ぶ" },
+        { english: "swim", japanese: "泳ぐ" },
+        { english: "drive", japanese: "運転する" },
+        { english: "listen", japanese: "聞く" },
+        { english: "write", japanese: "書く" },
+        { english: "read", japanese: "読む" },
+        { english: "speak", japanese: "話す" },
+        { english: "learn", japanese: "学ぶ" }
       ]
     }
+    // Add lessons 3-14 here similarly
   ];
 
-  // Elements
-  const startMenu = document.getElementById('start-menu');
-  const gameScreen = document.getElementById('game-screen');
-  const gameTitle = document.getElementById('game-title');
-  const pairsContainer = document.getElementById('pairs-container');
-  const progressBar = document.getElementById('progress-bar');
-  const streakCounter = document.getElementById('streak-counter');
-  const btnReview = document.getElementById('btn-review');
-  const btnBack = document.getElementById('btn-back');
-  const reviewScreen = document.getElementById('review-screen');
-  const reviewList = document.getElementById('review-list');
-  const btnBackFromReview = document.getElementById('btn-back-from-review');
-  const confettiCanvas = document.getElementById('confetti-canvas');
-  let matchedPairs = new Set();
-  let matchedCount = 0;
-  let totalPairs = 0;
+  // DOM elements
+  const startMenu = document.getElementById("start-menu");
+  const lessonButtonsDiv = document.getElementById("lesson-buttons");
+  const challengeBtn = document.getElementById("challenge-btn");
+  const darkModeToggle = document.getElementById("dark-mode-toggle");
+
+  const gameContainer = document.getElementById("game-container");
+  const gameGrid = document.getElementById("game-grid");
+  const progressContainer = document.getElementById("progress-container");
+  const progressBar = document.getElementById("progress-bar");
+  const streakCounter = document.getElementById("streak-counter");
+
+  const endScreen = document.getElementById("end-screen");
+  const endTitle = document.getElementById("end-title");
+  const endSummary = document.getElementById("end-summary");
+  const endScore = document.getElementById("end-score");
+  const restartBtn = document.getElementById("restart-btn");
+  const backToMenuBtn = document.getElementById("back-menu-btn");
+
+  const confettiCanvas = document.getElementById("confetti-canvas");
+  const ctx = confettiCanvas.getContext("2d");
+  let confettiParticles = [];
+
+  // Game state
+  let words = [];
+  let matchedPairs = 0;
   let streak = 0;
-  let incorrectAttempts = [];
-  let currentLessonIndex = null;
-  let touchDraggingElem = null;
+  let maxStreak = 0;
+  let draggedElement = null;
+  let offsetX = 0;
+  let offsetY = 0;
+  let originalPos = { x: 0, y: 0 };
+  let currentLessonIndex = 0;
+  let challengeMode = false;
+  let challengeTimer = null;
+  let timeLeft = 0;
 
-  // Create lesson buttons dynamically 1-14 + dark mode toggle
-  function initStartMenu() {
-    startMenu.innerHTML = `<h1 class="title">Vocabulary Match Game</h1>`;
-    const container = document.createElement('div');
-    container.style.display = 'flex';
-    container.style.flexWrap = 'wrap';
-    container.style.justifyContent = 'center';
-    container.style.gap = '0.6rem 1rem';
-    container.style.maxWidth = '600px';
-    container.style.margin = 'auto';
-    container.style.padding = '0 1rem 2rem';
-
-    for (let i = 0; i < 14; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = `Lesson ${i + 1}`;
-      btn.onclick = () => startGame(i);
-      container.appendChild(btn);
-    }
-
-    // Dark mode toggle
-    const darkModeBtn = document.createElement('button');
-    darkModeBtn.textContent = '🌓 Toggle Dark Mode';
-    darkModeBtn.onclick = toggleDarkMode;
-    container.appendChild(darkModeBtn);
-
-    startMenu.appendChild(container);
+  // Setup lesson buttons
+  function setupLessonButtons() {
+    lessonButtonsDiv.innerHTML = "";
+    lessons.forEach((lesson, i) => {
+      const btn = document.createElement("button");
+      btn.textContent = lesson.name;
+      btn.addEventListener("click", () => startGame(i));
+      lessonButtonsDiv.appendChild(btn);
+    });
   }
 
-  function toggleDarkMode() {
-    document.body.classList.toggle('dark');
+  // Start a game
+  function startGame(index, isChallenge = false) {
+    currentLessonIndex = index;
+    challengeMode = isChallenge;
+
+    words = [...lessons[index].words];
+    matchedPairs = 0;
+    streak = 0;
+    maxStreak = 0;
+    updateProgress(0);
+    updateStreak(0);
+
+    startMenu.style.display = "none";
+    endScreen.style.display = "none";
+    gameContainer.style.display = "block";
+    progressContainer.style.display = challengeMode ? "block" : "none";
+    streakCounter.style.display = challengeMode ? "block" : "none";
+
+    if (challengeMode) startChallengeTimer();
+    else clearChallengeTimer();
+
+    renderGameGrid(words);
   }
 
-  function shuffleArray(arr) {
-    for (let i=arr.length-1; i>0; i--) {
-      const j = Math.floor(Math.random()*(i+1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
+  // Render game grid with 4 columns: English left 2 columns, Japanese right 2 columns
+  function renderGameGrid(words) {
+    gameGrid.innerHTML = "";
+    // Shuffle English words and Japanese words independently
+    const englishWords = shuffleArray(words.map(w => w.english));
+    const japaneseWords = shuffleArray(words.map(w => w.japanese));
+
+    // Create draggable English boxes first (left columns)
+    englishWords.forEach(eng => {
+      createDraggableBox(eng);
+    });
+    // Create droppable Japanese boxes (right columns)
+    japaneseWords.forEach(jap => {
+      // Find the matching english word for this jap word
+      const match = words.find(w => w.japanese === jap)?.english || "";
+      createDroppableBox(jap, match);
+    });
   }
 
-  // Render 4-column grid: 2 English in col 1 & 3, 2 Japanese in col 2 & 4
-  function renderPairs(words) {
-    pairsContainer.innerHTML = '';
-    // Shuffle English & Japanese separately
-    const englishWords = shuffleArray(words.map(w => ({...w})));
-    const japaneseWords = shuffleArray(words.map(w => ({...w})));
+  // Create draggable English box
+  function createDraggableBox(text) {
+    const div = document.createElement("div");
+    div.className = "draggable";
+    div.textContent = text;
+    div.setAttribute("draggable", "true");
+    div.dataset.word = text;
+    div.style.position = "relative";
+    div.tabIndex = 0;
+    div.setAttribute("aria-grabbed", "false");
 
-    // We'll split English words into two groups, Japanese words into two groups
-    // For example, first half English in col 1, second half in col 3
-    // Same for Japanese: first half in col 2, second half in col 4
+    // Drag events
+    div.addEventListener("dragstart", dragStart);
+    div.addEventListener("dragend", dragEnd);
 
-    const half = Math.ceil(words.length / 2);
+    // Touch drag events
+    div.addEventListener("touchstart", handleTouchStart, { passive: false });
 
-    // English group 1 - col 1
-    for (let i=0; i<half; i++) {
-      const eng = englishWords[i];
-      const engDiv = document.createElement('div');
-      engDiv.className = 'english-word draggable';
-      engDiv.textContent = eng.english;
-      engDiv.dataset.word = eng.english;
-      engDiv.setAttribute('draggable', 'true');
-      engDiv.style.gridColumn = '1';
-      pairsContainer.appendChild(engDiv);
-      addDragTouchListeners(engDiv);
-    }
-    // English group 2 - col 3
-    for (let i=half; i<words.length; i++) {
-      const eng = englishWords[i];
-      const engDiv = document.createElement('div');
-      engDiv.className = 'english-word draggable';
-      engDiv.textContent = eng.english;
-      engDiv.dataset.word = eng.english;
-      engDiv.setAttribute('draggable', 'true');
-      engDiv.style.gridColumn = '3';
-      pairsContainer.appendChild(engDiv);
-      addDragTouchListeners(engDiv);
-    }
-    // Japanese group 1 - col 2
-    for (let i=0; i<half; i++) {
-      const jap = japaneseWords[i];
-      const japDiv = document.createElement('div');
-      japDiv.className = 'japanese-word droppable';
-      japDiv.textContent = jap.japanese;
-      japDiv.dataset.match = jap.english;
-      japDiv.style.gridColumn = '2';
-      pairsContainer.appendChild(japDiv);
-      addDropListeners(japDiv);
-    }
-    // Japanese group 2 - col 4
-    for (let i=half; i<words.length; i++) {
-      const jap = japaneseWords[i];
-      const japDiv = document.createElement('div');
-      japDiv.className = 'japanese-word droppable';
-      japDiv.textContent = jap.japanese;
-      japDiv.dataset.match = jap.english;
-      japDiv.style.gridColumn = '4';
-      pairsContainer.appendChild(japDiv);
-      addDropListeners(japDiv);
-    }
+    // Play audio on drag or touch start
+    div.addEventListener("mousedown", () => playAudio(text));
+    div.addEventListener("touchstart", () => playAudio(text), { passive: true });
+
+    gameGrid.appendChild(div);
   }
 
-  // Drag & Drop Handlers
-  let draggedElem = null;
+  // Create droppable Japanese box
+  function createDroppableBox(japText, matchEnglish) {
+    const div = document.createElement("div");
+    div.className = "droppable";
+    div.textContent = japText;
+    div.dataset.match = matchEnglish;
+    div.tabIndex = 0;
 
-  function addDragTouchListeners(elem) {
-    elem.addEventListener('dragstart', dragStart);
-    elem.addEventListener('dragend', dragEnd);
-    elem.addEventListener('touchstart', touchStart, {passive:false});
-  }
-  function addDropListeners(elem) {
-    elem.addEventListener('dragover', e => e.preventDefault());
-    elem.addEventListener('drop', handleDrop);
+    div.addEventListener("dragover", e => e.preventDefault());
+    div.addEventListener("drop", handleDrop);
+
+    // Keyboard accessibility: allow "Enter" to drop when focused
+    div.addEventListener("keydown", e => {
+      if (e.key === "Enter" && draggedElement) {
+        handleDrop({ target: div, preventDefault: () => {} });
+      }
+    });
+
+    gameGrid.appendChild(div);
   }
 
+  // Drag and drop handlers
   function dragStart(e) {
-    draggedElem = e.target;
-    e.dataTransfer.setData('text/plain', draggedElem.dataset.word);
-    setTimeout(() => {
-      draggedElem.classList.add('dragging');
-    }, 0);
+    draggedElement = e.target;
+    e.dataTransfer.setData("text/plain", draggedElement.dataset.word);
+    setTimeout(() => draggedElement.classList.add("hide"), 0);
+    draggedElement.setAttribute("aria-grabbed", "true");
   }
   function dragEnd(e) {
-    if (draggedElem) draggedElem.classList.remove('dragging');
-    draggedElem = null;
+    if (draggedElement) {
+      draggedElement.classList.remove("hide");
+      draggedElement.setAttribute("aria-grabbed", "false");
+      draggedElement = null;
+    }
   }
   function handleDrop(e) {
     e.preventDefault();
-    if (!draggedElem) return;
-    const dropTarget = e.currentTarget;
-    if (dropTarget.dataset.match === draggedElem.dataset.word) {
-      markMatched(draggedElem, dropTarget);
+    if (!draggedElement) return;
+    const dropTarget = e.target.closest(".droppable");
+    if (!dropTarget || dropTarget.classList.contains("matched")) return;
+
+    const draggedWord = draggedElement.dataset.word;
+    if (dropTarget.dataset.match === draggedWord) {
+      onCorrectMatch(draggedElement, dropTarget);
     } else {
-      wrongDropFeedback(draggedElem);
+      onIncorrectMatch(draggedElement);
     }
   }
 
-  // Touch Handlers
-  let touchStartX, touchStartY;
-  let origX, origY;
-
-  function touchStart(e) {
+  // Touch drag and drop support
+  function handleTouchStart(e) {
     e.preventDefault();
-    if (touchDraggingElem) return; // Only one drag at a time
-    touchDraggingElem = e.target;
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    const rect = touchDraggingElem.getBoundingClientRect();
-    origX = rect.left;
-    origY = rect.top;
-    touchDraggingElem.style.position = 'fixed';
-    touchDraggingElem.style.zIndex = '9999';
-    touchDraggingElem.style.width = `${rect.width}px`;
-    touchDraggingElem.style.height = `${rect.height}px`;
-    touchDraggingElem.style.left = `${origX}px`;
-    touchDraggingElem.style.top = `${origY}px`;
+    draggedElement = e.target;
+    if (!draggedElement.classList.contains("draggable")) return;
+    draggedElement.setAttribute("aria-grabbed", "true");
 
-    playAudio(touchDraggingElem.dataset.word);
+    const rect = draggedElement.getBoundingClientRect();
+    offsetX = e.touches[0].clientX - rect.left;
+    offsetY = e.touches[0].clientY - rect.top;
 
-    window.addEventListener('touchmove', touchMove, {passive:false});
-    window.addEventListener('touchend', touchEnd);
+    originalPos.x = rect.left + window.scrollX;
+    originalPos.y = rect.top + window.scrollY;
+
+    draggedElement.style.position = "absolute";
+    draggedElement.style.zIndex = 1000;
+    draggedElement.style.width = rect.width + "px";
+    draggedElement.style.height = rect.height + "px";
+    moveAt(e.touches[0].clientX, e.touches[0].clientY);
+
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
   }
-  function touchMove(e) {
-    e.preventDefault();
-    if (!touchDraggingElem) return;
-    const touch = e.touches[0];
-    const left = touch.clientX - touchDraggingElem.offsetWidth / 2;
-    const top = touch.clientY - touchDraggingElem.offsetHeight / 2;
-    touchDraggingElem.style.left = `${left}px`;
-    touchDraggingElem.style.top = `${top}px`;
+  function moveAt(pageX, pageY) {
+    draggedElement.style.left = pageX - offsetX + "px";
+    draggedElement.style.top = pageY - offsetY + "px";
   }
-  function touchEnd(e) {
+  function handleTouchMove(e) {
     e.preventDefault();
-    if (!touchDraggingElem) return;
+    moveAt(e.touches[0].clientX, e.touches[0].clientY);
+  }
+  function handleTouchEnd(e) {
+    e.preventDefault();
     const touch = e.changedTouches[0];
-    let elem = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (!elem) {
-      resetTouchDrag();
-      return;
+    let dropElem = document.elementFromPoint(touch.clientX, touch.clientY);
+    while (dropElem && !dropElem.classList.contains("droppable")) {
+      dropElem = dropElem.parentElement;
     }
-    // Walk up until droppable found
-    let dropTarget = elem;
-    while (dropTarget && !dropTarget.classList.contains('droppable')) {
-      dropTarget = dropTarget.parentElement;
-    }
-    if (dropTarget && dropTarget.dataset.match === touchDraggingElem.dataset.word) {
-      markMatched(touchDraggingElem, dropTarget);
-      resetTouchDrag();
+    if (dropElem && !dropElem.classList.contains("matched")) {
+      if (dropElem.dataset.match === draggedElement.dataset.word) {
+        onCorrectMatch(draggedElement, dropElem);
+      } else {
+        onIncorrectMatch(draggedElement);
+        resetDraggedElement();
+      }
     } else {
-      wrongDropFeedback(touchDraggingElem);
-      resetTouchDrag();
+      onIncorrectMatch(draggedElement);
+      resetDraggedElement();
     }
+    draggedElement.setAttribute("aria-grabbed", "false");
+    resetDraggedElement();
+    window.removeEventListener("touchmove", handleTouchMove);
+    window.removeEventListener("touchend", handleTouchEnd);
+    draggedElement = null;
   }
-  function resetTouchDrag() {
-    if (!touchDraggingElem) return;
-    touchDraggingElem.style.position = '';
-    touchDraggingElem.style.zIndex = '';
-    touchDraggingElem.style.left = '';
-    touchDraggingElem.style.top = '';
-    touchDraggingElem.style.width = '';
-    touchDraggingElem.style.height = '';
-    touchDraggingElem = null;
-    window.removeEventListener('touchmove', touchMove);
-    window.removeEventListener('touchend', touchEnd);
+  function resetDraggedElement() {
+    if (!draggedElement) return;
+    draggedElement.style.position = "";
+    draggedElement.style.zIndex = "";
+    draggedElement.style.left = "";
+    draggedElement.style.top = "";
+    draggedElement.style.width = "";
+    draggedElement.style.height = "";
   }
 
-  // Mark matched pair
-  function markMatched(engElem, japElem) {
-    if (matchedPairs.has(engElem.dataset.word)) return;
-    matchedPairs.add(engElem.dataset.word);
+  // Correct match handler
+  function onCorrectMatch(dragEl, dropEl) {
+    dropEl.classList.add("matched");
+    dragEl.classList.add("matched");
+    dropEl.textContent = "";
+    dropEl.appendChild(dragEl);
+    dragEl.style.position = "static";
+    dragEl.style.left = "";
+    dragEl.style.top = "";
+    dragEl.style.width = "";
+    dragEl.style.height = "";
+    dragEl.setAttribute("draggable", "false");
+    dragEl.setAttribute("aria-grabbed", "false");
 
-    japElem.classList.add('matched');
-    engElem.classList.add('matched');
-    engElem.setAttribute('draggable', 'false');
-    engElem.style.cursor = 'default';
-
-    matchedCount++;
+    matchedPairs++;
     streak++;
-    updateProgress();
-    updateStreak();
-    showConfettiAt(japElem);
+    if (streak > maxStreak) maxStreak = streak;
 
-    if (matchedCount === totalPairs) {
-      btnReview.style.display = 'inline-block';
+    playAudio(dragEl.dataset.word);
+    triggerConfetti();
+    sparkleEffect(dragEl);
+    updateProgress(matchedPairs / words.length);
+    updateStreak(streak);
+
+    if (matchedPairs === words.length) {
+      endGame(true);
     }
   }
 
-  // Bounce and flash red on wrong drop
-  function wrongDropFeedback(elem) {
+  // Incorrect match handler
+  function onIncorrectMatch(dragEl) {
     streak = 0;
-    updateStreak();
-    elem.classList.add('bounce-red');
-    setTimeout(() => elem.classList.remove('bounce-red'), 600);
-    incorrectAttempts.push(elem.dataset.word);
-    if (touchDraggingElem === elem) resetTouchDrag();
+    updateStreak(streak);
+    flashRed(dragEl);
+    bounceBack(dragEl);
+    playAudio("No");
   }
 
-  // Update progress bar
-  function updateProgress() {
-    const percent = (matchedCount / totalPairs) * 100;
-    progressBar.style.width = `${percent}%`;
+  // Flash red on incorrect
+  function flashRed(el) {
+    el.classList.add("flash-red");
+    setTimeout(() => el.classList.remove("flash-red"), 400);
   }
-  // Update streak counter with sparkle
-  function updateStreak() {
-    if (streak >= 3) {
-      streakCounter.textContent = `🔥 Streak: ${streak} 🔥`;
-      streakCounter.classList.add('sparkle');
-    } else {
-      streakCounter.textContent = '';
-      streakCounter.classList.remove('sparkle');
+  // Bounce animation for wrong
+  function bounceBack(el) {
+    el.classList.add("bounce");
+    setTimeout(() => el.classList.remove("bounce"), 400);
+  }
+  // Sparkle on correct
+  function sparkleEffect(el) {
+    el.classList.add("sparkle");
+    setTimeout(() => el.classList.remove("sparkle"), 700);
+  }
+
+  // Progress bar update
+  function updateProgress(fraction) {
+    if (challengeMode) {
+      progressBar.style.width = Math.min(fraction * 100, 100) + "%";
+    }
+  }
+  // Streak counter update
+  function updateStreak(count) {
+    if (challengeMode) {
+      streakCounter.textContent = `Streak: ${count}`;
     }
   }
 
-  // Play audio with speech synthesis
+  // End game
+  function endGame(won) {
+    clearChallengeTimer();
+    gameContainer.style.display = "none";
+    endScreen.style.display = "block";
+    if (won) {
+      endTitle.textContent = "Congratulations! You completed the lesson!";
+      endSummary.textContent = `You matched all ${words.length} pairs.`;
+    } else {
+      endTitle.textContent = "Time's up!";
+      endSummary.textContent = `You matched ${matchedPairs} pairs.`;
+    }
+    endScore.textContent = `Max Streak: ${maxStreak}`;
+  }
+
+  restartBtn.addEventListener("click", () => {
+    startGame(currentLessonIndex, challengeMode);
+    endScreen.style.display = "none";
+  });
+  backToMenuBtn.addEventListener("click", () => {
+    endScreen.style.display = "none";
+    gameContainer.style.display = "none";
+    startMenu.style.display = "flex";
+  });
+
+  // Challenge mode timer
+  function startChallengeTimer() {
+    timeLeft = 120; // 2 minutes
+    progressContainer.style.display = "block";
+    streakCounter.style.display = "block";
+
+    if (challengeTimer) clearInterval(challengeTimer);
+
+    challengeTimer = setInterval(() => {
+      timeLeft--;
+      updateProgress(1 - timeLeft / 120);
+      if (timeLeft <= 0) {
+        clearInterval(challengeTimer);
+        endGame(false);
+      }
+    }, 1000);
+  }
+  function clearChallengeTimer() {
+    if (challengeTimer) clearInterval(challengeTimer);
+    progressContainer.style.display = "none";
+    streakCounter.style.display = "none";
+  }
+
+  // Speech synthesis for English words
   function playAudio(word) {
     if (!window.speechSynthesis) return;
-    if (speechSynthesis.speaking) speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(word);
-    utter.lang = 'en-US';
-    speechSynthesis.speak(utter);
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = "en-US";
+
+    // Choose a suitable voice
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female"))
+      || voices.find(v => v.lang.startsWith("en"))
+      || null;
+
+    window.speechSynthesis.speak(utterance);
   }
 
-  // Confetti animation code omitted here for brevity; included in full code below
-  const confettiCtx = confettiCanvas.getContext('2d');
-  let confettiParticles = [];
-  let confettiAnimationId = null;
-
-  function ConfettiParticle(x, y) {
-    this.x = x;
-    this.y = y;
-    this.size = Math.random() * 6 + 4;
-    this.speedX = (Math.random() - 0.5) * 5;
-    this.speedY = Math.random() * -7 - 3;
-    this.gravity = 0.3;
-    this.rotation = Math.random() * 360;
-    this.rotationSpeed = (Math.random() - 0.5) * 10;
-    this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
-    this.opacity = 1;
-  }
-  ConfettiParticle.prototype.update = function() {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    this.speedY += this.gravity;
-    this.rotation += this.rotationSpeed;
-    this.opacity -= 0.02;
-  }
-  ConfettiParticle.prototype.draw = function(ctx) {
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate((this.rotation * Math.PI) / 180);
-    ctx.fillStyle = this.color;
-    ctx.globalAlpha = this.opacity;
-    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
-    ctx.restore();
-  }
-  function createConfetti(x, y) {
-    for (let i=0; i<30; i++) {
-      confettiParticles.push(new ConfettiParticle(x, y));
+  // Shuffle utility
+  function shuffleArray(arr) {
+    const array = [...arr];
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
     }
-    if (!confettiAnimationId) {
-      confettiAnimationId = requestAnimationFrame(confettiLoop);
+    return array;
+  }
+
+  // Confetti animation code adapted from https://codepen.io/firxworx/pen/PwwdzM
+  // Very simple confetti effect on canvas
+  function triggerConfetti() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    confettiCanvas.width = w;
+    confettiCanvas.height = h;
+
+    confettiParticles = [];
+    const count = 150;
+
+    for (let i = 0; i < count; i++) {
+      confettiParticles.push({
+        x: Math.random() * w,
+        y: Math.random() * h - h,
+        r: randomRange(2, 6),
+        d: Math.random() * count + 10,
+        color: randomColor(),
+        tilt: Math.floor(Math.random() * 10) - 10,
+        tiltAngle: 0,
+        tiltAngleIncrement: Math.random() * 0.07 + 0.05,
+      });
     }
+
+    (function runConfetti() {
+      ctx.clearRect(0, 0, w, h);
+      confettiParticles.forEach((p, i) => {
+        p.tiltAngle += p.tiltAngleIncrement;
+        p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+        p.x += Math.sin(p.d);
+        p.tilt = Math.sin(p.tiltAngle) * 15;
+
+        ctx.beginPath();
+        ctx.lineWidth = p.r;
+        ctx.strokeStyle = p.color;
+        ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+        ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+        ctx.stroke();
+
+        if (p.y > h) {
+          confettiParticles[i] = {
+            x: Math.random() * w,
+            y: -10,
+            r: p.r,
+            d: p.d,
+            color: p.color,
+            tilt: p.tilt,
+            tiltAngle: 0,
+            tiltAngleIncrement: p.tiltAngleIncrement,
+          };
+        }
+      });
+
+      if (confettiParticles.length) requestAnimationFrame(runConfetti);
+    })();
   }
-  function confettiLoop() {
-    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-    confettiParticles.forEach((p, i) => {
-      p.update();
-      p.draw(confettiCtx);
-      if (p.opacity <= 0) confettiParticles.splice(i, 1);
+
+  function randomRange(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+  function randomColor() {
+    const colors = ["#f94144", "#f3722c", "#f8961e", "#f9844a", "#f9c74f", "#90be6d", "#43aa8b", "#577590"];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  // Dark mode toggle
+  darkModeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    const isDark = document.body.classList.contains("dark");
+    darkModeToggle.setAttribute("aria-pressed", isDark);
+    // Update button styles in start menu
+    document.querySelectorAll("#start-menu button").forEach(btn => {
+      btn.classList.toggle("dark", isDark);
     });
-    if (confettiParticles.length > 0) {
-      confettiAnimationId = requestAnimationFrame(confettiLoop);
-    } else {
-      cancelAnimationFrame(confettiAnimationId);
-      confettiAnimationId = null;
-      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-    }
-  }
-  function showConfettiAt(elem) {
-    const rect = elem.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    createConfetti(x, y);
-  }
-
-  // Start game
-  function startGame(lessonIndex) {
-    currentLessonIndex = lessonIndex;
-    matchedPairs.clear();
-    matchedCount = 0;
-    streak = 0;
-    incorrectAttempts = [];
-    updateProgress();
-    updateStreak();
-    btnReview.style.display = 'none';
-
-    startMenu.style.display = 'none';
-    reviewScreen.style.display = 'none';
-    gameScreen.style.display = 'block';
-
-    gameTitle.textContent = `${lessons[lessonIndex].name} - Match the words`;
-    const words = lessons[lessonIndex].words;
-    totalPairs = words.length;
-    renderPairs(words);
-    window.scrollTo(0, 0);
-  }
-
-  // Review screen
-  function showReview() {
-    gameScreen.style.display = 'none';
-    reviewScreen.style.display = 'block';
-    reviewList.innerHTML = '';
-
-    // Matched words first
-    matchedPairs.forEach(word => {
-      const pair = lessons[currentLessonIndex].words.find(w => w.english === word);
-      if (!pair) return;
-      const li = document.createElement('li');
-      li.textContent = `${pair.english} - ${pair.japanese}`;
-      const btn = document.createElement('button');
-      btn.textContent = '🔊';
-      btn.title = 'Play English word audio';
-      btn.onclick = () => playAudio(pair.english);
-      li.appendChild(btn);
-      reviewList.appendChild(li);
-    });
-
-    // Incorrect attempts unique
-    [...new Set(incorrectAttempts)].forEach(word => {
-      const pair = lessons[currentLessonIndex].words.find(w => w.english === word);
-      if (!pair) return;
-      const li = document.createElement('li');
-      li.textContent = `${pair.english} - ${pair.japanese}`;
-      li.classList.add('incorrect');
-      const btn = document.createElement('button');
-      btn.textContent = '🔊';
-      btn.title = 'Play English word audio';
-      btn.onclick = () => playAudio(pair.english);
-      li.appendChild(btn);
-      reviewList.appendChild(li);
-    });
-  }
-
-  // Event listeners
-  btnReview.addEventListener('click', showReview);
-  btnBack.addEventListener('click', () => {
-    gameScreen.style.display = 'none';
-    startMenu.style.display = 'block';
-  });
-  btnBackFromReview.addEventListener('click', () => {
-    reviewScreen.style.display = 'none';
-    startMenu.style.display = 'block';
+    // End screen dark mode style
+    endScreen.classList.toggle("dark", isDark);
   });
 
-  // Resize confetti canvas
-  function resizeCanvas() {
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+  // Challenge mode button
+  challengeBtn.addEventListener("click", () => {
+    startGame(0, true);
+  });
 
-  // Init
-  initStartMenu();
-
+  // Initialize
+  setupLessonButtons();
 })();
 </script>
-
 </body>
 </html>
