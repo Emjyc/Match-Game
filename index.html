@@ -196,13 +196,28 @@
         card.draggable = true;
         card.textContent = word.english;
         card.dataset.match = word.japanese;
+
         card.addEventListener('dragstart', (e) => {
           e.dataTransfer.setData('text/plain', word.english);
-          e.dataTransfer.setDragImage(card, card.offsetWidth / 2, card.offsetHeight / 2);
+
+          // Create clone for drag image to look exactly like the card
+          const dragIcon = card.cloneNode(true);
+          dragIcon.style.position = 'absolute';
+          dragIcon.style.top = '-1000px';  // hide it offscreen
+          dragIcon.style.left = '-1000px';
+          dragIcon.style.width = `${card.offsetWidth}px`;
+          dragIcon.style.height = `${card.offsetHeight}px`;
+          document.body.appendChild(dragIcon);
+
+          e.dataTransfer.setDragImage(dragIcon, card.offsetWidth / 2, card.offsetHeight / 2);
+
+          setTimeout(() => {
+            document.body.removeChild(dragIcon);
+          }, 0);
+
           playAudio(word.english);
-          // Add a data attribute for reference on drag
-          draggedElement = card;
         });
+
         englishColumn.appendChild(card);
       });
 
@@ -221,8 +236,9 @@
 
           if (card.dataset.match === draggedText) {
             card.classList.add('matched');
-            // Remove the dragged English card from column and append it on top of Japanese card
             matchCard.classList.add('matched');
+
+            // Append English card inside Japanese card and style it to sit on top
             matchCard.style.position = 'absolute';
             matchCard.style.left = 0;
             matchCard.style.top = 0;
