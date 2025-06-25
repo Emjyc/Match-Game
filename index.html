@@ -6,243 +6,211 @@
 <title>Vocabulary Match Game</title>
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
 <style>
+  /* Base styles */
   body {
-    margin: 0; padding: 0;
     font-family: 'Comic Neue', cursive;
+    margin: 0;
+    padding: 0;
     background: #fefefe;
     color: #222;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     user-select: none;
   }
   h1.title {
-    font-size: 2.5rem;
-    margin: 20px 0 30px;
     text-align: center;
+    font-size: 2.5em;
+    margin: 20px 0 10px 0;
   }
-
-  /* Start Menu */
   #start-menu {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
-    padding: 20px 10px 40px;
-    background-color: #fff;
-    min-height: 100vh;
-    box-sizing: border-box;
+    gap: 12px;
+    padding: 20px;
   }
   #lesson-buttons {
-    display: flex;
+    display: flex !important;
     flex-wrap: wrap;
+    gap: 10px;
     justify-content: center;
-    gap: 14px;
-    max-width: 720px;
+    width: 90vw;
+    max-width: 600px;
   }
   #lesson-buttons button {
-    background-color: #d6336c;
-    color: #fff;
+    flex: 1 1 120px;
+    padding: 12px 15px;
+    font-size: 1.1em;
+    border-radius: 8px;
     border: none;
-    border-radius: 10px;
-    padding: 14px 28px;
-    font-size: 1.25rem;
-    font-weight: 600;
+    background: #ffe0f0;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(214,51,108,0.35);
-    transition: background-color 0.25s ease, transform 0.2s ease;
-    min-width: 140px;
-    user-select: none;
+    transition: background-color 0.3s, transform 0.2s;
   }
   #lesson-buttons button:hover {
-    background-color: #ff799b;
+    background: #ffd2ea;
     transform: scale(1.05);
   }
-  #dark-mode-toggle {
-    background: #38b0de;
-    color: white;
-    padding: 12px 28px;
-    border-radius: 10px;
-    border: none;
-    font-weight: 600;
-    font-size: 1.2rem;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(56,176,222,0.5);
-    user-select: none;
-    transition: background-color 0.25s ease, transform 0.2s ease;
-    margin-top: 10px;
-  }
-  #dark-mode-toggle:hover {
-    background-color: #64b8e6;
-    transform: scale(1.05);
-  }
-
-  /* Game Grid */
   #game-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* English left, Japanese right */
-    gap: 12px 20px;
-    max-width: 800px;
-    margin: 30px auto 50px;
-    position: relative;
-    min-height: 400px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
   }
   .draggable, .droppable {
-    user-select: none;
-    font-size: 1.2rem;
-    border-radius: 10px;
-    padding: 14px 20px;
-    min-height: 50px;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    font-size: 1.2em;
+    height: 50px;
+    border-radius: 8px;
     box-sizing: border-box;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     cursor: grab;
     background: #fafafa;
-    border: 2px solid transparent;
-    transition: box-shadow 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
+    border: 2px solid #ccc;
+    transition: background-color 0.3s, border-color 0.3s;
     position: relative;
   }
-  .draggable:active {
-    cursor: grabbing;
+  .draggable.matched, .droppable.matched {
+    background-color: #c1f0c1 !important;
+    border-color: #60b260 !important;
+    cursor: default;
   }
   .droppable {
-    background: #f0f0f0;
-    border: 2px dashed #ccc;
+    cursor: default;
+    user-select: none;
   }
-  .matched {
-    background-color: #c1f0c1 !important;
-    box-shadow: 0 0 15px 3px #57d26f;
-    border-color: #57d26f !important;
-    cursor: default !important;
+  .draggable {
+    user-select: none;
   }
   .hide {
-    visibility: hidden !important;
-  }
-
-  /* Bounce back & shake animation for incorrect drops */
-  .bounce-back {
-    animation: bounceBack 0.4s ease forwards;
+    visibility: hidden;
   }
   .shake {
-    animation: shakeAnim 0.4s ease forwards;
+    animation: shake 0.4s;
+  }
+  .bounce-back {
+    animation: bounceBack 0.4s;
+  }
+  @keyframes shake {
+    0% { transform: translateX(0); border-color: #f44336; background: #fddede; }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); border-color: #ccc; background: #fafafa; }
   }
   @keyframes bounceBack {
-    0% { transform: translateY(-20px); }
-    50% { transform: translateY(10px); }
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
     100% { transform: translateY(0); }
   }
-  @keyframes shakeAnim {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    50% { transform: translateX(8px); }
-    75% { transform: translateX(-8px); }
-    100% { transform: translateX(0); }
-  }
 
-  /* Sparkle effect */
-  .sparkle {
-    position: absolute;
-    pointer-events: none;
-    width: 12px;
-    height: 12px;
-    background: #ffd23f;
-    border-radius: 50%;
-    box-shadow: 0 0 6px 2px #ffd23f;
-    animation: sparkleAnim 0.8s ease forwards;
-  }
-  @keyframes sparkleAnim {
-    0% { transform: scale(0.3); opacity: 1; }
-    100% { transform: scale(1.5); opacity: 0; }
-  }
-
-  /* Progress Bar & Streak */
+  /* Progress bar */
   #progress-container {
-    width: 80%;
-    max-width: 800px;
-    margin: 10px auto 0;
+    width: 90vw;
+    max-width: 600px;
+    height: 20px;
     background: #eee;
-    border-radius: 8px;
-    height: 14px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    margin: 0 auto 12px auto;
+    overflow: hidden;
   }
   #progress-bar {
     height: 100%;
     width: 0%;
-    background: #d6336c;
-    border-radius: 8px;
-    transition: width 0.3s ease;
+    background: #e91e63;
+    transition: width 0.4s ease;
   }
+
+  /* Streak counter */
   #streak-counter {
-    max-width: 800px;
-    margin: 6px auto 30px;
-    font-weight: 700;
-    font-size: 1.2rem;
     text-align: center;
-    color: #777;
+    font-weight: bold;
+    margin-bottom: 12px;
+    font-size: 1.2em;
     position: relative;
+  }
+  .sparkle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #e91e63;
+    border-radius: 50%;
+    animation: sparkleAnim 0.8s linear forwards;
+  }
+  @keyframes sparkleAnim {
+    0% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(0) translateY(-15px); }
+  }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    pointer-events: none;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
   }
 
   /* Dark mode */
   body.dark-mode {
-    background: #222;
+    background: #1e1e1e;
     color: #ddd;
   }
   body.dark-mode #start-menu {
-    background-color: #222;
+    background: #222;
   }
   body.dark-mode #lesson-buttons button {
-    background-color: #b6457a;
-    color: #eee;
-    box-shadow: 0 4px 8px rgba(182,69,122,0.5);
-  }
-  body.dark-mode #lesson-buttons button:hover {
-    background-color: #d16b9c;
-  }
-  body.dark-mode #dark-mode-toggle {
-    background: #8db4ff;
-    color: #222;
-    box-shadow: 0 4px 8px rgba(141,180,255,0.6);
-  }
-  body.dark-mode #dark-mode-toggle:hover {
-    background-color: #a6c6ff;
-  }
-  body.dark-mode #game-grid .draggable,
-  body.dark-mode #game-grid .droppable {
-    background: #333;
-    border-color: #555;
+    background: #444;
     color: #ddd;
   }
-  body.dark-mode #game-grid .droppable {
-    border-style: dashed;
+  body.dark-mode #lesson-buttons button:hover {
+    background: #666;
   }
-  body.dark-mode #game-grid .matched {
-    background-color: #4caf50 !important;
-    box-shadow: 0 0 15px 3px #7ed57e !important;
-    border-color: #7ed57e !important;
+  body.dark-mode .draggable, body.dark-mode .droppable {
+    background: #333;
+    border-color: #555;
+    color: #eee;
+  }
+  body.dark-mode .draggable.matched, body.dark-mode .droppable.matched {
+    background-color: #3a5f3a !important;
+    border-color: #5aa65a !important;
+  }
+  body.dark-mode #progress-container {
+    background: #333;
+  }
+  body.dark-mode #progress-bar {
+    background: #ff4081;
+  }
+  body.dark-mode #streak-counter {
+    color: #ff4081;
   }
 </style>
 </head>
 <body>
 
-  <div id="start-menu" class="active">
-    <h1 class="title">Vocabulary Match Game</h1>
-    <div id="lesson-buttons"></div>
-    <button id="dark-mode-toggle" title="Toggle Dark Mode">🌓 Toggle Dark Mode</button>
-  </div>
+<div id="start-menu" class="active">
+  <h1 class="title">Vocabulary Match Game</h1>
+  <div id="lesson-buttons"></div>
+  <button id="challenge-mode-btn" style="margin-top:20px; background:#ff4081; color:white;">Challenge Mode 🔥</button>
+  <button id="dark-mode-toggle" style="margin-top:12px;">🌓 Toggle Dark Mode</button>
+</div>
 
-  <div id="game-grid" style="display:none;"></div>
+<div id="progress-container" style="display:none;">
+  <div id="progress-bar"></div>
+</div>
+<div id="streak-counter" style="display:none;">Streak: 0</div>
 
-  <div id="progress-container" style="display:none;">
-    <div id="progress-bar"></div>
-  </div>
-  <div id="streak-counter" style="display:none;">Streak: 0</div>
+<div id="game-grid" style="display:none;"></div>
 
-  <canvas id="confetti-canvas" style="position:fixed; pointer-events:none; top:0; left:0; width:100vw; height:100vh; z-index:9999;"></canvas>
+<canvas id="confetti-canvas"></canvas>
 
 <script>
-  // Lesson data (fill lessons 3 to 14 as needed)
+window.addEventListener('DOMContentLoaded', () => {
+
   const lessons = [
+    // Lesson 1 example
     {
       name: "Lesson 1",
       words: [
@@ -268,6 +236,7 @@
         { english: "stadium", japanese: "スタジアム" }
       ]
     },
+    // Add other lessons here (lessons 2 to 14)
     {
       name: "Lesson 2",
       words: [
@@ -292,84 +261,81 @@
         { english: "speak", japanese: "話す" },
         { english: "learn", japanese: "学ぶ" }
       ]
-    },
-    // Placeholder lessons 3-14: fill in your data as needed
-    { name: "Lesson 3", words: [] },
-    { name: "Lesson 4", words: [] },
-    { name: "Lesson 5", words: [] },
-    { name: "Lesson 6", words: [] },
-    { name: "Lesson 7", words: [] },
-    { name: "Lesson 8", words: [] },
-    { name: "Lesson 9", words: [] },
-    { name: "Lesson 10", words: [] },
-    { name: "Lesson 11", words: [] },
-    { name: "Lesson 12", words: [] },
-    { name: "Lesson 13", words: [] },
-    { name: "Lesson 14", words: [] }
+    }
   ];
 
-  // Elements
-  const startMenu = document.getElementById('start-menu');
+  // === Elements ===
   const lessonButtonsContainer = document.getElementById('lesson-buttons');
   const gameGrid = document.getElementById('game-grid');
+  const startMenu = document.getElementById('start-menu');
   const progressContainer = document.getElementById('progress-container');
   const progressBar = document.getElementById('progress-bar');
   const streakCounter = document.getElementById('streak-counter');
+  const challengeModeBtn = document.getElementById('challenge-mode-btn');
   const darkModeToggle = document.getElementById('dark-mode-toggle');
   const confettiCanvas = document.getElementById('confetti-canvas');
   const confettiCtx = confettiCanvas.getContext('2d');
 
-  // Game state
+  // State
   let draggedElement = null;
-  let dragOffsetX = 0;
-  let dragOffsetY = 0;
+  let dragOffsetX = 0, dragOffsetY = 0;
   let matchesMade = 0;
-  let totalMatches = 0;
   let currentStreak = 0;
-  let confettiActive = false;
-
-  // Confetti data
+  let totalMatches = 0;
   let confettiParticles = [];
-  let confettiAnimationId = null;
+  let confettiAnimationId;
+  let confettiActive = false;
+  let challengeMode = false;
+  let challengeTimerId = null;
+  let challengeTimeLeft = 120;
 
-  // Create lesson buttons
-  lessons.forEach((lesson, i) => {
-    const btn = document.createElement('button');
-    btn.textContent = lesson.name;
-    btn.dataset.index = i;
-    btn.addEventListener('click', () => startGame(i));
-    lessonButtonsContainer.appendChild(btn);
+  // Initialize lesson buttons
+  function initLessonButtons() {
+    lessonButtonsContainer.innerHTML = '';
+    lessons.forEach((lesson, i) => {
+      const btn = document.createElement('button');
+      btn.textContent = lesson.name;
+      btn.addEventListener('click', () => startGame(i, false));
+      lessonButtonsContainer.appendChild(btn);
+    });
+  }
+  initLessonButtons();
+
+  challengeModeBtn.addEventListener('click', () => {
+    startGame(0, true);
   });
 
-  // Dark mode toggle
-  darkModeToggle.addEventListener('click', () => {
+  darkModeToggle.addEventListener('click', toggleDarkMode);
+
+  function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
-  });
+  }
 
-  function startGame(index) {
-    const words = lessons[index].words;
-    if (!words || words.length === 0) {
-      alert("No words found for this lesson.");
-      return;
-    }
+  // Start the game
+  function startGame(index, isChallenge = false) {
+    challengeMode = isChallenge;
+    challengeTimeLeft = 120;
     matchesMade = 0;
     currentStreak = 0;
+
+    progressContainer.style.display = 'block';
+    streakCounter.style.display = 'block';
     updateProgress();
     updateStreak(0);
 
-    gameGrid.innerHTML = '';
     startMenu.style.display = 'none';
     gameGrid.style.display = 'grid';
-    progressContainer.style.display = 'block';
-    streakCounter.style.display = 'block';
 
+    gameGrid.innerHTML = '';
+
+    const words = lessons[index].words;
     totalMatches = words.length;
 
-    // Shuffle English and Japanese independently
+    // Shuffle English and Japanese separately
     const shuffledEnglish = [...words].sort(() => Math.random() - 0.5);
     const shuffledJapanese = [...words].sort(() => Math.random() - 0.5);
 
-    // Create English draggable boxes (left)
+    // Create English draggable boxes (left side)
     shuffledEnglish.forEach(pair => {
       const engDiv = document.createElement('div');
       engDiv.className = 'draggable';
@@ -378,49 +344,46 @@
       engDiv.setAttribute('draggable', 'true');
       engDiv.style.position = 'relative';
 
+      // Mouse drag handlers
       engDiv.addEventListener('dragstart', dragStart);
       engDiv.addEventListener('dragend', dragEnd);
 
+      // Touch handlers
       engDiv.addEventListener('touchstart', touchStart, { passive: false });
 
       gameGrid.appendChild(engDiv);
     });
 
-    // Create Japanese droppable boxes (right)
+    // Create Japanese droppable boxes (right side)
     shuffledJapanese.forEach(pair => {
       const japDiv = document.createElement('div');
       japDiv.className = 'droppable';
       japDiv.textContent = pair.japanese;
       japDiv.dataset.match = pair.english;
+      japDiv.style.position = 'relative';
 
       japDiv.addEventListener('dragover', e => e.preventDefault());
       japDiv.addEventListener('drop', dropHandler);
 
       gameGrid.appendChild(japDiv);
     });
+
+    if (challengeMode) {
+      startChallengeTimer();
+    } else {
+      stopChallengeTimer();
+    }
   }
 
-  // Mouse drag handlers
+  // Drag handlers
   function dragStart(e) {
     draggedElement = e.target;
-    dragOffsetX = e.offsetX;
-    dragOffsetY = e.offsetY;
     e.dataTransfer.setData('text/plain', draggedElement.dataset.word);
     setTimeout(() => draggedElement.classList.add('hide'), 0);
-
-    playAudio(draggedElement.textContent);
   }
   function dragEnd(e) {
-    if (draggedElement) {
-      draggedElement.classList.remove('hide');
-      draggedElement.style.position = '';
-      draggedElement.style.left = '';
-      draggedElement.style.top = '';
-      draggedElement.style.zIndex = '';
-      draggedElement.style.width = '';
-      draggedElement.style.height = '';
-      draggedElement = null;
-    }
+    draggedElement.classList.remove('hide');
+    draggedElement = null;
   }
   function dropHandler(e) {
     e.preventDefault();
@@ -434,7 +397,7 @@
     }
   }
 
-  // Touch drag handlers
+  // Touch handlers
   function touchStart(e) {
     e.preventDefault();
     draggedElement = e.target;
@@ -489,7 +452,7 @@
     draggedElement.style.top = pageY - dragOffsetY + 'px';
   }
 
-  // Correct match logic
+  // Correct match
   function onCorrectMatch(dropTarget, draggedEl) {
     matchesMade++;
     currentStreak++;
@@ -513,7 +476,7 @@
     draggedEl.style.height = dropRect.height + 'px';
     draggedEl.style.zIndex = 500;
 
-    // Remove event listeners to disable further dragging
+    // Remove drag/touch listeners
     draggedEl.removeEventListener('dragstart', dragStart);
     draggedEl.removeEventListener('touchstart', touchStart);
 
@@ -523,7 +486,7 @@
     }
   }
 
-  // Incorrect match logic
+  // Incorrect match
   function onIncorrectMatch(el) {
     currentStreak = 0;
     updateStreak(currentStreak);
@@ -538,74 +501,80 @@
   // Bounce back animation
   function bounceBack(el) {
     el.classList.add('bounce-back');
-    setTimeout(() => el.classList.remove('bounce-back'), 400);
+    setTimeout(() => {
+      el.classList.remove('bounce-back');
+      // Reset position if touch drag
+      if (el.style.position === 'absolute') {
+        el.style.position = '';
+        el.style.left = '';
+        el.style.top = '';
+        el.style.zIndex = '';
+        el.style.width = '';
+        el.style.height = '';
+      }
+    }, 400);
   }
 
-  // Progress & Streak UI update
+  // Update progress bar
   function updateProgress() {
-    const pct = (matchesMade / totalMatches) * 100;
-    progressBar.style.width = pct + '%';
+    const percent = (matchesMade / totalMatches) * 100;
+    progressBar.style.width = percent + '%';
   }
+
+  // Update streak display
   function updateStreak(count) {
-    streakCounter.textContent = count >= 3 ? `🔥 Streak: ${count}` : `Streak: ${count}`;
-    if (count >= 3) createSparkle(streakCounter);
-  }
-
-  // Speech Synthesis for English words
-  function playAudio(word) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(word);
-    utter.lang = 'en-US';
-    window.speechSynthesis.speak(utter);
-  }
-
-  // Error sound for incorrect matches
-  function playErrorSound() {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-      osc.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.1);
-    } catch {
-      // AudioContext not supported
+    streakCounter.textContent = `Streak: ${count}`;
+    if (count >= 3) {
+      createSparkle(streakCounter);
     }
   }
 
-  // Sparkle effect for streak & correct match
-  function createSparkle(parent) {
-    const sparkle = document.createElement('div');
-    sparkle.classList.add('sparkle');
-    sparkle.style.left = Math.random() * 100 + '%';
-    sparkle.style.top = Math.random() * 100 + '%';
-    sparkle.style.position = 'absolute';
-    parent.appendChild(sparkle);
-    setTimeout(() => sparkle.remove(), 800);
+  // Play audio for English word (using SpeechSynthesis)
+  function playAudio(text) {
+    if (!window.speechSynthesis) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'en-US';
+    window.speechSynthesis.cancel(); // Stop previous
+    window.speechSynthesis.speak(utter);
   }
 
-  // Confetti implementation
+  // Play error sound (optional, can replace with beep or nothing)
+  function playErrorSound() {
+    // For simplicity, no sound, but you can add beep here
+  }
+
+  // Sparkle effect on element
+  function createSparkle(parent) {
+    for (let i = 0; i < 5; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      sparkle.style.left = `${Math.random() * parent.offsetWidth}px`;
+      sparkle.style.top = `${Math.random() * parent.offsetHeight}px`;
+      parent.appendChild(sparkle);
+      setTimeout(() => sparkle.remove(), 800);
+    }
+  }
+
+  // Confetti effect
   function launchConfetti() {
     if (confettiActive) return;
     confettiActive = true;
     confettiCanvas.width = window.innerWidth;
     confettiCanvas.height = window.innerHeight;
     confettiParticles = [];
-    const colors = ['#d6336c', '#fcd5ce', '#f9a8d4', '#ff80ab', '#c9184a'];
     for (let i = 0; i < 150; i++) {
       confettiParticles.push({
         x: Math.random() * confettiCanvas.width,
         y: Math.random() * confettiCanvas.height - confettiCanvas.height,
-        r: Math.random() * 7 + 3,
-        d: Math.random() * 30 + 10,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        tilt: Math.random() * 10 - 10,
-        tiltAngle: 0,
-        tiltAngleIncrement: (Math.random() * 0.07) + 0.05
+        r: Math.random() * 6 + 4,
+        d: Math.random() * 20 + 10,
+        color: `hsl(${Math.random()*360}, 70%, 60%)`,
+        tilt: Math.floor(Math.random() * 10) - 10,
+        tiltAngleIncrement: 0.07 + Math.random() / 10,
+        tiltAngle: 0
       });
     }
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
     animateConfetti();
   }
   function animateConfetti() {
@@ -613,24 +582,24 @@
     confettiParticles.forEach(p => {
       p.tiltAngle += p.tiltAngleIncrement;
       p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
-      p.x += Math.sin(p.tiltAngle);
+      p.x += Math.sin(p.d);
       p.tilt = Math.sin(p.tiltAngle) * 15;
 
       confettiCtx.beginPath();
-      confettiCtx.lineWidth = p.r;
+      confettiCtx.lineWidth = p.r / 2;
       confettiCtx.strokeStyle = p.color;
-      confettiCtx.moveTo(p.x + p.tilt + p.r / 2, p.y);
-      confettiCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+      confettiCtx.moveTo(p.x + p.tilt + p.r / 4, p.y);
+      confettiCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
       confettiCtx.stroke();
 
+      // Reset confetti below screen
       if (p.y > confettiCanvas.height) {
         p.x = Math.random() * confettiCanvas.width;
         p.y = -10;
+        p.tilt = Math.floor(Math.random() * 10) - 10;
       }
     });
     confettiAnimationId = requestAnimationFrame(animateConfetti);
-
-    // Stop confetti after 2 seconds
     setTimeout(() => {
       cancelAnimationFrame(confettiAnimationId);
       confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
@@ -638,11 +607,40 @@
     }, 5000);
   }
 
-  // Resize confetti canvas on window resize
-  window.addEventListener('resize', () => {
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-  });
+  // Challenge mode timer (optional)
+  function startChallengeTimer() {
+    if (challengeTimerId) clearInterval(challengeTimerId);
+    challengeTimerId = setInterval(() => {
+      challengeTimeLeft--;
+      progressBar.style.backgroundColor = '#ff1744'; // Red in challenge
+      updateProgress();
+      if (challengeTimeLeft <= 0) {
+        clearInterval(challengeTimerId);
+        alert('Time is up! Try again.');
+        resetGame();
+      }
+    }, 1000);
+  }
+  function stopChallengeTimer() {
+    if (challengeTimerId) clearInterval(challengeTimerId);
+    challengeTimerId = null;
+    progressBar.style.backgroundColor = '#e91e63';
+  }
+
+  // Reset to start menu
+  function resetGame() {
+    progressContainer.style.display = 'none';
+    streakCounter.style.display = 'none';
+    gameGrid.style.display = 'none';
+    startMenu.style.display = 'flex';
+    updateProgress();
+    updateStreak(0);
+  }
+
+  // Init
+  resetGame();
+
+});
 </script>
 
 </body>
