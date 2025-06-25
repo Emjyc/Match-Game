@@ -21,20 +21,21 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    padding: 1rem 1.5rem;
   }
   header {
     background: #3b82f6;
     color: white;
-    padding: 1rem 0;
+    padding: 1.5rem 0;
     text-align: center;
-    font-weight: 700;
-    font-size: 1.9rem;
+    font-weight: 900;
+    font-size: 2rem;
     font-family: 'Noto Sans JP', sans-serif;
     user-select: none;
+    margin-bottom: 1.5rem;
   }
   main {
     flex-grow: 1;
-    padding: 1.5rem;
     max-width: 900px;
     margin: 0 auto;
     display: flex;
@@ -46,27 +47,29 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 1rem;
-    margin-top: 3rem;
+    gap: 1.25rem;
+    margin-top: 2rem;
   }
   #title-screen button {
     background: #60a5fa;
     border: none;
     color: white;
     padding: 1rem 2rem;
-    font-size: 1.2rem;
-    border-radius: 12px;
+    font-size: 1.3rem;
+    border-radius: 14px;
     cursor: pointer;
-    box-shadow: 0 5px 15px rgba(96, 165, 250, 0.4);
+    box-shadow: 0 5px 15px rgba(96, 165, 250, 0.45);
     transition: background-color 0.3s ease, transform 0.2s ease;
-    width: 140px;
+    width: 150px;
     font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    user-select: none;
   }
   #title-screen button:hover,
   #title-screen button:focus {
     background: #2563eb;
     outline: none;
-    transform: scale(1.08);
+    transform: scale(1.1);
   }
 
   /* Game Screen */
@@ -76,8 +79,8 @@
   }
   #set-title {
     font-family: 'Noto Sans JP', sans-serif;
-    font-weight: 800;
-    font-size: 1.7rem;
+    font-weight: 900;
+    font-size: 1.9rem;
     text-align: center;
     margin-bottom: 1rem;
   }
@@ -85,17 +88,18 @@
   /* Progress Bar */
   #progress-container {
     width: 100%;
-    height: 20px;
+    height: 22px;
     background: #cbd5e1;
-    border-radius: 15px;
+    border-radius: 20px;
     overflow: hidden;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
   }
   #progress-bar {
     height: 100%;
     width: 0%;
     background: #22c55e;
-    border-radius: 15px 0 0 15px;
+    border-radius: 20px 0 0 20px;
     transition: width 0.4s ease;
   }
 
@@ -103,29 +107,29 @@
   .matching-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 2rem;
   }
   #english-words,
   #japanese-words {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: 1.2rem;
   }
 
   /* Word Tiles */
   .word-tile {
     background: white;
-    border-radius: 14px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
-    padding: 1.1rem;
-    font-size: 1.25rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    padding: 1.3rem;
+    font-size: 1.3rem;
     font-weight: 700;
     text-align: center;
     user-select: none;
     cursor: grab;
     font-family: 'Noto Sans JP', sans-serif;
     transition:
-      transform 0.25s ease,
+      transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
       box-shadow 0.25s ease,
       background-color 0.3s ease;
     will-change: transform;
@@ -135,83 +139,113 @@
   }
   /* Dragging scale */
   .dragging {
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    transform: scale(1.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.30);
     z-index: 10;
+  }
+  /* Bounce animation for correct drop */
+  .bounce-correct {
+    animation: bounceCorrect 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  @keyframes bounceCorrect {
+    0%   { transform: scale(1.12) translateY(0); }
+    50%  { transform: scale(1.18) translateY(-10px); }
+    100% { transform: scale(1.12) translateY(0); }
+  }
+
+  /* Bounce-back animation for incorrect drop */
+  .bounce-back {
+    animation: bounceBack 0.5s ease forwards;
+  }
+  @keyframes bounceBack {
+    0%   { transform: translateX(0); }
+    20%  { transform: translateX(-15px); }
+    50%  { transform: translateX(15px); }
+    80%  { transform: translateX(-10px); }
+    100% { transform: translateX(0); }
   }
 
   /* Drop Targets */
   .drop-target {
     cursor: pointer;
     background: white;
-    border: 3px solid #cbd5e1;
-    border-radius: 14px;
-    padding: 1.3rem;
-    font-size: 1.6rem;
-    font-weight: 800;
+    border: 3.5px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 1.5rem;
+    font-size: 1.75rem;
+    font-weight: 900;
     text-align: center;
     transition:
       border-color 0.35s ease,
       background-color 0.35s ease,
       box-shadow 0.3s ease;
-    min-height: 70px;
+    min-height: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Noto Sans JP', sans-serif;
     user-select: none;
+    position: relative;
   }
   .drop-target.drag-over {
     border-color: #2563eb;
     background-color: #dbeafe;
-    box-shadow: 0 0 8px 3px #93c5fd;
+    box-shadow: 0 0 10px 3px #93c5fd;
   }
   .drop-target.correct {
     background-color: #d1fae5;
     border-color: #22c55e;
     color: #166534;
     font-weight: 900;
-    box-shadow: 0 0 12px 4px #22c55e88;
+    box-shadow: 0 0 14px 5px #22c55eaa;
   }
   .drop-target.incorrect {
-    animation: shake 0.35s ease;
+    animation: shake 0.4s ease;
     border-color: #ef4444;
     background-color: #fee2e2;
     color: #b91c1c;
   }
-
   /* Shake animation for wrong drop */
   @keyframes shake {
     0%, 100% { transform: translateX(0);}
-    20%, 60% { transform: translateX(-6px);}
-    40%, 80% { transform: translateX(6px);}
+    20%, 60% { transform: translateX(-7px);}
+    40%, 80% { transform: translateX(7px);}
   }
 
   /* Matched English word style */
   .matched {
     cursor: default !important;
-    opacity: 0.6;
+    opacity: 0.5;
     box-shadow: none !important;
+  }
+  .matched:hover {
+    box-shadow: none !important;
+  }
+  .matched.dragging {
+    cursor: default !important;
   }
 
   /* Back button */
   #back-button {
-    margin: 2rem auto 0;
-    padding: 0.8rem 1.8rem;
+    margin: 2.5rem auto 0;
+    padding: 0.9rem 2.3rem;
     background: #64748b;
     color: white;
     border: none;
-    border-radius: 12px;
-    font-size: 1.15rem;
+    border-radius: 16px;
+    font-size: 1.25rem;
     cursor: pointer;
     transition: background-color 0.3s ease;
     font-family: 'Noto Sans JP', sans-serif;
     display: block;
-    max-width: 140px;
+    max-width: 150px;
     user-select: none;
+    font-weight: 700;
   }
-  #back-button:hover {
+  #back-button:hover,
+  #back-button:focus {
     background: #475569;
+    outline: none;
   }
 
   /* Confetti container */
@@ -232,7 +266,7 @@
       grid-template-columns: repeat(2, 1fr);
     }
     #title-screen button {
-      width: 45vw;
+      width: 48vw;
     }
   }
 </style>
@@ -365,7 +399,6 @@
     japaneseWordsContainer.innerHTML = '';
     resetProgress();
 
-    // Shuffle and clone
     let englishWords = [...currentSet.words];
     let japaneseWords = [...currentSet.words];
     shuffle(englishWords);
@@ -379,8 +412,9 @@
       div.setAttribute('role', 'listitem');
       div.setAttribute('aria-grabbed', 'false');
       div.dataset.word = english;
-      div.addEventListener('dragstart', dragStart);
-      div.addEventListener('dragend', dragEnd);
+
+      addEnglishWordDragHandlers(div);
+
       englishWordsContainer.appendChild(div);
     });
 
@@ -441,7 +475,10 @@
 
       // Combine text
       this.textContent = `${this.textContent} — ${draggedWord}`;
-      draggedEl.style.display = 'none';
+
+      // Animate bounce on English word then hide
+      draggedEl.classList.add('bounce-correct');
+      setTimeout(() => draggedEl.style.display = 'none', 500);
 
       matchedCount++;
       updateProgress();
@@ -454,8 +491,13 @@
     } else {
       // Incorrect feedback
       this.classList.add('incorrect');
+      draggedEl.classList.add('bounce-back');
       playIncorrectSound();
-      setTimeout(() => this.classList.remove('incorrect'), 600);
+
+      setTimeout(() => {
+        this.classList.remove('incorrect');
+        draggedEl.classList.remove('bounce-back');
+      }, 700);
     }
   }
 
@@ -470,7 +512,6 @@
 
   // Sound effect for incorrect drop
   function playIncorrectSound() {
-    // Simple beep
     const ctx = new AudioContext();
     const oscillator = ctx.createOscillator();
     oscillator.type = 'triangle';
@@ -483,165 +524,56 @@
   // Confetti function (basic lightweight confetti)
   function runConfetti() {
     const confettiCount = 150;
-    const colors = ['#60a5fa', '#2563eb', '#22c55e', '#16a34a', '#facc15', '#f59e0b', '#ef4444', '#b91c1c'];
-    const container = confettiContainer;
-    container.innerHTML = '';
-
-    for(let i=0; i<confettiCount; i++) {
+    const colors = ['#60a5fa', '#2563eb', '#22c55e', '#16a34a', '#facc15', '#f59e0b', '#ef4444', '#dc2626'];
+    for(let i = 0; i < confettiCount; i++) {
       const confetto = document.createElement('div');
-      confetto.style.position = 'absolute';
+      confetto.style.position = 'fixed';
       confetto.style.width = '8px';
       confetto.style.height = '8px';
       confetto.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-      confetto.style.top = '0px';
+      confetto.style.top = Math.random() * window.innerHeight + 'px';
       confetto.style.left = Math.random() * window.innerWidth + 'px';
-      confetto.style.opacity = 1;
-      confetto.style.borderRadius = '2px';
-      confetto.style.willChange = 'transform, opacity';
-      container.appendChild(confetto);
-
-      const fallDuration = 3000 + Math.random()*2000;
-      const xMovement = (Math.random()-0.5) * 200;
-
-      confetto.animate([
-        { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
-        { transform: `translate(${xMovement}px, 100vh) rotate(${Math.random()*360}deg)`, opacity: 0 }
-      ], {
-        duration: fallDuration,
-        easing: 'ease-out',
-        iterations: 1,
-        fill: 'forwards',
-      });
-      // Remove confetti after animation ends
-      setTimeout(() => confetto.remove(), fallDuration);
+      confetto.style.borderRadius = '50%';
+      confetto.style.opacity = '0.9';
+      confetto.style.pointerEvents = 'none';
+      confetto.style.zIndex = '9999';
+      confetto.style.animation = `confetti-fall 3s ease forwards`;
+      confettiContainer.appendChild(confetto);
+      setTimeout(() => confetto.remove(), 3000);
     }
   }
 
-  // Back button resets game
+  // Confetti fall animation keyframes injection
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes confetti-fall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1;}
+      100% { transform: translateY(400px) rotate(720deg); opacity: 0;}
+    }
+  `;
+  document.head.appendChild(style);
+
   backButton.addEventListener('click', () => {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     gameScreen.style.display = 'none';
     titleScreen.style.display = 'flex';
-    setTitle.textContent = '';
     englishWordsContainer.innerHTML = '';
     japaneseWordsContainer.innerHTML = '';
     resetProgress();
   });
 
-  // Add rearrange/retry feature:
-  // - User can drag unmatched English words around to reorder for easier matching
-  // We just keep them draggable in their container. No special code needed
-  // because the drag & drop only works from english-words to japanese-words containers
-  // So dragging inside English container just reorders them visually.
-
-  // Make english-words container sortable (drag inside English words area)
-  // We'll implement simple drag reorder on English words container:
-
-  let dragSrcEl = null;
-
-  function handleDragStart(e) {
-    dragSrcEl = this;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', this.outerHTML);
-    this.classList.add('dragging');
-  }
-
-  function handleDragOverReorder(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    return false;
-  }
-
-  function handleDropReorder(e) {
-    e.stopPropagation();
-    if (dragSrcEl !== this) {
-      const html = e.dataTransfer.getData('text/html');
-      this.insertAdjacentHTML('beforebegin', html);
-      dragSrcEl.parentNode.removeChild(dragSrcEl);
-
-      // Reattach drag event handlers to new node
-      const newNode = this.previousSibling;
-      addEnglishWordDragHandlers(newNode);
-    }
-    return false;
-  }
-
-  function handleDragEndReorder(e) {
-    this.classList.remove('dragging');
-  }
-
-  function addEnglishWordDragHandlers(el) {
-    el.addEventListener('dragstart', dragStart);
-    el.addEventListener('dragend', dragEnd);
-
-    // For reorder within English container
-    el.addEventListener('dragstart', handleDragStart);
-    el.addEventListener('dragover', handleDragOverReorder);
-    el.addEventListener('drop', handleDropReorder);
-    el.addEventListener('dragend', handleDragEndReorder);
-  }
-
-  // Override dragStart and dragEnd to handle dragging out to japanese area
-  // We'll call addEnglishWordDragHandlers for all English words after creating
-
-  // Override the existing dragStart & dragEnd to prevent conflict
-  // Actually, they both can coexist, just be careful with classes
-
-  // Initialize everything
+  // Initialize
   function init() {
     createSetButtons();
   }
 
-  // When creating English words, call addEnglishWordDragHandlers
-
-  // Modified startSet function snippet for English words:
-  function startSet(setIndex) {
-    currentSet = sets[setIndex];
-    matchedCount = 0;
-    totalPairs = currentSet.words.length;
-
-    titleScreen.style.display = 'none';
-    gameScreen.style.display = 'flex';
-    setTitle.textContent = currentSet.name;
-
-    englishWordsContainer.innerHTML = '';
-    japaneseWordsContainer.innerHTML = '';
-    resetProgress();
-
-    let englishWords = [...currentSet.words];
-    let japaneseWords = [...currentSet.words];
-    shuffle(englishWords);
-    shuffle(japaneseWords);
-
-    englishWords.forEach(({english}) => {
-      const div = document.createElement('div');
-      div.classList.add('word-tile');
-      div.textContent = english;
-      div.setAttribute('draggable', 'true');
-      div.setAttribute('role', 'listitem');
-      div.setAttribute('aria-grabbed', 'false');
-      div.dataset.word = english;
-
-      // Add all drag handlers for both normal drag & reorder
-      addEnglishWordDragHandlers(div);
-
-      englishWordsContainer.appendChild(div);
-    });
-
-    japaneseWords.forEach(({japanese, english}) => {
-      const div = document.createElement('div');
-      div.classList.add('drop-target');
-      div.textContent = japanese;
-      div.setAttribute('role', 'listitem');
-      div.dataset.matchWord = english;
-      div.addEventListener('dragover', dragOver);
-      div.addEventListener('drop', drop);
-      div.addEventListener('dragleave', dragLeave);
-      japaneseWordsContainer.appendChild(div);
-    });
+  // English word drag handlers
+  function addEnglishWordDragHandlers(el) {
+    el.addEventListener('dragstart', dragStart);
+    el.addEventListener('dragend', dragEnd);
   }
 
   init();
+
 })();
 </script>
 
