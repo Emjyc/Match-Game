@@ -1,11 +1,11 @@
-<!-- Fixed complete HTML code with working start buttons and drag-bounce animations -->
+<!-- Updated drag-and-drop with actual box movement and match placement -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vocabulary Match Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nico+Moji&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nico+Moji&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #fdf6f0;
@@ -32,18 +32,6 @@
       flex-direction: column;
       align-items: center;
     }
-    #start-menu, #game-screen, #end-screen {
-      max-width: 1000px;
-      width: 100%;
-      padding: 20px;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    #start-menu.active, #game-screen.active, #end-screen.active {
-      display: flex;
-    }
     .title {
       font-size: 2.5rem;
       margin: 20px;
@@ -63,6 +51,18 @@
     button:hover {
       background: var(--hover);
       transform: scale(1.05);
+    }
+    #start-menu, #game-screen, #end-screen {
+      max-width: 1000px;
+      width: 100%;
+      padding: 20px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    #start-menu.active, #game-screen.active, #end-screen.active {
+      display: flex;
     }
     .grid-container {
       display: grid;
@@ -84,18 +84,25 @@
       border-radius: 10px;
       font-family: 'Nico Moji', sans-serif;
       user-select: none;
+      position: relative;
     }
     .draggable {
       cursor: grab;
     }
     .droppable {
       border: 2px dashed transparent;
+      min-height: 60px;
     }
     .droppable.over {
       border-color: var(--primary);
     }
     .matched {
       background: var(--match) !important;
+      pointer-events: none;
+    }
+    .ghost {
+      opacity: 0.5;
+      position: absolute;
       pointer-events: none;
     }
     #timer {
@@ -184,6 +191,7 @@
         card.dataset.match = word.japanese;
         card.addEventListener('dragstart', (e) => {
           e.dataTransfer.setData('text/plain', word.english);
+          e.dataTransfer.setDragImage(card, card.offsetWidth / 2, card.offsetHeight / 2);
           playAudio(word.english);
         });
         engCol.appendChild(card);
@@ -202,8 +210,8 @@
 
           if (card.dataset.match === draggedText) {
             card.classList.add('matched');
-            matchCard.classList.add('matched');
-            matchCard.draggable = false;
+            card.textContent = `${card.textContent}\n${draggedText}`;
+            matchCard.remove();
             matchedPairs++;
             if (matchedPairs === selectedSet.words.length) {
               if (isChallenge) clearInterval(countdown);
@@ -248,7 +256,6 @@
       utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
     }
-
     const sets = [
       {
         name: "Lesson 1",
