@@ -4,10 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Vocabulary Match Game</title>
-<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
 <style>
-  /* Reset & base */
   * {
     box-sizing: border-box;
   }
@@ -70,12 +68,12 @@
     margin-bottom: 1rem;
   }
 
-  /* Grid container for pairs */
+  /* Grid container for pairs - 4 columns */
   #pairs-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.1rem 2rem;
-    max-width: 700px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem 1.5rem;
+    max-width: 900px;
     margin: auto;
   }
 
@@ -112,7 +110,6 @@
     cursor: default !important;
   }
 
-  /* Bounce red flash on wrong */
   .bounce-red {
     animation: bounceRed 0.5s ease forwards;
   }
@@ -122,7 +119,6 @@
     100% { transform: translateY(0) scale(1); border-color: #cc0000; background-color: #ffc0c0; }
   }
 
-  /* Confetti container */
   #confetti-canvas {
     position: fixed;
     pointer-events: none;
@@ -132,7 +128,6 @@
     z-index: 10000;
   }
 
-  /* Progress bar */
   #progress-container {
     max-width: 700px;
     margin: 15px auto 10px;
@@ -149,7 +144,6 @@
     transition: width 0.3s ease;
   }
 
-  /* Streak counter */
   #streak-counter {
     text-align: center;
     font-weight: 700;
@@ -167,7 +161,6 @@
     50% { text-shadow: 0 0 15px #ff0088, 0 0 25px #ff0088, 0 0 35px #ff0088; }
   }
 
-  /* Review screen */
   #review-screen {
     display: none;
     max-width: 700px;
@@ -213,7 +206,6 @@
     background: #ff66cc;
   }
 
-  /* Dark Mode */
   body.dark {
     background: #1a1a2e;
     color: #ddd;
@@ -267,13 +259,10 @@
 </style>
 </head>
 <body>
-  <!-- Start menu -->
   <div id="start-menu">
     <h1 class="title">Vocabulary Match Game</h1>
-    <!-- Buttons inserted here -->
   </div>
 
-  <!-- Game screen -->
   <div id="game-screen" aria-live="polite" aria-atomic="true">
     <h2 id="game-title"></h2>
     <div id="progress-container" aria-label="Progress of matched pairs">
@@ -287,7 +276,6 @@
     </div>
   </div>
 
-  <!-- Review screen -->
   <div id="review-screen" style="display:none;">
     <h3>Review Your Answers</h3>
     <ul id="review-list" tabindex="0"></ul>
@@ -296,12 +284,11 @@
     </div>
   </div>
 
-  <!-- Confetti canvas -->
   <canvas id="confetti-canvas"></canvas>
 
 <script>
 (() => {
-  // Data: lessons 1-14 (sample few lessons shown, you can add all)
+  // Data: only first two lessons shown here; add all as needed
   const lessons = [
     {
       name: "Lesson 1",
@@ -352,18 +339,15 @@
         {english:"speak", japanese:"話す"},
         {english:"learn", japanese:"学ぶ"}
       ]
-    },
-    // Add more lessons here for up to 14 as needed
+    }
   ];
 
   // Elements
   const startMenu = document.getElementById('start-menu');
-  const lessonButtonsContainer = startMenu;
   const gameScreen = document.getElementById('game-screen');
   const gameTitle = document.getElementById('game-title');
   const pairsContainer = document.getElementById('pairs-container');
   const progressBar = document.getElementById('progress-bar');
-  const progressContainer = document.getElementById('progress-container');
   const streakCounter = document.getElementById('streak-counter');
   const btnReview = document.getElementById('btn-review');
   const btnBack = document.getElementById('btn-back');
@@ -371,19 +355,15 @@
   const reviewList = document.getElementById('review-list');
   const btnBackFromReview = document.getElementById('btn-back-from-review');
   const confettiCanvas = document.getElementById('confetti-canvas');
-
-  // State
-  let currentLessonIndex = null;
+  let matchedPairs = new Set();
   let matchedCount = 0;
   let totalPairs = 0;
   let streak = 0;
   let incorrectAttempts = [];
-  let matchedPairs = new Set();
-  let audioContext = null;
-  let speechSynthesisUtterance = null;
-  let darkMode = false;
+  let currentLessonIndex = null;
+  let touchDraggingElem = null;
 
-  // Initialize lesson buttons (1-14) + Challenge + Dark mode toggle
+  // Create lesson buttons dynamically 1-14 + dark mode toggle
   function initStartMenu() {
     startMenu.innerHTML = `<h1 class="title">Vocabulary Match Game</h1>`;
     const container = document.createElement('div');
@@ -402,12 +382,6 @@
       container.appendChild(btn);
     }
 
-    // Challenge mode button
-    const challengeBtn = document.createElement('button');
-    challengeBtn.textContent = 'Challenge Mode 🔥 (2 min timer)';
-    challengeBtn.onclick = () => startGame(0, true);
-    container.appendChild(challengeBtn);
-
     // Dark mode toggle
     const darkModeBtn = document.createElement('button');
     darkModeBtn.textContent = '🌓 Toggle Dark Mode';
@@ -417,98 +391,118 @@
     startMenu.appendChild(container);
   }
 
-  // Toggle Dark mode
   function toggleDarkMode() {
-    darkMode = !darkMode;
-    if (darkMode) {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
+    document.body.classList.toggle('dark');
   }
 
-  // Shuffle array
   function shuffleArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+    for (let i=arr.length-1; i>0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
   }
 
-  // Create draggable English boxes and droppable Japanese boxes
+  // Render 4-column grid: 2 English in col 1 & 3, 2 Japanese in col 2 & 4
   function renderPairs(words) {
     pairsContainer.innerHTML = '';
-
-    // Shuffle English and Japanese separately for matching challenge
+    // Shuffle English & Japanese separately
     const englishWords = shuffleArray(words.map(w => ({...w})));
     const japaneseWords = shuffleArray(words.map(w => ({...w})));
 
-    // Create containers for left and right columns
-    // We will append english and japanese boxes interleaved in grid of two columns
-    for (let i = 0; i < words.length; i++) {
-      // English draggable box
-      const engBox = document.createElement('div');
-      engBox.classList.add('english-word', 'draggable');
-      engBox.setAttribute('draggable', 'true');
-      engBox.textContent = englishWords[i].english;
-      engBox.dataset.word = englishWords[i].english;
-      engBox.style.width = '100%';
-      engBox.style.boxSizing = 'border-box';
+    // We'll split English words into two groups, Japanese words into two groups
+    // For example, first half English in col 1, second half in col 3
+    // Same for Japanese: first half in col 2, second half in col 4
 
-      // Event listeners for drag & touch
-      engBox.addEventListener('dragstart', dragStart);
-      engBox.addEventListener('dragend', dragEnd);
-      engBox.addEventListener('touchstart', touchStart, {passive:false});
+    const half = Math.ceil(words.length / 2);
 
-      // Japanese droppable box
-      const japBox = document.createElement('div');
-      japBox.classList.add('japanese-word', 'droppable');
-      japBox.textContent = japaneseWords[i].japanese;
-      japBox.dataset.match = japaneseWords[i].english;
-      japBox.style.width = '100%';
-      japBox.style.boxSizing = 'border-box';
-
-      // Dragover and drop events for japanese boxes
-      japBox.addEventListener('dragover', dragOver);
-      japBox.addEventListener('drop', handleDrop);
-
-      pairsContainer.appendChild(engBox);
-      pairsContainer.appendChild(japBox);
+    // English group 1 - col 1
+    for (let i=0; i<half; i++) {
+      const eng = englishWords[i];
+      const engDiv = document.createElement('div');
+      engDiv.className = 'english-word draggable';
+      engDiv.textContent = eng.english;
+      engDiv.dataset.word = eng.english;
+      engDiv.setAttribute('draggable', 'true');
+      engDiv.style.gridColumn = '1';
+      pairsContainer.appendChild(engDiv);
+      addDragTouchListeners(engDiv);
+    }
+    // English group 2 - col 3
+    for (let i=half; i<words.length; i++) {
+      const eng = englishWords[i];
+      const engDiv = document.createElement('div');
+      engDiv.className = 'english-word draggable';
+      engDiv.textContent = eng.english;
+      engDiv.dataset.word = eng.english;
+      engDiv.setAttribute('draggable', 'true');
+      engDiv.style.gridColumn = '3';
+      pairsContainer.appendChild(engDiv);
+      addDragTouchListeners(engDiv);
+    }
+    // Japanese group 1 - col 2
+    for (let i=0; i<half; i++) {
+      const jap = japaneseWords[i];
+      const japDiv = document.createElement('div');
+      japDiv.className = 'japanese-word droppable';
+      japDiv.textContent = jap.japanese;
+      japDiv.dataset.match = jap.english;
+      japDiv.style.gridColumn = '2';
+      pairsContainer.appendChild(japDiv);
+      addDropListeners(japDiv);
+    }
+    // Japanese group 2 - col 4
+    for (let i=half; i<words.length; i++) {
+      const jap = japaneseWords[i];
+      const japDiv = document.createElement('div');
+      japDiv.className = 'japanese-word droppable';
+      japDiv.textContent = jap.japanese;
+      japDiv.dataset.match = jap.english;
+      japDiv.style.gridColumn = '4';
+      pairsContainer.appendChild(japDiv);
+      addDropListeners(japDiv);
     }
   }
 
-  // Drag and Drop handlers for mouse
+  // Drag & Drop Handlers
   let draggedElem = null;
+
+  function addDragTouchListeners(elem) {
+    elem.addEventListener('dragstart', dragStart);
+    elem.addEventListener('dragend', dragEnd);
+    elem.addEventListener('touchstart', touchStart, {passive:false});
+  }
+  function addDropListeners(elem) {
+    elem.addEventListener('dragover', e => e.preventDefault());
+    elem.addEventListener('drop', handleDrop);
+  }
+
   function dragStart(e) {
     draggedElem = e.target;
     e.dataTransfer.setData('text/plain', draggedElem.dataset.word);
-    setTimeout(() => draggedElem.classList.add('hide'), 0);
-    // Play audio of english word on drag start
-    playAudio(draggedElem.dataset.word);
+    setTimeout(() => {
+      draggedElem.classList.add('dragging');
+    }, 0);
   }
   function dragEnd(e) {
-    if(draggedElem) draggedElem.classList.remove('hide');
-  }
-  function dragOver(e) {
-    e.preventDefault();
+    if (draggedElem) draggedElem.classList.remove('dragging');
+    draggedElem = null;
   }
   function handleDrop(e) {
     e.preventDefault();
     if (!draggedElem) return;
     const dropTarget = e.currentTarget;
     if (dropTarget.dataset.match === draggedElem.dataset.word) {
-      // Correct match
       markMatched(draggedElem, dropTarget);
     } else {
       wrongDropFeedback(draggedElem);
     }
   }
 
-  // Touch handlers
-  let touchDraggingElem = null;
+  // Touch Handlers
   let touchStartX, touchStartY;
   let origX, origY;
+
   function touchStart(e) {
     e.preventDefault();
     if (touchDraggingElem) return; // Only one drag at a time
@@ -524,7 +518,7 @@
     touchDraggingElem.style.height = `${rect.height}px`;
     touchDraggingElem.style.left = `${origX}px`;
     touchDraggingElem.style.top = `${origY}px`;
-    // Play audio
+
     playAudio(touchDraggingElem.dataset.word);
 
     window.addEventListener('touchmove', touchMove, {passive:false});
@@ -534,8 +528,8 @@
     e.preventDefault();
     if (!touchDraggingElem) return;
     const touch = e.touches[0];
-    let left = touch.clientX - touchDraggingElem.offsetWidth / 2;
-    let top = touch.clientY - touchDraggingElem.offsetHeight / 2;
+    const left = touch.clientX - touchDraggingElem.offsetWidth / 2;
+    const top = touch.clientY - touchDraggingElem.offsetHeight / 2;
     touchDraggingElem.style.left = `${left}px`;
     touchDraggingElem.style.top = `${top}px`;
   }
@@ -543,13 +537,16 @@
     e.preventDefault();
     if (!touchDraggingElem) return;
     const touch = e.changedTouches[0];
-    const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+    let elem = document.elementFromPoint(touch.clientX, touch.clientY);
     if (!elem) {
       resetTouchDrag();
       return;
     }
-    // Find droppable japanese box from element or its parents
-    const dropTarget = elem.closest('.japanese-word.droppable');
+    // Walk up until droppable found
+    let dropTarget = elem;
+    while (dropTarget && !dropTarget.classList.contains('droppable')) {
+      dropTarget = dropTarget.parentElement;
+    }
     if (dropTarget && dropTarget.dataset.match === touchDraggingElem.dataset.word) {
       markMatched(touchDraggingElem, dropTarget);
       resetTouchDrag();
@@ -573,25 +570,13 @@
 
   // Mark matched pair
   function markMatched(engElem, japElem) {
-    if (matchedPairs.has(engElem.dataset.word)) return; // already matched
+    if (matchedPairs.has(engElem.dataset.word)) return;
     matchedPairs.add(engElem.dataset.word);
 
-    // Snap english box on top of japanese box neatly
     japElem.classList.add('matched');
     engElem.classList.add('matched');
     engElem.setAttribute('draggable', 'false');
-    engElem.style.position = 'absolute';
-    engElem.style.left = `${japElem.getBoundingClientRect().left}px`;
-    engElem.style.top = `${japElem.getBoundingClientRect().top}px`;
-    engElem.style.width = `${japElem.offsetWidth}px`;
-    engElem.style.height = `${japElem.offsetHeight}px`;
-    engElem.style.margin = '0';
     engElem.style.cursor = 'default';
-    japElem.style.position = 'relative';
-
-    // Place engElem visually above japElem
-    japElem.style.zIndex = '1';
-    engElem.style.zIndex = '2';
 
     matchedCount++;
     streak++;
@@ -599,7 +584,6 @@
     updateStreak();
     showConfettiAt(japElem);
 
-    // Reveal review button if all matched
     if (matchedCount === totalPairs) {
       btnReview.style.display = 'inline-block';
     }
@@ -612,17 +596,15 @@
     elem.classList.add('bounce-red');
     setTimeout(() => elem.classList.remove('bounce-red'), 600);
     incorrectAttempts.push(elem.dataset.word);
-    // Move element back if touch drag
     if (touchDraggingElem === elem) resetTouchDrag();
   }
 
-  // Progress bar update
+  // Update progress bar
   function updateProgress() {
     const percent = (matchedCount / totalPairs) * 100;
     progressBar.style.width = `${percent}%`;
   }
-
-  // Streak update
+  // Update streak counter with sparkle
   function updateStreak() {
     if (streak >= 3) {
       streakCounter.textContent = `🔥 Streak: ${streak} 🔥`;
@@ -633,7 +615,7 @@
     }
   }
 
-  // Play English word audio with SpeechSynthesis
+  // Play audio with speech synthesis
   function playAudio(word) {
     if (!window.speechSynthesis) return;
     if (speechSynthesis.speaking) speechSynthesis.cancel();
@@ -642,7 +624,7 @@
     speechSynthesis.speak(utter);
   }
 
-  // Confetti implementation
+  // Confetti animation code omitted here for brevity; included in full code below
   const confettiCtx = confettiCanvas.getContext('2d');
   let confettiParticles = [];
   let confettiAnimationId = null;
@@ -705,15 +687,15 @@
     createConfetti(x, y);
   }
 
-  // Start the game with lesson index, optionally challengeMode disables timer for now (can add later)
-  function startGame(lessonIndex, challengeMode = false) {
+  // Start game
+  function startGame(lessonIndex) {
     currentLessonIndex = lessonIndex;
+    matchedPairs.clear();
     matchedCount = 0;
     streak = 0;
     incorrectAttempts = [];
-    matchedPairs = new Set();
-    updateStreak();
     updateProgress();
+    updateStreak();
     btnReview.style.display = 'none';
 
     startMenu.style.display = 'none';
@@ -724,12 +706,10 @@
     const words = lessons[lessonIndex].words;
     totalPairs = words.length;
     renderPairs(words);
-
-    // Reset scroll
-    window.scrollTo(0,0);
+    window.scrollTo(0, 0);
   }
 
-  // Show review screen with all matched and incorrect words
+  // Review screen
   function showReview() {
     gameScreen.style.display = 'none';
     reviewScreen.style.display = 'block';
@@ -737,8 +717,7 @@
 
     // Matched words first
     matchedPairs.forEach(word => {
-      const lessonWords = lessons[currentLessonIndex].words;
-      const pair = lessonWords.find(w => w.english === word);
+      const pair = lessons[currentLessonIndex].words.find(w => w.english === word);
       if (!pair) return;
       const li = document.createElement('li');
       li.textContent = `${pair.english} - ${pair.japanese}`;
@@ -750,11 +729,9 @@
       reviewList.appendChild(li);
     });
 
-    // Incorrect attempts next (unique)
-    const uniqueIncorrect = [...new Set(incorrectAttempts)];
-    uniqueIncorrect.forEach(word => {
-      const lessonWords = lessons[currentLessonIndex].words;
-      const pair = lessonWords.find(w => w.english === word);
+    // Incorrect attempts unique
+    [...new Set(incorrectAttempts)].forEach(word => {
+      const pair = lessons[currentLessonIndex].words.find(w => w.english === word);
       if (!pair) return;
       const li = document.createElement('li');
       li.textContent = `${pair.english} - ${pair.japanese}`;
@@ -768,11 +745,10 @@
     });
   }
 
-  // Event Listeners
+  // Event listeners
   btnReview.addEventListener('click', showReview);
   btnBack.addEventListener('click', () => {
     gameScreen.style.display = 'none';
-    reviewScreen.style.display = 'none';
     startMenu.style.display = 'block';
   });
   btnBackFromReview.addEventListener('click', () => {
@@ -780,7 +756,7 @@
     startMenu.style.display = 'block';
   });
 
-  // Resize confetti canvas to window size
+  // Resize confetti canvas
   function resizeCanvas() {
     confettiCanvas.width = window.innerWidth;
     confettiCanvas.height = window.innerHeight;
@@ -788,10 +764,11 @@
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  // Initialize on load
+  // Init
   initStartMenu();
 
 })();
 </script>
+
 </body>
 </html>
