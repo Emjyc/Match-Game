@@ -223,27 +223,44 @@
         });
         card.addEventListener('dragleave', () => card.classList.remove('over'));
         card.addEventListener('drop', (e) => {
-          e.preventDefault();
-          card.classList.remove('over');
-          const draggedEnglish = e.dataTransfer.getData('text/plain');
+  e.preventDefault();
+  card.classList.remove('over');
+  const draggedEnglish = e.dataTransfer.getData('text/plain');
+  const dragged = [...englishCol.children].find(c => c.textContent === draggedEnglish);
 
-          if (card.dataset.match === draggedEnglish) {
-            card.classList.add('matched');
-            const dragged = [...englishCol.children].find(c => c.textContent === draggedEnglish);
-            dragged.classList.add('matched');
-            dragged.draggable = false;
-            matchedPairs++;
+  if (card.dataset.match === draggedEnglish) {
+    card.classList.add('matched');
+    dragged.classList.add('matched');
+    dragged.draggable = false;
+    matchedPairs++;
 
-            if (matchedPairs === selectedSet.words.length) {
-              if (isChallenge) clearInterval(countdown);
-              const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-              document.getElementById('score-time').textContent = `${timeTaken} seconds`;
-              document.getElementById('score-matches').textContent = matchedPairs;
-              document.getElementById('score-mistakes').textContent = mistakeCount;
-              setTimeout(() => {
-                document.getElementById('game-screen').classList.remove('active');
-                document.getElementById('end-screen').classList.add('active');
-                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+    if (matchedPairs === selectedSet.words.length) {
+      if (isChallenge) clearInterval(countdown);
+      const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+      document.getElementById('score-time').textContent = `${timeTaken} seconds`;
+      document.getElementById('score-matches').textContent = matchedPairs;
+      document.getElementById('score-mistakes').textContent = mistakeCount;
+      setTimeout(() => {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('end-screen').classList.add('active');
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      }, 300);
+    }
+  } else {
+    mistakeCount++;
+    card.style.backgroundColor = '#ffcccc';
+    dragged.style.transition = 'transform 0.2s ease';
+    dragged.style.transform = 'translateX(-20px)';
+    setTimeout(() => {
+      dragged.style.transform = 'translateX(20px)';
+      setTimeout(() => {
+        dragged.style.transform = 'translateX(0)';
+        dragged.style.transition = '';
+        card.style.backgroundColor = '';
+      }, 150);
+    }, 150);
+  }
+});
               }, 300);
             }
           } else {
