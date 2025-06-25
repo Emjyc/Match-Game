@@ -1,8 +1,9 @@
+<!-- Full Vocabulary Match Game with Sparkle, Confetti, Challenge Timer, Streaks, and Review Screen -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vocabulary Match Game</title>
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nico+Moji&display=swap" rel="stylesheet" />
   <style>
@@ -56,24 +57,21 @@
       background: var(--hover);
       transform: scale(1.05);
     }
-    #start-menu, #game-screen, #end-screen, #review-screen {
-      max-width: 1000px;
-      width: 100%;
-      padding: 20px;
+    #start-menu, #review-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #game-screen {
       display: none;
       flex-direction: column;
       align-items: center;
-      text-align: center;
-    }
-    #start-menu.active, #game-screen.active, #end-screen.active, #review-screen.active {
-      display: flex;
     }
     .grid-container {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr 1fr;
       gap: 20px;
-      width: 100%;
-      max-width: 900px;
+      margin-top: 20px;
     }
     .grid-column {
       display: grid;
@@ -81,46 +79,24 @@
       gap: 10px;
     }
     .card {
-      background: var(--card-bg);
-      padding: 15px;
-      text-align: center;
-      font-size: 1.2rem;
-      border-radius: 10px;
       font-family: 'Nico Moji', sans-serif;
-      user-select: none;
-      position: relative;
-      min-height: 60px;
-      box-sizing: border-box;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      padding: 10px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.1rem;
       height: 80px;
-      max-width: 180px;
-      width: 100%;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      color: var(--text);
-      touch-action: none;
-    }
-    .draggable {
-      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       user-select: none;
+      transition: all 0.2s;
     }
-    .droppable {
-      border: 2px dashed transparent;
-      position: relative;
-    }
-    .droppable.over {
-      border-color: var(--primary);
-    }
+    .draggable { cursor: grab; }
+    .droppable.over { border: 2px dashed var(--accent); }
     .matched {
       background: var(--match) !important;
       pointer-events: none;
-    }
-    #timer, #streak-message {
-      font-size: 1.2rem;
-      color: var(--accent);
-      margin: 5px;
     }
     #progress-container {
       width: 80%;
@@ -128,7 +104,7 @@
       background: var(--progress-bg);
       border-radius: 10px;
       overflow: hidden;
-      margin-bottom: 10px;
+      margin-top: 10px;
     }
     #progress-bar {
       height: 100%;
@@ -136,44 +112,29 @@
       width: 0%;
       transition: width 0.3s ease;
     }
-    #review-list {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-      max-width: 600px;
+    #timer { font-size: 1.2rem; margin: 10px; }
+    .sparkle {
+      animation: sparkle 0.8s ease forwards;
+      background: gold !important;
     }
-    .review-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--card-bg);
-      padding: 10px 20px;
-      border-radius: 10px;
-    }
-    .incorrect {
-      background-color: rgba(255, 0, 0, 0.1);
-    }
-    .dragging {
-      opacity: 0.8;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      cursor: grabbing !important;
+    @keyframes sparkle {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); background: gold; }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
 <body>
-
   <div id="start-menu" class="active">
-    <h1 class="title"> Vocabulary Match Game </h1>
-    <button onclick="startGame(0)">Lesson 1</button>
-    <button onclick="startGame(1)">Lesson 2</button>
-    <button onclick="startGame(2)">Lesson 3</button>
+    <h1 class="title">Vocabulary Match Game</h1>
+    <div id="lesson-buttons"></div>
+    <button onclick="startGame(0, true)">🔥 Challenge Mode</button>
     <button onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
   </div>
 
   <div id="game-screen">
-    <h2 id="game-title">Vocabulary Match</h2>
+    <h2 id="game-title"></h2>
+    <div id="timer"></div>
     <div class="grid-container">
       <div id="english-column" class="grid-column"></div>
       <div id="japanese-column" class="grid-column"></div>
@@ -183,628 +144,207 @@
     </div>
   </div>
 
-  <div id="end-screen">
-    <h2>Game Over</h2>
-    <p>Your score: <span id="final-score">0</span></p>
-    <button onclick="showReviewScreen(matchedPairs, incorrectPairs)">Review Your Answers</button>
-    <button onclick="goToStart()">Back to Start</button>
+  <div id="review-screen" style="display:none">
+    <h2>🎉 Review Your Answers</h2>
+    <ul id="review-list"></ul>
+    <button onclick="location.reload()">🔁 Play Again</button>
   </div>
 
-  <div id="review-screen">
-    <h2>Quick Review</h2>
-    <div id="review-list"></div>
-    <button onclick="goToStart()">🔁 Back to Start</button>
-  </div>
+  <script>
+    const lessons = [{
+      name: "Lesson 1",
+      words: [
+        { english: "minute", japanese: "分" },
+        { english: "before", japanese: "の前に" },
+        { english: "photography", japanese: "写真撮影" },
+        { english: "tournament", japanese: "トーナメント" },
+        { english: "against", japanese: "に対抗して" },
+        { english: "lost", japanese: "負けった" },
+        { english: "lose", japanese: "負ける" },
+        { english: "final", japanese: "最後の" }
+      ]
+    }];
 
-<script>
+    let draggedElement = null;
+    let streak = 0;
+    let incorrectAttempts = [];
+    let timerInterval;
+    let timeLeft = 120;
 
-const sets = [
-      {
-        name: "Lesson 1",
-        words: [
-           {english:"minute", japanese:"分"},
-      {english:"before", japanese:"の前に"},
-      {english:"photography", japanese:"写真撮影"},
-      {english:"tournament", japanese:"トーナメント"},
-      {english:"against", japanese:"に対抗して"},
-      {english:"lost", japanese:"負けった"},
-      {english:"lose", japanese:"負ける"},
-      {english:"final", japanese:"最後の"},
-      {english:"second", japanese:"秒"},
-      {english:"broke", japanese:"壊した"},
-      {english:"surely", japanese:"確かに"},
-      {english:"until", japanese:"。。。まで"},
-      {english:"half", japanese:"半分の"},
-      {english:"hour", japanese:"１時間"},
-      {english:"tomorrow", japanese:"明日"},
-      {english:"today", japanese:"今日"},
-      {english:"yesterday", japanese:"昨日"},
-      {english:"ago", japanese:"～前に"},
-      {english:"spread", japanese:"広める"},
-        ]
-      },
-      {
-        name: "Lesson 2",
-        words: [
-         {english:"if", japanese:"もし"},
-      {english:"plastic", japanese:"プラスチック"},
-      {english:"exam", japanese:"テスト"},
-      {english:"adventure", japanese:"冒険"},
-      {english:"read", japanese:"読む"},
-      {english:"main", japanese:"主な"},
-      {english:"naughty", japanese:"いたずらな"},
-      {english:"trouble", japanese:"心配、悩み、やっかいな事態"},
-      {english:"lend", japanese:"貸す"},
-      {english:"another", japanese:"もう一つの"},
-        ]
-        },
-      {
-        name: "Lesson 3",
-        words: [
-        {english:"think", japanese:"考える・思う"},
-      {english:"author", japanese:"作者"},
-      {english:"drew", japanese:"描いた"},
-      {english:"scenery", japanese:"景色"},
-      {english:"in fact", japanese:"今まで"},
-      {english:"area", japanese:"地域"},
-      {english:"still", japanese:"まだ"},
-      {english:"hope", japanese:"望む"},
-      {english:"someday", japanese:"いつか"},
-      {english:"how", japanese:"どう"},
-      {english:"borrow", japanese:"借りる"},
-      {english:"fantasy", japanese:"ファンタジー"},
-      {english:"message", japanese:"メッセージ"},
-      {english:"horror", japanese:"ホラー"},
-      {english:"novel", japanese:"小説"},
-      {english:"mystery", japanese:"ミステリー"},
-      {english:"encourage", japanese:"励ます"},
-        ]
-      },
-       {
-        name: "Lesson 4",
-        words: [
-         {english:"finish", japanese:"終わる"},
-      {english:"training", japanese:"トレーニング"},
-      {english:"perfect", japanese:"完璧"},
-      {english:"learner", japanese:"学習者"},
-      {english:"because", japanese:"だから・なので"},
-      {english:"easy", japanese:"優しい・簡単な"},
-      {english:"plus", japanese:"さらにその上"},
-      {english:"teenager", japanese:"１０代の少年"},
-      {english:"among", japanese:"の中に・の間に"},
-      {english:"ending", japanese:"終わり"},
-      {english:"town", japanese:"町"},
-      {english:"witch", japanese:"魔女"},
-        ]
-      },
-       {
-        name: "Lesson 5",
-        words: [
-        {english:"famous", japanese:"有名"},
-      {english:"dream", japanese:"夢"},
-      {english:"build", japanese:"建てる"},
-      {english:"tower", japanese:"塔"},
-      {english:"around the world", japanese:"世界中"},
-      {english:"world", japanese:"世界"},
-      {english:"decide", japanese:"決める"},
-      {english:"interest", japanese:"興味"},
-      {english:"yourself", japanese:"あなた自身"},
-      {english:"lots of", japanese:"たくさんの"},
-      {english:"bake", japanese:"焼く"},
-      {english:"more", japanese:"もっと"},
-      {english:"perhaps", japanese:"多分"},
-      {english:"bakery", japanese:"パン屋"},
-      {english:"need", japanese:"必要"},
-        ]
-      },
-       {
-        name: "Lesson 6",
-        words: [
-        {english:"relax", japanese:"くつろぐ"},
-      {english:"customer", japanese:"お客さん"},
-      {english:"provide", japanese:"提供する"},
-      {english:"several", japanese:"いくつかの"},
-      {english:"that way", japanese:"そのようにして"},
-      {english:"plenty", japanese:"十分な"},
-      {english:"choice", japanese:"選択"},
-      {english:"however", japanese:"しかしながら"},
-      {english:"leftovers", japanese:"残り物・食べ残し"},
-      {english:"away", japanese:"別の方向へ・わきへ"},
-      {english:"throw away", japanese:"無駄に使う"},
-      {english:"waste", japanese:"無駄"},
-      {english:"discount", japanese:"割引"},
-      {english:"enough", japanese:"十分な"},
-      {english:"help", japanese:"助ける"},
-        ]
-      },
-       {
-        name: "Lesson 7",
-        words: [
-        {english:"pool", japanese:"プール"},
-      {english:"over", japanese:"〜以上"},
-      {english:"review", japanese:"見直す"},
-      {english:"rule", japanese:"規則"},
-      {english:"kitchen", japanese:"台所"},
-      {english:"must", japanese:"〜しなければならない"},
-      {english:"mask", japanese:"マスク"},
-      {english:"smartphone", japanese:"スマートフォン"},
-      {english:"back", japanese:"戻る"},
-      {english:"return", japanese:"返す"},
-      {english:"week", japanese:"週"},
-      {english:"quiet", japanese:"静かな"},
-      {english:"future", japanese:"未来"},
-      {english:"in the future", japanese:"将来"},
-      {english:"somewhere", japanese:"どこかに"},
-      {english:"explore", japanese:"探検する"},
-      {english:"clothes", japanese:"服"},
-      {english:"design", japanese:"デザイン"},
-      {english:"chef", japanese:"シェフ"},
-        ]
-      },
-       {
-        name: "Lesson 8",
-        words: [
-         {english:"as", japanese:"〜として"},
-      {english:"behind", japanese:"後ろに"},
-      {english:"cut down", japanese:"切り倒す"},
-      {english:"building", japanese:"建物"},
-      {english:"destroy", japanese:"破壊する"},
-      {english:"shock", japanese:"衝撃"},
-      {english:"environment", japanese:"環境"},
-      {english:"guide", japanese:"案内する"},
-      {english:"tour", japanese:"ツアー"},
-      {english:"simply", japanese:"単純に"},
-      {english:"nothing", japanese:"何も"},
-      {english:"worry", japanese:"心配する"},
-      {english:"decide", japanese:"決める"},
-      {english:"major", japanese:"主要な"},
-      {english:"less", japanese:"より少ない"},
-      {english:"sell", japanese:"売る"},
-      {english:"sold", japanese:"売られた"},
-      {english:"knowledge", japanese:"知識"},
-      {english:"itself", japanese:"それ自身"},
-      {english:"share", japanese:"共有する"},
-        ]
-      },
-      {
-        name: "Lesson 9",
-        words: [
-        {english:"billion", japanese:"１０億"},
-      {english:"than", japanese:"。。。よりも"},
-      {english:"more than...", japanese:"。。。より多くの"},
-      {english:"dirty", japanese:"汚れる"},
-      {english:"directly", japanese:"直接"},
-      {english:"pond", japanese:"池"},
-      {english:"should", japanese:"すべきである"},
-      {english:"presentation", japanese:"プレゼンテーション"},
-      {english:"everywhere", japanese:"どこでも"},
-      {english:"imagine", japanese:"想像する"},
-      {english:"step", japanese:"一歩"},
-      {english:"situation", japanese:"事態"},
-      {english:"one of...", japanese:"の一つ・一人"},
-      {english:"collect", japanese:"集める"},
-      {english:"drinking water", japanese:"飲み水"},
-      {english:"understand", japanese:"理解する"},
-      {english:"laundry", japanese:"洗濯物"},
-      {english:"available", japanese:"利用できる"},
-      {english:"post", japanese:"郵便"},
-      {english:"store", japanese:"店"},
-      {english:"office", japanese:"事務所"},
-        ]
-      },
-      {
-        name: "Lesson 10",
-        words: [
-         {english:"minute", japanese:"分"},
-      {english:"before", japanese:"の前に"},
-      {english:"photography", japanese:"写真撮影"},
-      {english:"tournament", japanese:"トーナメント"},
-      {english:"against", japanese:"に対抗して"},
-      {english:"lost", japanese:"負けった"},
-      {english:"lose", japanese:"負ける"},
-      {english:"final", japanese:"最後の"},
-      {english:"second", japanese:"秒"},
-      {english:"broke", japanese:"壊した"},
-      {english:"surely", japanese:"確かに"},
-      {english:"until", japanese:"。。。まで"},
-      {english:"half", japanese:"半分の"},
-      {english:"hour", japanese:"１時間"},
-      {english:"tomorrow", japanese:"明日"},
-      {english:"today", japanese:"今日"},
-      {english:"yesterday", japanese:"昨日"},
-      {english:"ago", japanese:"～前に"},
-      {english:"spread", japanese:"広める"},
-        ]
-      },
-      {
-        name: "Lesson 11",
-        words: [
-         {english:"kitchen", japanese:"台所"},
-      {english:"must", japanese:"〜しなければならない"},
-      {english:"mask", japanese:"マスク"},
-      {english:"smartphone", japanese:"スマートフォン"},
-      {english:"back", japanese:"戻る"},
-      {english:"return", japanese:"返す"},
-      {english:"week", japanese:"週"},
-      {english:"quiet", japanese:"静かな"},
-      {english:"future", japanese:"未来"},
-      {english:"in the future", japanese:"将来"},
-      {english:"somewhere", japanese:"どこかに"},
-      {english:"explore", japanese:"探検する"},
-      {english:"clothes", japanese:"服"},
-      {english:"design", japanese:"デザイン"},
-      {english:"chef", japanese:"シェフ"},
-        ]
-      },
-      {
-        name: "Lesson 12",
-        words: [
-         {english:"as", japanese:"〜として"},
-      {english:"behind", japanese:"後ろに"},
-      {english:"cut down", japanese:"切り倒す"},
-      {english:"building", japanese:"建物"},
-      {english:"destroy", japanese:"破壊する"},
-      {english:"shock", japanese:"衝撃"},
-      {english:"environment", japanese:"環境"},
-      {english:"guide", japanese:"案内する"},
-      {english:"tour", japanese:"ツアー"},
-      {english:"simply", japanese:"単純に"},
-      {english:"nothing", japanese:"何も"},
-      {english:"worry", japanese:"心配する"},
-      {english:"decide", japanese:"決める"},
-      {english:"major", japanese:"主要な"},
-      {english:"less", japanese:"より少ない"},
-      {english:"sell", japanese:"売る"},
-      {english:"sold", japanese:"売られた"},
-      {english:"knowledge", japanese:"知識"},
-      {english:"itself", japanese:"それ自身"},
-      {english:"share", japanese:"共有する"},
-        ]
-      },
-       {
-        name: "Lesson 13",
-        words: [
-         {english:"billion", japanese:"１０億"},
-      {english:"than", japanese:"。。。よりも"},
-      {english:"more than...", japanese:"。。。より多くの"},
-      {english:"dirty", japanese:"汚れる"},
-      {english:"directly", japanese:"直接"},
-      {english:"pond", japanese:"池"},
-      {english:"should", japanese:"すべきである"},
-      {english:"presentation", japanese:"プレゼンテーション"},
-      {english:"everywhere", japanese:"どこでも"},
-      {english:"imagine", japanese:"想像する"},
-      {english:"step", japanese:"一歩"},
-      {english:"situation", japanese:"事態"},
-      {english:"one of...", japanese:"の一つ・一人"},
-      {english:"collect", japanese:"集める"},
-      {english:"drinking water", japanese:"飲み水"},
-      {english:"understand", japanese:"理解する"},
-      {english:"laundry", japanese:"洗濯物"},
-      {english:"available", japanese:"利用できる"},
-      {english:"post", japanese:"郵便"},
-      {english:"store", japanese:"店"},
-      {english:"office", japanese:"事務所"},
-        ]
-      },
-       {
-        name: "Lesson 14",
-        words: [
-        {english:"minute", japanese:"分"},
-      {english:"before", japanese:"の前に"},
-      {english:"photography", japanese:"写真撮影"},
-      {english:"tournament", japanese:"トーナメント"},
-      {english:"against", japanese:"に対抗して"},
-      {english:"lost", japanese:"負けった"},
-      {english:"lose", japanese:"負ける"},
-      {english:"final", japanese:"最後の"},
-      {english:"second", japanese:"秒"},
-      {english:"broke", japanese:"壊した"},
-      {english:"surely", japanese:"確かに"},
-      {english:"until", japanese:"。。。まで"},
-      {english:"half", japanese:"半分の"},
-      {english:"hour", japanese:"１時間"},
-      {english:"tomorrow", japanese:"明日"},
-      {english:"today", japanese:"今日"},
-      {english:"yesterday", japanese:"昨日"},
-      {english:"ago", japanese:"～前に"},
-      {english:"spread", japanese:"広める"},
-        ]
-      }
-    ];
-
-
-  
-
-  let matchedPairs = [];
-  let incorrectPairs = [];
-  let currentLesson = null;
-
-  let japaneseToEnglishMap = {};
-
-  function startGame(index) {
-    matchedPairs = [];
-    incorrectPairs = [];
-    currentLesson = lessons[index];
-
-    japaneseToEnglishMap = {};
-    currentLesson.words.forEach(({english, japanese}) => {
-      japaneseToEnglishMap[japanese] = english;
-    });
-
-    document.getElementById('start-menu').classList.remove('active');
-    document.getElementById('end-screen').classList.remove('active');
-    document.getElementById('review-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.add('active');
-    document.getElementById('game-title').textContent = `Vocabulary Match - ${currentLesson.name}`;
-
-    populateGameGrid(currentLesson.words);
-    updateProgress();
-  }
-
-  function populateGameGrid(words) {
-    const englishCol = document.getElementById('english-column');
-    const japaneseCol = document.getElementById('japanese-column');
-    englishCol.innerHTML = '';
-    japaneseCol.innerHTML = '';
-
-    const shuffledEnglish = [...words].sort(() => Math.random() - 0.5);
-    const shuffledJapanese = [...words].sort(() => Math.random() - 0.5);
-
-    shuffledEnglish.forEach(({english}) => {
-      const card = document.createElement('div');
-      card.className = 'card draggable';
-      card.textContent = english;
-      card.dataset.english = english;
-      card.setAttribute('draggable', 'true');
-      addDragAndDropListeners(card);
-      englishCol.appendChild(card);
-    });
-
-    shuffledJapanese.forEach(({japanese}) => {
-      const card = document.createElement('div');
-      card.className = 'card droppable';
-      card.textContent = japanese;
-      card.dataset.japanese = japanese;
-      japaneseCol.appendChild(card);
-    });
-  }
-
-  function addDragAndDropListeners(card) {
-    card.addEventListener('dragstart', dragStart);
-    card.addEventListener('dragend', dragEnd);
-  }
-
-  let dragSrc = null;
-
-  function dragStart(e) {
-    dragSrc = e.target;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', dragSrc.dataset.english);
-    dragSrc.style.opacity = '0.6';
-  }
-
-  function dragEnd(e) {
-    if (dragSrc) dragSrc.style.opacity = '';
-  }
-
-  document.querySelector('#japanese-column').addEventListener('dragover', e => {
-    e.preventDefault();
-  });
-
-  document.querySelector('#japanese-column').addEventListener('drop', e => {
-    e.preventDefault();
-    if (!dragSrc) return;
-
-    const dropTarget = e.target.closest('.droppable');
-    if (!dropTarget) return;
-
-    const englishWord = dragSrc.dataset.english;
-    const japaneseWord = dropTarget.dataset.japanese;
-
-    if (checkMatch(englishWord, japaneseWord)) {
-      markMatched(dragSrc, dropTarget);
-    } else {
-      bounceBack(dragSrc);
+    const lessonButtons = document.getElementById('lesson-buttons');
+    for (let i = 1; i <= 14; i++) {
+      const button = document.createElement('button');
+      button.textContent = `Lesson ${i}`;
+      button.onclick = () => startGame(i - 1);
+      lessonButtons.appendChild(button);
     }
-  });
 
-  function checkMatch(english, japanese) {
-    return japaneseToEnglishMap[japanese] === english;
-  }
-
-  function markMatched(englishCard, japaneseCard) {
-    englishCard.classList.add('matched');
-    englishCard.classList.remove('draggable');
-    japaneseCard.classList.add('matched');
-
-    japaneseCard.appendChild(englishCard);
-    englishCard.style.position = 'relative';
-    englishCard.style.left = '0';
-    englishCard.style.top = '0';
-
-    matchedPairs.push({english: englishCard.dataset.english, japanese: japaneseCard.dataset.japanese});
-    updateProgress();
-
-    if (matchedPairs.length === currentLesson.words.length) {
-      setTimeout(() => {
-        showEndScreen();
-      }, 500);
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
     }
-  }
 
-  function bounceBack(card) {
-    card.style.transition = 'transform 0.3s';
-    card.style.transform = 'translateX(-20px)';
-    setTimeout(() => {
-      card.style.transform = 'translateX(20px)';
-    }, 150);
-    setTimeout(() => {
-      card.style.transform = 'translateX(0)';
-    }, 300);
-    setTimeout(() => {
-      card.style.transition = '';
-    }, 600);
-  }
+    function startGame(lessonIndex, challenge = false) {
+      const lesson = lessons[lessonIndex] || lessons[0];
+      document.getElementById('start-menu').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'flex';
+      document.getElementById('game-title').textContent = lesson.name;
+      document.getElementById('timer').textContent = challenge ? '⏱ 2:00' : '';
 
-  function updateProgress() {
-    const progressBar = document.getElementById('progress-bar');
-    const percent = (matchedPairs.length / currentLesson.words.length) * 100;
-    progressBar.style.width = percent + '%';
-  }
+      const englishCol = document.getElementById('english-column');
+      const japaneseCol = document.getElementById('japanese-column');
+      englishCol.innerHTML = '';
+      japaneseCol.innerHTML = '';
+      streak = 0;
+      incorrectAttempts = [];
 
-  function showEndScreen() {
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('end-screen').classList.add('active');
-    document.getElementById('final-score').textContent = matchedPairs.length;
-  }
+      const shuffledEnglish = [...lesson.words].sort(() => 0.5 - Math.random());
+      const shuffledJapanese = [...lesson.words].sort(() => 0.5 - Math.random());
 
-  function goToStart() {
-    document.getElementById('end-screen').classList.remove('active');
-    document.getElementById('review-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('start-menu').classList.add('active');
-  }
-
-  function showReviewScreen(matched, incorrect) {
-    document.getElementById('end-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('review-screen').classList.add('active');
-
-    const reviewList = document.getElementById('review-list');
-    reviewList.innerHTML = '';
-
-    matched.forEach(pair => {
-      const div = document.createElement('div');
-      div.className = 'review-item';
-      div.innerHTML = `<span>${pair.english} - ${pair.japanese}</span><button onclick="playAudio('${pair.english}')">🔊</button>`;
-      reviewList.appendChild(div);
-    });
-
-    if (incorrect.length > 0) {
-      const header = document.createElement('h3');
-      header.textContent = 'Incorrect Attempts';
-      reviewList.appendChild(header);
-
-      incorrect.forEach(pair => {
-        const div = document.createElement('div');
-        div.className = 'review-item incorrect';
-        div.innerHTML = `<span>${pair.english} ❌ ${pair.japanese}</span><button onclick="playAudio('${pair.english}')">🔊</button>`;
-        reviewList.appendChild(div);
+      shuffledEnglish.forEach(({english}) => {
+        const card = document.createElement('div');
+        card.className = 'card draggable';
+        card.textContent = english;
+        card.setAttribute('draggable', 'true');
+        card.dataset.word = english;
+        card.addEventListener('dragstart', dragStart);
+        card.addEventListener('touchstart', handleTouchStart, {passive: false});
+        englishCol.appendChild(card);
       });
+
+      shuffledJapanese.forEach(({english, japanese}) => {
+        const card = document.createElement('div');
+        card.className = 'card droppable';
+        card.textContent = japanese;
+        card.dataset.match = english;
+        card.addEventListener('dragover', e => e.preventDefault());
+        card.addEventListener('drop', handleDrop);
+        japaneseCol.appendChild(card);
+      });
+
+      if (challenge) startTimer();
     }
-  }
 
-  function playAudio(text) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    speechSynthesis.speak(utterance);
-  }
-
-  // ----------------------------------------
-  // TOUCH DRAG & DROP (only active on game screen)
-  // ----------------------------------------
-  let draggedCard = null;
-  let offsetX = 0;
-  let offsetY = 0;
-
-  function getDroppableUnderPoint(x, y) {
-    const elements = document.elementsFromPoint(x, y);
-    return elements.find(el => el.classList && el.classList.contains('droppable'));
-  }
-
-  document.addEventListener('touchstart', function(e) {
-    // Only if game screen is active and touched element is draggable card
-    if (!document.getElementById('game-screen').classList.contains('active')) return;
-
-    const target = e.target.closest('.draggable');
-    if (!target) return;
-
-    draggedCard = target;
-    const touch = e.touches[0];
-    const rect = draggedCard.getBoundingClientRect();
-
-    offsetX = touch.clientX - rect.left;
-    offsetY = touch.clientY - rect.top;
-
-    draggedCard.style.position = 'fixed';
-    draggedCard.style.zIndex = 1000;
-    draggedCard.style.width = rect.width + 'px';
-    draggedCard.style.height = rect.height + 'px';
-    draggedCard.style.left = (touch.clientX - offsetX) + 'px';
-    draggedCard.style.top = (touch.clientY - offsetY) + 'px';
-
-    draggedCard.classList.add('dragging');
-
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('touchmove', function(e) {
-    if (!draggedCard) return;
-    const touch = e.touches[0];
-    draggedCard.style.left = (touch.clientX - offsetX) + 'px';
-    draggedCard.style.top = (touch.clientY - offsetY) + 'px';
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('touchend', function(e) {
-    if (!draggedCard) return;
-
-    const touch = e.changedTouches[0];
-    const dropTarget = getDroppableUnderPoint(touch.clientX, touch.clientY);
-
-    if (dropTarget) {
-      const draggedEnglish = draggedCard.dataset.english;
-      const targetJapanese = dropTarget.dataset.japanese;
-
-      if (checkMatch(draggedEnglish, targetJapanese)) {
-        dropTarget.appendChild(draggedCard);
-        draggedCard.style.position = 'relative';
-        draggedCard.style.left = '0';
-        draggedCard.style.top = '0';
-        draggedCard.style.width = '100%';
-        draggedCard.style.height = 'auto';
-
-        draggedCard.classList.add('matched');
-        draggedCard.classList.remove('draggable');
-        dropTarget.classList.add('matched');
-
-        matchedPairs.push({ english: draggedEnglish, japanese: targetJapanese });
-        updateProgress();
-
-        if (matchedPairs.length === currentLesson.words.length) {
-          setTimeout(() => {
-            showEndScreen();
-          }, 500);
+    function startTimer() {
+      timeLeft = 120;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const min = Math.floor(timeLeft / 60);
+        const sec = String(timeLeft % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = `⏱ ${min}:${sec}`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          endGame();
         }
+      }, 1000);
+    }
 
-        draggedCard = null;
-        e.preventDefault();
-        return;
+    function dragStart(e) {
+      draggedElement = e.target;
+      e.dataTransfer.setData('text/plain', e.target.dataset.word);
+    }
+
+    function handleDrop(e) {
+      const dropTarget = e.target;
+      const draggedWord = draggedElement.dataset.word;
+      if (dropTarget.dataset.match === draggedWord) {
+        dropTarget.appendChild(draggedElement);
+        dropTarget.classList.add('matched', 'sparkle');
+        draggedElement.classList.add('matched');
+        draggedElement.setAttribute('draggable', 'false');
+        playAudio(draggedWord);
+        streak++;
+        if (streak >= 3) dropTarget.classList.add('sparkle');
+        updateProgress();
+      } else {
+        bounceBack(draggedElement);
+        streak = 0;
+        incorrectAttempts.push(draggedWord);
       }
     }
 
-    bounceBack(draggedCard);
+    function updateProgress() {
+      const total = document.querySelectorAll('.droppable').length;
+      const matched = document.querySelectorAll('.droppable.matched').length;
+      const percent = (matched / total) * 100;
+      document.getElementById('progress-bar').style.width = percent + '%';
+      if (matched === total) endGame();
+    }
 
-    setTimeout(() => {
-      draggedCard.style.position = '';
-      draggedCard.style.left = '';
-      draggedCard.style.top = '';
-      draggedCard.style.zIndex = '';
-      draggedCard.style.width = '';
-      draggedCard.style.height = '';
-      draggedCard.classList.remove('dragging');
-      draggedCard = null;
-    }, 400);
+    function endGame() {
+      clearInterval(timerInterval);
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('review-screen').style.display = 'flex';
+      const reviewList = document.getElementById('review-list');
+      reviewList.innerHTML = '';
+      const uniqueIncorrect = [...new Set(incorrectAttempts)];
+      if (uniqueIncorrect.length === 0) {
+        reviewList.innerHTML = '<li>🎉 Perfect! Great job!</li>';
+      } else {
+        uniqueIncorrect.forEach(w => {
+          const li = document.createElement('li');
+          li.textContent = `Missed: ${w}`;
+          reviewList.appendChild(li);
+        });
+      }
+      confetti();
+    }
 
-    e.preventDefault();
-  }, { passive: false });
+    function bounceBack(card) {
+      card.style.transition = 'transform 0.3s';
+      card.style.transform = 'translateX(-15px)';
+      setTimeout(() => card.style.transform = 'translateX(15px)', 150);
+      setTimeout(() => card.style.transform = 'translateX(0)', 300);
+    }
 
-  // Dark mode toggle
-  function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
-  }
-</script>
+    function playAudio(word) {
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+    }
 
+    function handleTouchStart(e) {
+      e.preventDefault();
+      draggedElement = e.target;
+      document.addEventListener('touchmove', handleTouchMove, {passive: false});
+      document.addEventListener('touchend', handleTouchEnd);
+    }
+
+    function handleTouchMove(e) {
+      const touch = e.touches[0];
+      draggedElement.style.position = 'fixed';
+      draggedElement.style.left = `${touch.clientX - draggedElement.offsetWidth / 2}px`;
+      draggedElement.style.top = `${touch.clientY - draggedElement.offsetHeight / 2}px`;
+    }
+
+    function handleTouchEnd(e) {
+      const touch = e.changedTouches[0];
+      const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (dropTarget && dropTarget.classList.contains('droppable')) {
+        handleDrop({target: dropTarget});
+      } else {
+        bounceBack(draggedElement);
+      }
+      draggedElement.style.position = '';
+      draggedElement.style.left = '';
+      draggedElement.style.top = '';
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    }
+
+    function confetti() {
+      // Simple emoji confetti fallback
+      for (let i = 0; i < 30; i++) {
+        const confetto = document.createElement('div');
+        confetto.textContent = '✨';
+        confetto.style.position = 'fixed';
+        confetto.style.left = Math.random() * 100 + 'vw';
+        confetto.style.top = '-2vh';
+        confetto.style.fontSize = '24px';
+        confetto.style.animation = 'fall 2s linear';
+        document.body.appendChild(confetto);
+        setTimeout(() => confetto.remove(), 2000);
+      }
+    }
+  </script>
 </body>
 </html>
