@@ -56,15 +56,35 @@
     max-width: 900px;
     margin: 20px auto 40px;
   }
+  /* English words in left two columns */
+  #game-grid .draggable {
+    grid-column: span 1;
+    justify-content: center;
+    width: 130px;
+    cursor: grab;
+  }
+  /* Japanese words in right two columns */
+  #game-grid .droppable {
+    grid-column: span 1;
+    justify-content: center;
+    width: 130px;
+    cursor: default;
+  }
+  /* place English on left half, Japanese on right half */
+  #game-grid .draggable:nth-child(n) {
+    /* Will assign by JS */
+  }
+  #game-grid .droppable:nth-child(n) {
+    /* Will assign by JS */
+  }
   .draggable, .droppable {
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 1.2em;
-    height: 50px;
+    height: 45px;
     border-radius: 8px;
     box-sizing: border-box;
-    cursor: grab;
     background: #fafafa;
     border: 2px solid #ccc;
     transition: background-color 0.3s, border-color 0.3s;
@@ -76,9 +96,16 @@
     cursor: default;
   }
   .droppable.matched {
-    background-color: #c1f0c1;
-    border-color: #60b260;
+    background-color: #a5d6a7; /* green highlight */
+    border-color: #388e3c;
     cursor: default;
+  }
+  .incorrect-flash {
+    animation: flashRed 0.4s;
+  }
+  @keyframes flashRed {
+    0%, 100% { background-color: #fafafa; border-color: #ccc; }
+    50% { background-color: #f44336; border-color: #b71c1c; color: white; }
   }
   .hide { visibility: hidden; }
   .shake {
@@ -114,18 +141,6 @@
     font-size: 1.2em;
     display: none;
     position: relative;
-  }
-  .sparkle {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: #e91e63;
-    border-radius: 50%;
-    animation: sparkleAnim 0.8s linear forwards;
-  }
-  @keyframes sparkleAnim {
-    0% { opacity: 1; transform: scale(1) translateY(0); }
-    100% { opacity: 0; transform: scale(0) translateY(-15px); }
   }
   #confetti-canvas {
     position: fixed;
@@ -239,7 +254,6 @@ window.addEventListener('DOMContentLoaded', () => {
         { english: "second", japanese: "秒" }
       ]
     },
-    // Fill in lessons 3-13 similarly or with your real data
     { name: "Lesson 3", words: [ { english: "happy", japanese: "幸せ" }, { english: "run", japanese: "走る" } ] },
     { name: "Lesson 4", words: [ { english: "delicious", japanese: "おいしい" }, { english: "build", japanese: "建てる" } ] },
     { name: "Lesson 5", words: [ { english: "open", japanese: "開ける" }, { english: "close", japanese: "閉じる" } ] },
@@ -253,7 +267,6 @@ window.addEventListener('DOMContentLoaded', () => {
     { name: "Lesson 13", words: [ { english: "big", japanese: "大きい" }, { english: "small", japanese: "小さい" } ] },
   ];
 
-  // Elements
   const lessonButtonsContainer = document.getElementById('lesson-buttons');
   const gameGrid = document.getElementById('game-grid');
   const startMenu = document.getElementById('start-menu');
@@ -265,7 +278,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const confettiCanvas = document.getElementById('confetti-canvas');
   const confettiCtx = confettiCanvas.getContext('2d');
 
-  // State variables
   let totalMatches = 0;
   let matchesMade = 0;
   let currentStreak = 0;
@@ -299,7 +311,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   initLessonButtons();
 
-  // Toggle dark mode
+  // Dark mode toggle
   darkModeToggle.addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
   });
@@ -331,31 +343,33 @@ window.addEventListener('DOMContentLoaded', () => {
     const shuffledEnglish = shuffle([...words]);
     const shuffledJapanese = shuffle([...words]);
 
-    // Create draggable English boxes
-    shuffledEnglish.forEach(pair => {
+    // Clear any previous grid-template-columns style
+    gameGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+
+    // Add English words in left two columns
+    shuffledEnglish.forEach((pair, idx) => {
       const engDiv = document.createElement('div');
       engDiv.className = 'draggable';
       engDiv.textContent = pair.english;
       engDiv.dataset.word = pair.english;
       engDiv.setAttribute('draggable', 'true');
+      engDiv.style.gridColumn = (idx % 2) + 1; // columns 1 or 2 (left half)
       engDiv.style.position = 'relative';
 
-      // Drag handlers
       engDiv.addEventListener('dragstart', dragStart);
       engDiv.addEventListener('dragend', dragEnd);
-
-      // Touch handlers
       engDiv.addEventListener('touchstart', touchStart, { passive: false });
 
       gameGrid.appendChild(engDiv);
     });
 
-    // Create droppable Japanese boxes
-    shuffledJapanese.forEach(pair => {
+    // Add Japanese words in right two columns
+    shuffledJapanese.forEach((pair, idx) => {
       const japDiv = document.createElement('div');
       japDiv.className = 'droppable';
       japDiv.textContent = pair.japanese;
       japDiv.dataset.match = pair.english;
+      japDiv.style.gridColumn = (idx % 2) + 3; // columns 3 or 4 (right half)
       japDiv.style.position = 'relative';
 
       japDiv.addEventListener('dragover', e => e.preventDefault());
@@ -404,6 +418,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     draggedElement.style.position = 'absolute';
     draggedElement.style.zIndex = 1000;
+    draggedElement.style.width = rect.width + 'px';
+    draggedElement.style.height = rect.height + 'px';
     moveAt(touch.pageX, touch.pageY);
 
     document.addEventListener('touchmove', touchMove, { passive: false });
@@ -455,52 +471,52 @@ window.addEventListener('DOMContentLoaded', () => {
     updateProgress();
     updateStreak(currentStreak);
     playAudio(draggedEl.textContent);
-    createSparkle(draggedEl);
 
     dropTarget.classList.add('matched');
     draggedEl.classList.add('matched');
     draggedEl.setAttribute('draggable', 'false');
 
-    // Remove drag/touch listeners
+    // Remove drag listeners from matched element
     draggedEl.removeEventListener('dragstart', dragStart);
+    draggedEl.removeEventListener('dragend', dragEnd);
     draggedEl.removeEventListener('touchstart', touchStart);
 
+    launchConfetti();
+
     if (matchesMade === totalMatches) {
-      launchConfetti();
-      setTimeout(() => alert('🎉 Congratulations! You matched all words!'), 150);
+      setTimeout(() => alert('🎉 Congratulations! All matched!'), 100);
+      if (challengeMode) stopChallengeTimer();
     }
   }
 
   // Incorrect match handler
-  function onIncorrectMatch(el) {
+  function onIncorrectMatch(draggedEl) {
     currentStreak = 0;
     updateStreak(currentStreak);
-    el.classList.add('shake');
-    setTimeout(() => {
-      el.classList.remove('shake');
-      bounceBack(el);
-    }, 400);
     playErrorSound();
+
+    // Flash red briefly
+    draggedEl.classList.add('incorrect-flash');
+    setTimeout(() => draggedEl.classList.remove('incorrect-flash'), 400);
   }
 
-  // Bounce back animation (simple)
-  function bounceBack(el) {
-    // For drag-and-drop with mouse, CSS is enough.
-    // For touch, element is reset on touchEnd.
-  }
-
-  // Update progress bar
+  // Update progress bar width
   function updateProgress() {
-    const percent = (matchesMade / totalMatches) * 100;
+    let percent;
+    if (challengeMode) {
+      percent = ((challengeTimeLeft / 120) * 100);
+    } else {
+      percent = (matchesMade / totalMatches) * 100;
+    }
     progressBar.style.width = percent + '%';
   }
 
-  // Update streak display
+  // Update streak display text
   function updateStreak(count) {
     streakCounter.textContent = `Streak: ${count}`;
   }
 
-  // Play English word speech synthesis
+  // Play English word audio
   function playAudio(text) {
     if (!('speechSynthesis' in window)) return;
     const utter = new SpeechSynthesisUtterance(text);
@@ -509,29 +525,30 @@ window.addEventListener('DOMContentLoaded', () => {
     speechSynthesis.speak(utter);
   }
 
-  // Play error sound (simple beep)
+  // Play simple beep on error
   function playErrorSound() {
     try {
       const ctx = new AudioContext();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.frequency.setValueAtTime(240, ctx.currentTime);
-      g.gain.setValueAtTime(0.1, ctx.currentTime);
-      o.connect(g);
-      g.connect(ctx.destination);
-      o.start();
-      o.stop(ctx.currentTime + 0.1);
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(240, ctx.currentTime);
+      gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.1);
     } catch {
-      // Audio context not supported
+      // No audio context support
     }
   }
 
-  // Confetti animation setup
-  const confettiCanvasWidth = window.innerWidth;
-  const confettiCanvasHeight = window.innerHeight;
-  confettiCanvas.width = confettiCanvasWidth;
-  confettiCanvas.height = confettiCanvasHeight;
+  // Confetti setup
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  let confettiParticles = [];
+  let confettiAnimationId;
+  let confettiActive = false;
 
   function launchConfetti() {
     if (confettiActive) return;
@@ -539,8 +556,8 @@ window.addEventListener('DOMContentLoaded', () => {
     confettiParticles = [];
     for (let i = 0; i < 150; i++) {
       confettiParticles.push({
-        x: Math.random() * confettiCanvasWidth,
-        y: Math.random() * confettiCanvasHeight - confettiCanvasHeight,
+        x: Math.random() * confettiCanvas.width,
+        y: Math.random() * confettiCanvas.height - confettiCanvas.height,
         r: Math.random() * 6 + 4,
         d: Math.random() * 20 + 10,
         color: `hsl(${Math.random() * 360}, 70%, 60%)`,
@@ -553,7 +570,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function animateConfetti() {
-    confettiCtx.clearRect(0, 0, confettiCanvasWidth, confettiCanvasHeight);
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
     confettiParticles.forEach(p => {
       p.tiltAngle += p.tiltAngleIncrement;
       p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
@@ -567,32 +584,28 @@ window.addEventListener('DOMContentLoaded', () => {
       confettiCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
       confettiCtx.stroke();
 
-      // Reset confetti below screen
-      if (p.y > confettiCanvasHeight) {
-        p.x = Math.random() * confettiCanvasWidth;
+      if (p.y > confettiCanvas.height) {
+        p.x = Math.random() * confettiCanvas.width;
         p.y = -10;
         p.tilt = Math.floor(Math.random() * 10) - 10;
       }
     });
     confettiAnimationId = requestAnimationFrame(animateConfetti);
-
-    // Stop after 5 seconds
     setTimeout(() => {
       cancelAnimationFrame(confettiAnimationId);
-      confettiCtx.clearRect(0, 0, confettiCanvasWidth, confettiCanvasHeight);
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
       confettiActive = false;
     }, 5000);
   }
 
-  // Challenge timer
+  // Challenge timer functions
   function startChallengeTimer() {
     if (challengeTimerId) clearInterval(challengeTimerId);
     challengeTimeLeft = 120;
-    progressBar.style.backgroundColor = '#ff1744'; // red
+    progressBar.style.backgroundColor = '#ff1744'; // red for challenge
     challengeTimerId = setInterval(() => {
       challengeTimeLeft--;
       updateProgress();
-
       if (challengeTimeLeft <= 0) {
         clearInterval(challengeTimerId);
         alert('⏰ Time is up! Try again.');
@@ -603,10 +616,10 @@ window.addEventListener('DOMContentLoaded', () => {
   function stopChallengeTimer() {
     if (challengeTimerId) clearInterval(challengeTimerId);
     challengeTimerId = null;
-    progressBar.style.backgroundColor = '#e91e63';
+    progressBar.style.backgroundColor = '#e91e63'; // normal pink
   }
 
-  // Reset game to start menu
+  // Reset to start menu
   function resetGame() {
     progressContainer.style.display = 'none';
     streakCounter.style.display = 'none';
@@ -617,9 +630,13 @@ window.addEventListener('DOMContentLoaded', () => {
     stopChallengeTimer();
   }
 
-  // Initialize the app at load
   resetGame();
 
+  // Resize confetti canvas on window resize
+  window.addEventListener('resize', () => {
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  });
 });
 </script>
 </body>
