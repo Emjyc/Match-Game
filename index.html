@@ -7,7 +7,6 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nico+Moji&display=swap" rel="stylesheet" />
   <style>
-    /* All previous styles unchanged */
     * { box-sizing: border-box; }
     body {
       font-family: 'Comic Neue', cursive;
@@ -28,7 +27,7 @@
     .hidden { display: none; }
     .game-container {
       display: grid;
-      grid-template-columns: repeat(6, 1fr); /* Changed from 4 to 6 columns */
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
       justify-items: center;
       margin-top: 1rem;
@@ -224,8 +223,8 @@
 
   <div id="start-screen">
     <h1>Match the Words!</h1>
-
-  <p>Select a set to start:</p>
+    <div id="subtitle">Lesson 4 New Words</div>
+    <p>Select a set to start:</p>
     <div id="set-buttons">
       <button data-set="0">Set 1</button>
       <button data-set="1">Set 2</button>
@@ -240,180 +239,6 @@
   </div>
 
   <div id="timer" class="hidden">Time Left: 5:00</div>
-
-  <div id="game-screen" class="hidden">
-    <h2>Match the Words</h2>
-    <div class="game-container">
-      <div class="column" id="english-col-1"></div>
-      <div class="column" id="english-col-2"></div>
-      <div class="column" id="japanese-col-1"></div>
-      <div class="column" id="japanese-col-2"></div>
-    </div>
-    <button id="reset-btn">Reset</button>
-  </div>
-
-  <!-- Modal for end game messages -->
-  <div id="modal-overlay">
-    <div id="modal-box">
-      <h2 id="modal-message">Message</h2>
-      <button id="modal-close-btn">Close</button>
-    </div>
-  </div>
-
-  <script>
-    const sets = [
-      {
-        name: "Set 1",
-        vocab: [
-          { english: "minute", japanese: "分" },
-          { english: "before", japanese: "の前に" },
-          { english: "photography", japanese: "写真撮影" },
-          { english: "tournament", japanese: "トーナメント" },
-          { english: "article", japanese: "に対抗して" },
-          { english: "against", japanese: "～に対抗して" },
-          { english: "lost", japanese: "負けった" },
-          { english: "lose", japanese: "負ける" },
-          { english: "final", japanese: "最後の" },
-          { english: "second", japanese: "秒" },
-          { english: "broke", japanese: "壊した" },
-          { english: "surely", japanese: "確かに" },
-          { english: "half", japanese: "半分の" },
-          { english: "hour", japanese: "１時間" },
-          { english: "until", japanese: "。。。まで" },
-          { english: "spread", japanese: "広める" },
-          { english: "today", japanese: "今日" },
-          { english: "tomorrow", japanese: "明日" },
-          { english: "yesterday", japanese: "昨日" },
-          { english: "ago", japanese: "～前に" },
-        ]
-      },
-      // ... Other sets unchanged for brevity ...
-    ];
-
-    let currentSetIndex = null;
-    let matchedCount = 0;
-    let totalPairs = 0;
-    let timerInterval = null;
-    let timeLeft = 300; // 5 minutes in seconds
-
-    const startScreen = document.getElementById('start-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const englishCol1 = document.getElementById('english-col-1');
-    const englishCol2 = document.getElementById('english-col-2');
-    const englishCol3 = document.getElementById('english-col-3'); // new col
-    const japaneseCol1 = document.getElementById('japanese-col-1');
-    const japaneseCol2 = document.getElementById('japanese-col-2');
-    const japaneseCol3 = document.getElementById('japanese-col-3'); // new col
-    const resetBtn = document.getElementById('reset-btn');
-    const timerDisplay = document.getElementById('timer');
-    const progressBar = document.getElementById('progress-bar');
-    const progressContainer = document.getElementById('progress-container');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const modalMessage = document.getElementById('modal-message');
-    const modalCloseBtn = document.getElementById('modal-close-btn');
-
-    // Store original positions for bounce-back
-    let dragOrigin = null;
-    let dragElement = null;
-
-    // Initialize set buttons
-    document.querySelectorAll('#set-buttons button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        currentSetIndex = parseInt(btn.dataset.set);
-        startGame();
-      });
-    });
-
-    resetBtn.addEventListener('click', () => {
-      resetGame();
-    });
-
-    modalCloseBtn.addEventListener('click', () => {
-      closeModal();
-      resetGame();
-    });
-
-    // Shuffle utility
-    function shuffle(array) {
-      for (let i = array.length -1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i+1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    function startGame() {
-      matchedCount = 0;
-      timeLeft = 300;
-      progressContainer.classList.remove('hidden');
-      timerDisplay.classList.remove('hidden');
-      startScreen.classList.add('hidden');
-      gameScreen.classList.remove('hidden');
-
-      const set = sets[currentSetIndex];
-      document.querySelector('#game-screen h2').textContent = `Match the Words - ${set.name}`;
-
-      totalPairs = set.vocab.length;
-
-      // Clear previous columns
-      englishCol1.innerHTML = '';
-      englishCol2.innerHTML = '';
-      englishCol3.innerHTML = '';
-      japaneseCol1.innerHTML = '';
-      japaneseCol2.innerHTML = '';
-      japaneseCol3.innerHTML = '';
-      progressBar.style.width = '0%';
-
-      // Shuffle english and japanese separately
-      const englishWords = shuffle([...set.vocab]);
-      const japaneseWords = shuffle([...set.vocab]);
-
-      // Split english and japanese into three columns
-      const thirdE = Math.ceil(englishWords.length / 3);
-      const engCol1Items = englishWords.slice(0, thirdE);
-      const engCol2Items = englishWords.slice(thirdE, 2*thirdE);
-      const engCol3Items = englishWords.slice(2*thirdE);
-
-      const thirdJ = Math.ceil(japaneseWords.length / 3);
-      const japCol1Items = japaneseWords.slice(0, thirdJ);
-      const japCol2Items = japaneseWords.slice(thirdJ, 2*thirdJ);
-      const japCol3Items = japaneseWords.slice(2*thirdJ);
-
-      // Create English draggable items
-      engCol1Items.forEach(item => {
-        const div = createDraggableEnglish(item);
-        englishCol1.appendChild(div);
-      });
-      engCol2Items.forEach(item => {
-        const div = createDraggableEnglish(item);
-        englishCol2.appendChild(div);
-      });
-      engCol3Items.forEach(item => {
-        const div = createDraggableEnglish(item);
-        englishCol3.appendChild(div);
-      });
-
-      // Create Japanese drop targets
-      japCol1Items.forEach(item => {
-        const div = createDropTargetJapanese(item);
-        japaneseCol1.appendChild(div);
-      });
-      japCol2Items.forEach(item => {
-        const div = createDropTargetJapanese(item);
-        japaneseCol2.appendChild(div);
-      });
-      japCol3Items.forEach(item => {
-        const div = createDropTargetJapanese(item);
-        japaneseCol3.appendChild(div);
-      });
-
-      updateTimerDisplay();
-      startTimer();
-    }
-
-    
-
- <div id="timer" class="hidden">Time Left: 5:00</div>
 
   <div id="game-screen" class="hidden">
     <h2>Match the Words</h2>
@@ -573,7 +398,7 @@
           { english: "future", japanese: "未来" },
           { english: "in the future", japanese: "将来" },
           { english: "somewhere", japanese: "どこか" },
-       { english: "explore", japanese: "探検する" },
+           { english: "explore", japanese: "探検する" },
           { english: "clothes", japanese: "服" },
           { english: "design", japanese: "デザイン" },
           { english: "chef", japanese: "料理人" },
