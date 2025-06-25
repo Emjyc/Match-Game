@@ -59,30 +59,29 @@
       max-width: 960px;
       margin: 0 auto;
     }
+    /* 4 columns: 2 for English on left, 2 for Japanese on right */
     #game-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 15px;
       margin-top: 20px;
     }
-    .draggable, .droppable {
-      font-size: 1.15em;
-      padding: 14px 10px;
-      border-radius: 8px;
-      user-select: none;
-      text-align: center;
-      box-sizing: border-box;
-      min-height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s;
-    }
+    /* English boxes in first two columns */
     .draggable {
       background-color: #f9f9ff;
       border: 2px solid #aaa;
       cursor: grab;
       position: relative;
+      font-size: 1.15em;
+      padding: 14px 10px;
+      border-radius: 8px;
+      user-select: none;
+      text-align: center;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s;
     }
     .draggable:active {
       cursor: grabbing;
@@ -96,6 +95,15 @@
       background-color: #f0f0f0;
       border: 2px dashed #ccc;
       min-height: 52px;
+      font-size: 1.15em;
+      padding: 14px 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      text-align: center;
+      transition: background-color 0.3s, border-color 0.3s;
     }
     .droppable.matched {
       border-style: solid;
@@ -217,7 +225,6 @@
 
 <script>
 (() => {
-  // Vocabulary data example with 2 lessons - add more lessons here
   const lessons = [
     {
       name: "Lesson 1",
@@ -269,10 +276,9 @@
         { english: "learn", japanese: "学ぶ" }
       ]
     }
-    // Add lessons 3-14 here similarly
+    // Add lessons 3-14 here
   ];
 
-  // DOM elements
   const startMenu = document.getElementById("start-menu");
   const lessonButtonsDiv = document.getElementById("lesson-buttons");
   const challengeBtn = document.getElementById("challenge-btn");
@@ -295,7 +301,6 @@
   const ctx = confettiCanvas.getContext("2d");
   let confettiParticles = [];
 
-  // Game state
   let words = [];
   let matchedPairs = 0;
   let streak = 0;
@@ -309,7 +314,6 @@
   let challengeTimer = null;
   let timeLeft = 0;
 
-  // Setup lesson buttons
   function setupLessonButtons() {
     lessonButtonsDiv.innerHTML = "";
     lessons.forEach((lesson, i) => {
@@ -320,7 +324,6 @@
     });
   }
 
-  // Start a game
   function startGame(index, isChallenge = false) {
     currentLessonIndex = index;
     challengeMode = isChallenge;
@@ -344,69 +347,56 @@
     renderGameGrid(words);
   }
 
-  // Render game grid with 4 columns: English left 2 columns, Japanese right 2 columns
+  // Render with left 2 columns English, right 2 columns Japanese
   function renderGameGrid(words) {
     gameGrid.innerHTML = "";
-    // Shuffle English words and Japanese words independently
     const englishWords = shuffleArray(words.map(w => w.english));
     const japaneseWords = shuffleArray(words.map(w => w.japanese));
 
-    // Create draggable English boxes first (left columns)
-    englishWords.forEach(eng => {
-      createDraggableBox(eng);
-    });
-    // Create droppable Japanese boxes (right columns)
-    japaneseWords.forEach(jap => {
-      // Find the matching english word for this jap word
-      const match = words.find(w => w.japanese === jap)?.english || "";
-      createDroppableBox(jap, match);
-    });
-  }
+    // Add English words first in first two columns
+    englishWords.forEach((eng, idx) => {
+      const div = document.createElement("div");
+      div.className = "draggable";
+      div.textContent = eng;
+      div.setAttribute("draggable", "true");
+      div.dataset.word = eng;
+      div.style.gridColumnStart = (idx % 2) + 1; // columns 1 or 2
+      div.style.gridRowStart = Math.floor(idx / 2) + 1;
 
-  // Create draggable English box
-  function createDraggableBox(text) {
-    const div = document.createElement("div");
-    div.className = "draggable";
-    div.textContent = text;
-    div.setAttribute("draggable", "true");
-    div.dataset.word = text;
-    div.style.position = "relative";
-    div.tabIndex = 0;
-    div.setAttribute("aria-grabbed", "false");
+      div.tabIndex = 0;
+      div.setAttribute("aria-grabbed", "false");
 
-    // Drag events
-    div.addEventListener("dragstart", dragStart);
-    div.addEventListener("dragend", dragEnd);
+      div.addEventListener("dragstart", dragStart);
+      div.addEventListener("dragend", dragEnd);
+      div.addEventListener("touchstart", handleTouchStart, { passive: false });
 
-    // Touch drag events
-    div.addEventListener("touchstart", handleTouchStart, { passive: false });
+      div.addEventListener("mousedown", () => playAudio(eng));
+      div.addEventListener("touchstart", () => playAudio(eng), { passive: true });
 
-    // Play audio on drag or touch start
-    div.addEventListener("mousedown", () => playAudio(text));
-    div.addEventListener("touchstart", () => playAudio(text), { passive: true });
-
-    gameGrid.appendChild(div);
-  }
-
-  // Create droppable Japanese box
-  function createDroppableBox(japText, matchEnglish) {
-    const div = document.createElement("div");
-    div.className = "droppable";
-    div.textContent = japText;
-    div.dataset.match = matchEnglish;
-    div.tabIndex = 0;
-
-    div.addEventListener("dragover", e => e.preventDefault());
-    div.addEventListener("drop", handleDrop);
-
-    // Keyboard accessibility: allow "Enter" to drop when focused
-    div.addEventListener("keydown", e => {
-      if (e.key === "Enter" && draggedElement) {
-        handleDrop({ target: div, preventDefault: () => {} });
-      }
+      gameGrid.appendChild(div);
     });
 
-    gameGrid.appendChild(div);
+    // Add Japanese words in right two columns
+    japaneseWords.forEach((jap, idx) => {
+      const div = document.createElement("div");
+      div.className = "droppable";
+      div.textContent = jap;
+      const matchEnglish = words.find(w => w.japanese === jap)?.english || "";
+      div.dataset.match = matchEnglish;
+      div.style.gridColumnStart = (idx % 2) + 3; // columns 3 or 4
+      div.style.gridRowStart = Math.floor(idx / 2) + 1;
+
+      div.tabIndex = 0;
+      div.addEventListener("dragover", e => e.preventDefault());
+      div.addEventListener("drop", handleDrop);
+      div.addEventListener("keydown", e => {
+        if (e.key === "Enter" && draggedElement) {
+          handleDrop({ target: div, preventDefault: () => {} });
+        }
+      });
+
+      gameGrid.appendChild(div);
+    });
   }
 
   // Drag and drop handlers
@@ -437,7 +427,7 @@
     }
   }
 
-  // Touch drag and drop support
+  // Touch drag and drop support, improved correct pair detection
   function handleTouchStart(e) {
     e.preventDefault();
     draggedElement = e.target;
@@ -470,14 +460,14 @@
   }
   function handleTouchEnd(e) {
     e.preventDefault();
+    if (!draggedElement) return;
+
     const touch = e.changedTouches[0];
-    let dropElem = document.elementFromPoint(touch.clientX, touch.clientY);
-    while (dropElem && !dropElem.classList.contains("droppable")) {
-      dropElem = dropElem.parentElement;
-    }
-    if (dropElem && !dropElem.classList.contains("matched")) {
-      if (dropElem.dataset.match === draggedElement.dataset.word) {
-        onCorrectMatch(draggedElement, dropElem);
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (dropTarget && dropTarget.classList.contains("droppable") && !dropTarget.classList.contains("matched")) {
+      // Check if correct match
+      if (dropTarget.dataset.match === draggedElement.dataset.word) {
+        onCorrectMatch(draggedElement, dropTarget);
       } else {
         onIncorrectMatch(draggedElement);
         resetDraggedElement();
@@ -486,11 +476,19 @@
       onIncorrectMatch(draggedElement);
       resetDraggedElement();
     }
+
+    draggedElement.style.position = "";
+    draggedElement.style.zIndex = "";
+    draggedElement.style.left = "";
+    draggedElement.style.top = "";
+    draggedElement.style.width = "";
+    draggedElement.style.height = "";
+
     draggedElement.setAttribute("aria-grabbed", "false");
-    resetDraggedElement();
+    draggedElement = null;
+
     window.removeEventListener("touchmove", handleTouchMove);
     window.removeEventListener("touchend", handleTouchEnd);
-    draggedElement = null;
   }
   function resetDraggedElement() {
     if (!draggedElement) return;
@@ -521,12 +519,12 @@
     if (streak > maxStreak) maxStreak = streak;
 
     playAudio(dragEl.dataset.word);
-    triggerConfetti();
     sparkleEffect(dragEl);
     updateProgress(matchedPairs / words.length);
     updateStreak(streak);
 
     if (matchedPairs === words.length) {
+      triggerConfetti();
       endGame(true);
     }
   }
@@ -624,11 +622,12 @@
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.lang = "en-US";
 
-    // Choose a suitable voice
+    // Choose a female English voice if available
     const voices = window.speechSynthesis.getVoices();
-    utterance.voice = voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female"))
-      || voices.find(v => v.lang.startsWith("en"))
-      || null;
+    utterance.voice =
+      voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female")) ||
+      voices.find(v => v.lang.startsWith("en")) ||
+      null;
 
     window.speechSynthesis.speak(utterance);
   }
@@ -643,8 +642,7 @@
     return array;
   }
 
-  // Confetti animation code adapted from https://codepen.io/firxworx/pen/PwwdzM
-  // Very simple confetti effect on canvas
+  // Confetti animation adapted from https://codepen.io/firxworx/pen/PwwdzM
   function triggerConfetti() {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -713,20 +711,16 @@
     document.body.classList.toggle("dark");
     const isDark = document.body.classList.contains("dark");
     darkModeToggle.setAttribute("aria-pressed", isDark);
-    // Update button styles in start menu
     document.querySelectorAll("#start-menu button").forEach(btn => {
       btn.classList.toggle("dark", isDark);
     });
-    // End screen dark mode style
     endScreen.classList.toggle("dark", isDark);
   });
 
-  // Challenge mode button
   challengeBtn.addEventListener("click", () => {
     startGame(0, true);
   });
 
-  // Initialize
   setupLessonButtons();
 })();
 </script>
