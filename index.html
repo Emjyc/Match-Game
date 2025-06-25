@@ -167,6 +167,11 @@
   <div id="end-screen">
     <h2>✨ All Pairs Matched! ✨</h2>
     <p>Great job! You’ve matched every word perfectly. 🎉</p>
+    <div id="scoreboard">
+      <p><strong>⏱ Time Taken:</strong> <span id="score-time"></span></p>
+      <p><strong>✅ Matches Made:</strong> <span id="score-matches"></span></p>
+      <p><strong>❌ Mistakes:</strong> <span id="score-mistakes"></span></p>
+    </div>
     <button class="restart-btn" onclick="goBack()">🔁 Play Again</button>
   </div>
 
@@ -180,19 +185,23 @@
     let matchedPairs = 0;
     let firstSelection = null;
     let isChallenge = false;
+    let startTime;
+  let mistakeCount = 0;
 
     function toggleDarkMode() {
       document.body.classList.toggle("dark-mode");
     }
 
-    function startGame(setIndex, challenge = false) {
-      selectedSet = sets[setIndex];
-      isChallenge = challenge;
-      document.getElementById('start-menu').classList.remove('active');
-      document.getElementById('game-screen').classList.add('active');
-      document.getElementById('end-screen').classList.remove('active');
-      timerDisplay.textContent = "";
-      buildGrid();
+  function startGame(setIndex, challenge = false) {
+    selectedSet = sets[setIndex];
+    isChallenge = challenge;
+    document.getElementById('start-menu').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+    document.getElementById('end-screen').classList.remove('active');
+    timerDisplay.textContent = "";
+    mistakeCount = 0;
+    startTime = Date.now();
+    buildGrid();
 
       if (isChallenge) {
         let timeLeft = 120;
@@ -244,46 +253,50 @@
     }
 
     function handleSelection(card, type) {
-      if (card.classList.contains('matched') || card === firstSelection?.card) return;
+    if (card.classList.contains('matched') || card === firstSelection?.card) return;
 
-      if (!firstSelection) {
-        firstSelection = { card, type };
-        card.style.background = '#ffe1e9';
-        return;
-      }
-
-      const isMatch = firstSelection.card.dataset.match === card.textContent &&
-                      firstSelection.card.textContent === card.dataset.match;
-
-      if (isMatch) {
-        firstSelection.card.classList.add('matched');
-        card.classList.add('matched');
-        matchedPairs++;
-
-        if (matchedPairs === selectedSet.words.length) {
-          if (isChallenge) clearInterval(countdown);
-          setTimeout(() => {
-            document.getElementById('game-screen').classList.remove('active');
-            document.getElementById('end-screen').classList.add('active');
-            confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 }
-            });
-          }, 500);
-        }
-      } else {
-        firstSelection.card.classList.add("wrong");
-        card.classList.add("wrong");
-        setTimeout(() => {
-          firstSelection.card.classList.remove("wrong");
-          card.classList.remove("wrong");
-          firstSelection.card.style.background = "";
-          card.style.background = "";
-        }, 700);
-      }
-      firstSelection = null;
+      
+    if (!firstSelection) {
+      firstSelection = { card, type };
+      card.style.background = '#ffe1e9';
+      return;
     }
+
+    const isMatch = firstSelection.card.dataset.match === card.textContent &&
+                    firstSelection.card.textContent === card.dataset.match;
+
+    if (isMatch) {
+      firstSelection.card.classList.add('matched');
+      card.classList.add('matched');
+      matchedPairs++;
+
+      if (matchedPairs === selectedSet.words.length) {
+        if (isChallenge) clearInterval(countdown);
+
+        const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+
+        document.getElementById('score-time').textContent = `${timeTaken} seconds`;
+        document.getElementById('score-matches').textContent = matchedPairs;
+        document.getElementById('score-mistakes').textContent = mistakeCount;
+
+        setTimeout(() => {
+          document.getElementById('game-screen').classList.remove('active');
+          document.getElementById('end-screen').classList.add('active');
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }, 500);
+      }
+    } else {
+      mistakeCount++;
+      firstSelection.card.classList.add("wrong");
+      card.classList.add("wrong");
+      setTimeout(() => {
+        firstSelection.card.classList.remove("wrong");
+        card.classList.remove("wrong");
+        firstSelection.card.style.background = "";
+        card.style.background = "";
+      }, 700);
+    }
+    firstSelection = null;
 
     function goBack() {
       clearInterval(countdown);
