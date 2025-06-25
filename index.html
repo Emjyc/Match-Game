@@ -164,27 +164,15 @@
 </head>
 <body>
 
-<div id="start-menu" class="active">
+  <div id="start-menu" class="active">
     <h1 class="title"> Vocabulary Match Game </h1>
-  <button onclick="startGame(0)">Lesson 1</button>
-  <button onclick="startGame(1)">Lesson 2</button>
-  <button onclick="startGame(2)">Lesson 3</button>
-  <button onclick="startGame(3)">Lesson 4</button>
-  <button onclick="startGame(4)">Lesson 5</button>
-  <button onclick="startGame(5)">Lesson 6</button>
-  <button onclick="startGame(6)">Lesson 7</button>
-  <button onclick="startGame(7)">Lesson 8</button>
-  <button onclick="startGame(8)">Lesson 9</button>
-  <button onclick="startGame(9)">Lesson 10</button>
-  <button onclick="startGame(10)">Lesson 11</button>
-  <button onclick="startGame(11)">Lesson 12</button>
-  <button onclick="startGame(12)">Lesson 13</button>
-  <button onclick="startGame(13)">Lesson 14</button>
-  <button onclick="startGame(0, true)">Challenge Mode 🔥</button>
-  <button onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
-</div>
+    <button onclick="startGame(0)">Lesson 1</button>
+    <button onclick="startGame(1)">Lesson 2</button>
+    <button onclick="startGame(2)">Lesson 3</button>
+    <button onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
+  </div>
 
- <div id="game-screen">
+  <div id="game-screen">
     <h2 id="game-title">Vocabulary Match</h2>
     <div class="grid-container">
       <div id="english-column" class="grid-column"></div>
@@ -208,330 +196,9 @@
     <button onclick="goToStart()">🔁 Back to Start</button>
   </div>
 
-  <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-  
-  
-  
-  <script>
-    let countdown, selectedSet, matchedPairs, startTime, mistakeCount, isChallenge = false, streak = 0;
-   let matchedPairs = [];
-  let incorrectPairs = [];
-  let currentLesson = null;
-     let japaneseToEnglishMap = {};
-    const timerDisplay = document.getElementById('timer');
-    const progressBar = document.getElementById('progress-bar');
-    const streakMsg = document.getElementById('streak-message');
+<script>
 
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-    }
-
-    / Map for quick matching: japanese -> english
-  let japaneseToEnglishMap = {};
-
-  function startGame(index) {
-    matchedPairs = [];
-    incorrectPairs = [];
-    currentLesson = lessons[index];
-
-    // Create matching map
-    japaneseToEnglishMap = {};
-    currentLesson.words.forEach(({english, japanese}) => {
-      japaneseToEnglishMap[japanese] = english;
-    });
-
-    document.getElementById('start-menu').classList.remove('active');
-    document.getElementById('end-screen').classList.remove('active');
-    document.getElementById('review-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.add('active');
-    document.getElementById('game-title').textContent = `Vocabulary Match - ${currentLesson.name}`;
-
-    populateGameGrid(currentLesson.words);
-    updateProgress();
-  }
-
-  function populateGameGrid(words) {
-    const englishCol = document.getElementById('english-column');
-    const japaneseCol = document.getElementById('japanese-column');
-    englishCol.innerHTML = '';
-    japaneseCol.innerHTML = '';
-
-    // Shuffle arrays
-    const shuffledEnglish = [...words].sort(() => Math.random() - 0.5);
-    const shuffledJapanese = [...words].sort(() => Math.random() - 0.5);
-
-    // Create English draggable cards
-    shuffledEnglish.forEach(({english}) => {
-      const card = document.createElement('div');
-      card.className = 'card draggable';
-      card.textContent = english;
-      card.dataset.english = english;
-      card.setAttribute('draggable', 'true');
-      addDragAndDropListeners(card);
-      englishCol.appendChild(card);
-    });
-
-    // Create Japanese droppable cards
-    shuffledJapanese.forEach(({japanese}) => {
-      const card = document.createElement('div');
-      card.className = 'card droppable';
-      card.textContent = japanese;
-      card.dataset.japanese = japanese;
-      japaneseCol.appendChild(card);
-    });
-  }
-
-  // For mouse drag-and-drop (unchanged from before)
-  function addDragAndDropListeners(card) {
-    card.addEventListener('dragstart', dragStart);
-    card.addEventListener('dragend', dragEnd);
-  }
-
-  let dragSrc = null;
-
-  function dragStart(e) {
-    dragSrc = e.target;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', dragSrc.dataset.english);
-    // Reduce opacity for dragging effect
-    dragSrc.style.opacity = '0.6';
-  }
-
-  function dragEnd(e) {
-    if (dragSrc) dragSrc.style.opacity = '';
-  }
-
-  document.querySelector('#japanese-column').addEventListener('dragover', e => {
-    e.preventDefault();
-  });
-
-  document.querySelector('#japanese-column').addEventListener('drop', e => {
-    e.preventDefault();
-    if (!dragSrc) return;
-
-    const dropTarget = e.target.closest('.droppable');
-    if (!dropTarget) return;
-
-    const englishWord = dragSrc.dataset.english;
-    const japaneseWord = dropTarget.dataset.japanese;
-
-    if (checkMatch(englishWord, japaneseWord)) {
-      markMatched(dragSrc, dropTarget);
-    } else {
-      bounceBack(dragSrc);
-    }
-  });
-
-  // Check match logic
-  function checkMatch(english, japanese) {
-    return japaneseToEnglishMap[japanese] === english;
-  }
-
-  // Mark matched cards
-  function markMatched(englishCard, japaneseCard) {
-    englishCard.classList.add('matched');
-    englishCard.classList.remove('draggable');
-    japaneseCard.classList.add('matched');
-
-    // Snap English card onto Japanese card visually
-    japaneseCard.appendChild(englishCard);
-    englishCard.style.position = 'relative';
-    englishCard.style.left = '0';
-    englishCard.style.top = '0';
-
-    matchedPairs.push({english: englishCard.dataset.english, japanese: japaneseCard.dataset.japanese});
-    updateProgress();
-
-    // Check if all matched
-    if (matchedPairs.length === currentLesson.words.length) {
-      setTimeout(() => {
-        showEndScreen();
-      }, 500);
-    }
-  }
-
-  // Bounce animation for incorrect drops
-  function bounceBack(card) {
-    card.style.transition = 'transform 0.3s';
-    card.style.transform = 'translateX(-20px)';
-    setTimeout(() => {
-      card.style.transform = 'translateX(20px)';
-    }, 150);
-    setTimeout(() => {
-      card.style.transform = 'translateX(0)';
-    }, 300);
-    setTimeout(() => {
-      card.style.transition = '';
-    }, 600);
-  }
-
-  // Update progress bar
-  function updateProgress() {
-    const progressBar = document.getElementById('progress-bar');
-    const percent = (matchedPairs.length / currentLesson.words.length) * 100;
-    progressBar.style.width = percent + '%';
-  }
-
-  // Show end screen
-  function showEndScreen() {
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('end-screen').classList.add('active');
-    document.getElementById('final-score').textContent = matchedPairs.length;
-  }
-
-  function goToStart() {
-    document.getElementById('end-screen').classList.remove('active');
-    document.getElementById('review-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('start-menu').classList.add('active');
-  }
-
-  // REVIEW SCREEN LOGIC (includes incorrect pairs)
-  function showReviewScreen(matched, incorrect) {
-    document.getElementById('end-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('review-screen').classList.add('active');
-
-    const reviewList = document.getElementById('review-list');
-    reviewList.innerHTML = '';
-
-    matched.forEach(pair => {
-      const div = document.createElement('div');
-      div.className = 'review-item';
-      div.innerHTML = `<span>${pair.english} - ${pair.japanese}</span><button onclick="playAudio('${pair.english}')">🔊</button>`;
-      reviewList.appendChild(div);
-    });
-
-    if (incorrect.length > 0) {
-      const header = document.createElement('h3');
-      header.textContent = 'Incorrect Attempts';
-      reviewList.appendChild(header);
-
-      incorrect.forEach(pair => {
-        const div = document.createElement('div');
-        div.className = 'review-item incorrect';
-        div.innerHTML = `<span>${pair.english} ❌ ${pair.japanese}</span><button onclick="playAudio('${pair.english}')">🔊</button>`;
-        reviewList.appendChild(div);
-      });
-    }
-  }
-
-  // Play English audio
-  function playAudio(text) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    speechSynthesis.speak(utterance);
-  }
-
-  // ------------------------------
-  // TOUCH DRAG & DROP INTEGRATION
-  // ------------------------------
-  let draggedCard = null;
-  let offsetX = 0;
-  let offsetY = 0;
-
-  function getDroppableUnderPoint(x, y) {
-    const elements = document.elementsFromPoint(x, y);
-    return elements.find(el => el.classList && el.classList.contains('droppable'));
-  }
-
-  document.addEventListener('touchstart', function(e) {
-    const target = e.target.closest('.draggable');
-    if (!target) return;
-
-    draggedCard = target;
-    const touch = e.touches[0];
-    const rect = draggedCard.getBoundingClientRect();
-
-    offsetX = touch.clientX - rect.left;
-    offsetY = touch.clientY - rect.top;
-
-    draggedCard.style.position = 'fixed';
-    draggedCard.style.zIndex = 1000;
-    draggedCard.style.width = rect.width + 'px';
-    draggedCard.style.height = rect.height + 'px';
-    draggedCard.style.left = (touch.clientX - offsetX) + 'px';
-    draggedCard.style.top = (touch.clientY - offsetY) + 'px';
-
-    draggedCard.classList.add('dragging');
-
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('touchmove', function(e) {
-    if (!draggedCard) return;
-    const touch = e.touches[0];
-    draggedCard.style.left = (touch.clientX - offsetX) + 'px';
-    draggedCard.style.top = (touch.clientY - offsetY) + 'px';
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('touchend', function(e) {
-    if (!draggedCard) return;
-
-    const touch = e.changedTouches[0];
-    const dropTarget = getDroppableUnderPoint(touch.clientX, touch.clientY);
-
-    if (dropTarget) {
-      const draggedEnglish = draggedCard.dataset.english;
-      const targetJapanese = dropTarget.dataset.japanese;
-
-      if (checkMatch(draggedEnglish, targetJapanese)) {
-        // Snap onto the droppable
-        const dropRect = dropTarget.getBoundingClientRect();
-
-        // Move the dragged card inside the dropTarget container to maintain layout
-        dropTarget.appendChild(draggedCard);
-        draggedCard.style.position = 'relative';
-        draggedCard.style.left = '0';
-        draggedCard.style.top = '0';
-        draggedCard.style.width = '100%';
-        draggedCard.style.height = 'auto';
-
-        draggedCard.classList.add('matched');
-        draggedCard.classList.remove('draggable');
-        dropTarget.classList.add('matched');
-
-        matchedPairs.push({ english: draggedEnglish, japanese: targetJapanese });
-        updateProgress();
-
-        // Check game end
-        if (matchedPairs.length === currentLesson.words.length) {
-          setTimeout(() => {
-            showEndScreen();
-          }, 500);
-        }
-
-        draggedCard = null;
-        e.preventDefault();
-        return;
-      }
-    }
-
-    // If no match or no droppable under finger, bounce back
-    bounceBack(draggedCard);
-
-    // Reset dragged card styles after short delay
-    setTimeout(() => {
-      draggedCard.style.position = '';
-      draggedCard.style.left = '';
-      draggedCard.style.top = '';
-      draggedCard.style.zIndex = '';
-      draggedCard.style.width = '';
-      draggedCard.style.height = '';
-      draggedCard.classList.remove('dragging');
-      draggedCard = null;
-    }, 400);
-
-    e.preventDefault();
-  }, { passive: false });
-
-  // Dark mode toggle
-  function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
-  }
-    const sets = [
+const sets = [
       {
         name: "Lesson 1",
         words: [
@@ -845,6 +512,299 @@
         ]
       }
     ];
-  </script>
+
+
+  
+
+  let matchedPairs = [];
+  let incorrectPairs = [];
+  let currentLesson = null;
+
+  let japaneseToEnglishMap = {};
+
+  function startGame(index) {
+    matchedPairs = [];
+    incorrectPairs = [];
+    currentLesson = lessons[index];
+
+    japaneseToEnglishMap = {};
+    currentLesson.words.forEach(({english, japanese}) => {
+      japaneseToEnglishMap[japanese] = english;
+    });
+
+    document.getElementById('start-menu').classList.remove('active');
+    document.getElementById('end-screen').classList.remove('active');
+    document.getElementById('review-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+    document.getElementById('game-title').textContent = `Vocabulary Match - ${currentLesson.name}`;
+
+    populateGameGrid(currentLesson.words);
+    updateProgress();
+  }
+
+  function populateGameGrid(words) {
+    const englishCol = document.getElementById('english-column');
+    const japaneseCol = document.getElementById('japanese-column');
+    englishCol.innerHTML = '';
+    japaneseCol.innerHTML = '';
+
+    const shuffledEnglish = [...words].sort(() => Math.random() - 0.5);
+    const shuffledJapanese = [...words].sort(() => Math.random() - 0.5);
+
+    shuffledEnglish.forEach(({english}) => {
+      const card = document.createElement('div');
+      card.className = 'card draggable';
+      card.textContent = english;
+      card.dataset.english = english;
+      card.setAttribute('draggable', 'true');
+      addDragAndDropListeners(card);
+      englishCol.appendChild(card);
+    });
+
+    shuffledJapanese.forEach(({japanese}) => {
+      const card = document.createElement('div');
+      card.className = 'card droppable';
+      card.textContent = japanese;
+      card.dataset.japanese = japanese;
+      japaneseCol.appendChild(card);
+    });
+  }
+
+  function addDragAndDropListeners(card) {
+    card.addEventListener('dragstart', dragStart);
+    card.addEventListener('dragend', dragEnd);
+  }
+
+  let dragSrc = null;
+
+  function dragStart(e) {
+    dragSrc = e.target;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragSrc.dataset.english);
+    dragSrc.style.opacity = '0.6';
+  }
+
+  function dragEnd(e) {
+    if (dragSrc) dragSrc.style.opacity = '';
+  }
+
+  document.querySelector('#japanese-column').addEventListener('dragover', e => {
+    e.preventDefault();
+  });
+
+  document.querySelector('#japanese-column').addEventListener('drop', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+
+    const dropTarget = e.target.closest('.droppable');
+    if (!dropTarget) return;
+
+    const englishWord = dragSrc.dataset.english;
+    const japaneseWord = dropTarget.dataset.japanese;
+
+    if (checkMatch(englishWord, japaneseWord)) {
+      markMatched(dragSrc, dropTarget);
+    } else {
+      bounceBack(dragSrc);
+    }
+  });
+
+  function checkMatch(english, japanese) {
+    return japaneseToEnglishMap[japanese] === english;
+  }
+
+  function markMatched(englishCard, japaneseCard) {
+    englishCard.classList.add('matched');
+    englishCard.classList.remove('draggable');
+    japaneseCard.classList.add('matched');
+
+    japaneseCard.appendChild(englishCard);
+    englishCard.style.position = 'relative';
+    englishCard.style.left = '0';
+    englishCard.style.top = '0';
+
+    matchedPairs.push({english: englishCard.dataset.english, japanese: japaneseCard.dataset.japanese});
+    updateProgress();
+
+    if (matchedPairs.length === currentLesson.words.length) {
+      setTimeout(() => {
+        showEndScreen();
+      }, 500);
+    }
+  }
+
+  function bounceBack(card) {
+    card.style.transition = 'transform 0.3s';
+    card.style.transform = 'translateX(-20px)';
+    setTimeout(() => {
+      card.style.transform = 'translateX(20px)';
+    }, 150);
+    setTimeout(() => {
+      card.style.transform = 'translateX(0)';
+    }, 300);
+    setTimeout(() => {
+      card.style.transition = '';
+    }, 600);
+  }
+
+  function updateProgress() {
+    const progressBar = document.getElementById('progress-bar');
+    const percent = (matchedPairs.length / currentLesson.words.length) * 100;
+    progressBar.style.width = percent + '%';
+  }
+
+  function showEndScreen() {
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('end-screen').classList.add('active');
+    document.getElementById('final-score').textContent = matchedPairs.length;
+  }
+
+  function goToStart() {
+    document.getElementById('end-screen').classList.remove('active');
+    document.getElementById('review-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('start-menu').classList.add('active');
+  }
+
+  function showReviewScreen(matched, incorrect) {
+    document.getElementById('end-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('review-screen').classList.add('active');
+
+    const reviewList = document.getElementById('review-list');
+    reviewList.innerHTML = '';
+
+    matched.forEach(pair => {
+      const div = document.createElement('div');
+      div.className = 'review-item';
+      div.innerHTML = `<span>${pair.english} - ${pair.japanese}</span><button onclick="playAudio('${pair.english}')">🔊</button>`;
+      reviewList.appendChild(div);
+    });
+
+    if (incorrect.length > 0) {
+      const header = document.createElement('h3');
+      header.textContent = 'Incorrect Attempts';
+      reviewList.appendChild(header);
+
+      incorrect.forEach(pair => {
+        const div = document.createElement('div');
+        div.className = 'review-item incorrect';
+        div.innerHTML = `<span>${pair.english} ❌ ${pair.japanese}</span><button onclick="playAudio('${pair.english}')">🔊</button>`;
+        reviewList.appendChild(div);
+      });
+    }
+  }
+
+  function playAudio(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    speechSynthesis.speak(utterance);
+  }
+
+  // ----------------------------------------
+  // TOUCH DRAG & DROP (only active on game screen)
+  // ----------------------------------------
+  let draggedCard = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  function getDroppableUnderPoint(x, y) {
+    const elements = document.elementsFromPoint(x, y);
+    return elements.find(el => el.classList && el.classList.contains('droppable'));
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    // Only if game screen is active and touched element is draggable card
+    if (!document.getElementById('game-screen').classList.contains('active')) return;
+
+    const target = e.target.closest('.draggable');
+    if (!target) return;
+
+    draggedCard = target;
+    const touch = e.touches[0];
+    const rect = draggedCard.getBoundingClientRect();
+
+    offsetX = touch.clientX - rect.left;
+    offsetY = touch.clientY - rect.top;
+
+    draggedCard.style.position = 'fixed';
+    draggedCard.style.zIndex = 1000;
+    draggedCard.style.width = rect.width + 'px';
+    draggedCard.style.height = rect.height + 'px';
+    draggedCard.style.left = (touch.clientX - offsetX) + 'px';
+    draggedCard.style.top = (touch.clientY - offsetY) + 'px';
+
+    draggedCard.classList.add('dragging');
+
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!draggedCard) return;
+    const touch = e.touches[0];
+    draggedCard.style.left = (touch.clientX - offsetX) + 'px';
+    draggedCard.style.top = (touch.clientY - offsetY) + 'px';
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchend', function(e) {
+    if (!draggedCard) return;
+
+    const touch = e.changedTouches[0];
+    const dropTarget = getDroppableUnderPoint(touch.clientX, touch.clientY);
+
+    if (dropTarget) {
+      const draggedEnglish = draggedCard.dataset.english;
+      const targetJapanese = dropTarget.dataset.japanese;
+
+      if (checkMatch(draggedEnglish, targetJapanese)) {
+        dropTarget.appendChild(draggedCard);
+        draggedCard.style.position = 'relative';
+        draggedCard.style.left = '0';
+        draggedCard.style.top = '0';
+        draggedCard.style.width = '100%';
+        draggedCard.style.height = 'auto';
+
+        draggedCard.classList.add('matched');
+        draggedCard.classList.remove('draggable');
+        dropTarget.classList.add('matched');
+
+        matchedPairs.push({ english: draggedEnglish, japanese: targetJapanese });
+        updateProgress();
+
+        if (matchedPairs.length === currentLesson.words.length) {
+          setTimeout(() => {
+            showEndScreen();
+          }, 500);
+        }
+
+        draggedCard = null;
+        e.preventDefault();
+        return;
+      }
+    }
+
+    bounceBack(draggedCard);
+
+    setTimeout(() => {
+      draggedCard.style.position = '';
+      draggedCard.style.left = '';
+      draggedCard.style.top = '';
+      draggedCard.style.zIndex = '';
+      draggedCard.style.width = '';
+      draggedCard.style.height = '';
+      draggedCard.classList.remove('dragging');
+      draggedCard = null;
+    }, 400);
+
+    e.preventDefault();
+  }, { passive: false });
+
+  // Dark mode toggle
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+  }
+</script>
+
 </body>
 </html>
