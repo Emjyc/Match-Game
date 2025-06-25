@@ -1,10 +1,11 @@
+<!-- Full code will be rewritten to switch from click-matching to drag-and-drop mechanics. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>English-Japanese Vocab Match</title>
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nico+Moji&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vocabulary Match Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nico+Moji&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #fdf6f0;
@@ -14,7 +15,6 @@
       --text: #333;
       --accent: #ffb5d2;
     }
-
     body.dark-mode {
       --bg: #1e1e2f;
       --primary: #5e548e;
@@ -23,7 +23,6 @@
       --text: #f5f5f5;
       --accent: #ffb5d2;
     }
-
     body {
       margin: 0;
       font-family: 'Comic Neue', cursive;
@@ -33,7 +32,6 @@
       flex-direction: column;
       align-items: center;
     }
-
     #start-menu, #game-screen, #end-screen {
       max-width: 1000px;
       width: 100%;
@@ -43,17 +41,14 @@
       align-items: center;
       text-align: center;
     }
-
     #start-menu.active, #game-screen.active, #end-screen.active {
       display: flex;
     }
-
     .title {
       font-size: 2.5rem;
       margin: 20px;
       color: #d85f84;
     }
-
     .lesson-buttons button, .back-btn, .restart-btn, .toggle-dark, .challenge-btn {
       font-family: 'Comic Neue', cursive;
       padding: 12px 24px;
@@ -64,82 +59,60 @@
       border-radius: 20px;
       cursor: pointer;
       transition: all 0.3s;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
     }
-
     .lesson-buttons button:hover, .back-btn:hover, .restart-btn:hover, .toggle-dark:hover, .challenge-btn:hover {
       background: var(--hover);
       transform: scale(1.05);
     }
-
     .grid-container {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 20px;
       width: 100%;
       max-width: 900px;
     }
-
     .grid-column {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
     }
-
     .card {
       background: white;
-      padding: 20px;
+      padding: 15px;
       text-align: center;
       font-size: 1.2rem;
       border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.3s;
       font-family: 'Nico Moji', sans-serif;
+      user-select: none;
     }
-
-    .card:hover {
-      background: var(--hover);
-      transform: scale(1.05);
+    .draggable {
+      cursor: grab;
     }
-
+    .droppable {
+      border: 2px dashed transparent;
+    }
+    .droppable.over {
+      border-color: var(--primary);
+    }
     .matched {
       background: var(--match) !important;
       pointer-events: none;
-      animation: pulse 0.5s;
     }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.15); }
-      100% { transform: scale(1); }
-    }
-
-    .wrong {
-      background: #ffcccc !important;
-      animation: shake 0.5s;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      50% { transform: translateX(5px); }
-      75% { transform: translateX(-5px); }
-    }
-
     #end-screen h2 {
       font-size: 2rem;
       color: #5c3a56;
     }
-
     #end-screen p {
       font-size: 1.2rem;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
-
+    #scoreboard p {
+      margin: 4px 0;
+    }
     #timer {
       font-size: 1.2rem;
-      margin-top: 10px;
       color: var(--accent);
+      margin-bottom: 15px;
     }
   </style>
 </head>
@@ -155,7 +128,7 @@
   </div>
 
   <div id="game-screen">
-    <h2 class="title">🎯 Match the Words</h2>
+    <h2 class="title">🎯 Drag English Words to Match</h2>
     <div id="timer"></div>
     <div class="grid-container">
       <div class="grid-column" id="english-column"></div>
@@ -176,32 +149,31 @@
   </div>
 
   <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
-
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <script>
-    const timerDisplay = document.getElementById("timer");
     let countdown;
     let selectedSet = null;
     let matchedPairs = 0;
-    let firstSelection = null;
-    let isChallenge = false;
     let startTime;
-  let mistakeCount = 0;
+    let mistakeCount = 0;
+    let isChallenge = false;
+    const timerDisplay = document.getElementById('timer');
 
     function toggleDarkMode() {
-      document.body.classList.toggle("dark-mode");
+      document.body.classList.toggle('dark-mode');
     }
 
-  function startGame(setIndex, challenge = false) {
-    selectedSet = sets[setIndex];
-    isChallenge = challenge;
-    document.getElementById('start-menu').classList.remove('active');
-    document.getElementById('game-screen').classList.add('active');
-    document.getElementById('end-screen').classList.remove('active');
-    timerDisplay.textContent = "";
-    mistakeCount = 0;
-    startTime = Date.now();
-    buildGrid();
+    function startGame(setIndex, challenge = false) {
+      selectedSet = sets[setIndex];
+      isChallenge = challenge;
+      document.getElementById('start-menu').classList.remove('active');
+      document.getElementById('game-screen').classList.add('active');
+      document.getElementById('end-screen').classList.remove('active');
+      timerDisplay.textContent = "";
+      matchedPairs = 0;
+      mistakeCount = 0;
+      startTime = Date.now();
+      buildGrid();
 
       if (isChallenge) {
         let timeLeft = 120;
@@ -219,84 +191,71 @@
     }
 
     function buildGrid() {
-      matchedPairs = 0;
-      firstSelection = null;
       const englishCol = document.getElementById('english-column');
       const japaneseCol = document.getElementById('japanese-column');
       englishCol.innerHTML = '';
       japaneseCol.innerHTML = '';
+      const englishWords = [...selectedSet.words].sort(() => Math.random() - 0.5);
+      const japaneseWords = [...selectedSet.words].sort(() => Math.random() - 0.5);
 
-      const words = [...selectedSet.words];
-      const englishWords = [...words].sort(() => Math.random() - 0.5);
-      const japaneseWords = [...words].sort(() => Math.random() - 0.5);
-
-      englishWords.forEach((word) => {
+      englishWords.forEach(word => {
         const card = document.createElement('div');
+        card.className = 'card draggable';
+        card.draggable = true;
         card.textContent = word.english;
-        card.className = 'card';
         card.dataset.match = word.japanese;
-        card.onclick = () => {
+        card.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', word.english);
           playAudio(word.english);
-          handleSelection(card, 'english');
-        };
+        });
         englishCol.appendChild(card);
       });
 
-      japaneseWords.forEach((word) => {
+      japaneseWords.forEach(word => {
         const card = document.createElement('div');
+        card.className = 'card droppable';
         card.textContent = word.japanese;
-        card.className = 'card';
         card.dataset.match = word.english;
-        card.onclick = () => handleSelection(card, 'japanese');
+
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          card.classList.add('over');
+        });
+        card.addEventListener('dragleave', () => card.classList.remove('over'));
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          card.classList.remove('over');
+          const draggedEnglish = e.dataTransfer.getData('text/plain');
+
+          if (card.dataset.match === draggedEnglish) {
+            card.classList.add('matched');
+            const dragged = [...englishCol.children].find(c => c.textContent === draggedEnglish);
+            dragged.classList.add('matched');
+            dragged.draggable = false;
+            matchedPairs++;
+
+            if (matchedPairs === selectedSet.words.length) {
+              if (isChallenge) clearInterval(countdown);
+              const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+              document.getElementById('score-time').textContent = `${timeTaken} seconds`;
+              document.getElementById('score-matches').textContent = matchedPairs;
+              document.getElementById('score-mistakes').textContent = mistakeCount;
+              setTimeout(() => {
+                document.getElementById('game-screen').classList.remove('active');
+                document.getElementById('end-screen').classList.add('active');
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+              }, 300);
+            }
+          } else {
+            mistakeCount++;
+            card.style.backgroundColor = '#ffcccc';
+            setTimeout(() => card.style.backgroundColor = '', 600);
+          }
+        });
+
         japaneseCol.appendChild(card);
       });
     }
-
-    function handleSelection(card, type) {
-    if (card.classList.contains('matched') || card === firstSelection?.card) return;
-
-      
-    if (!firstSelection) {
-      firstSelection = { card, type };
-      card.style.background = '#ffe1e9';
-      return;
-    }
-
-    const isMatch = firstSelection.card.dataset.match === card.textContent &&
-                    firstSelection.card.textContent === card.dataset.match;
-
-    if (isMatch) {
-      firstSelection.card.classList.add('matched');
-      card.classList.add('matched');
-      matchedPairs++;
-
-      if (matchedPairs === selectedSet.words.length) {
-        if (isChallenge) clearInterval(countdown);
-
-        const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-
-        document.getElementById('score-time').textContent = `${timeTaken} seconds`;
-        document.getElementById('score-matches').textContent = matchedPairs;
-        document.getElementById('score-mistakes').textContent = mistakeCount;
-
-        setTimeout(() => {
-          document.getElementById('game-screen').classList.remove('active');
-          document.getElementById('end-screen').classList.add('active');
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        }, 500);
-      }
-    } else {
-      mistakeCount++;
-      firstSelection.card.classList.add("wrong");
-      card.classList.add("wrong");
-      setTimeout(() => {
-        firstSelection.card.classList.remove("wrong");
-        card.classList.remove("wrong");
-        firstSelection.card.style.background = "";
-        card.style.background = "";
-      }, 700);
-    }
-    firstSelection = null;
 
     function goBack() {
       clearInterval(countdown);
