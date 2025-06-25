@@ -1,932 +1,876 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vocabulary Match Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
-  <style>
-    * {
-      box-sizing: border-box;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vocabulary Match Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
+<style>
+  /* Reset & base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Comic Neue', cursive;
+    margin: 0; padding: 0;
+    background: #fefefe;
+    color: #222;
+    user-select: none;
+    overflow-x: hidden;
+  }
+  h1.title {
+    text-align: center;
+    font-size: 2.8rem;
+    margin: 24px 0;
+    font-weight: 700;
+    color: #d6336c;
+  }
+  #start-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+  }
+  #lesson-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    max-width: 720px;
+  }
+  #lesson-buttons button, #start-menu button {
+    background-color: #ffe0f0;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: background-color 0.25s, transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-width: 120px;
+  }
+  #lesson-buttons button:hover, #start-menu button:hover {
+    background-color: #ffbad4;
+    transform: scale(1.05);
+  }
+  #dark-mode-toggle {
+    margin-top: 16px;
+    background-color: #dcdcdc;
+    color: #333;
+  }
+  #game-grid {
+    max-width: 900px;
+    margin: 0 auto 40px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 0 16px 24px;
+  }
+  .droppable {
+    border: 2px dashed #ccc;
+    background-color: #f7f7f7;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    border-radius: 8px;
+    position: relative;
+    user-select: none;
+  }
+  .droppable.matched {
+    border-style: solid;
+    border-color: #57d26f;
+    background-color: #dbf7dc;
+  }
+  .draggable {
+    background-color: #fff;
+    border: 1.8px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+    position: relative;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .draggable:active {
+    cursor: grabbing;
+  }
+  .draggable.matched {
+    border-color: #57d26f;
+    background-color: #dbf7dc;
+    cursor: default;
+  }
+  .hide {
+    visibility: hidden;
+  }
+  /* Red shake animation on wrong drop */
+  @keyframes shake {
+    0% { transform: translateX(0); border-color: #ccc;}
+    20% { transform: translateX(-8px); border-color: #ff4c4c;}
+    40% { transform: translateX(8px); border-color: #ff4c4c;}
+    60% { transform: translateX(-8px); border-color: #ff4c4c;}
+    80% { transform: translateX(8px); border-color: #ff4c4c;}
+    100% { transform: translateX(0); border-color: #ccc;}
+  }
+  .shake {
+    animation: shake 0.4s;
+    border-color: #ff4c4c !important;
+  }
+  /* Confetti canvas */
+  #confetti-canvas {
+    pointer-events: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 9999;
+  }
+  /* Progress bar */
+  #progress-container {
+    max-width: 900px;
+    margin: 0 auto 20px;
+    background-color: #eee;
+    border-radius: 12px;
+    height: 20px;
+    overflow: hidden;
+  }
+  #progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #d6336c 0%, #ff96b8 100%);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+  /* Streak counter */
+  #streak-counter {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #d6336c;
+    margin-bottom: 10px;
+  }
+  /* Dark mode */
+  body.dark-mode {
+    background: #1c1c1c;
+    color: #ddd;
+  }
+  body.dark-mode #start-menu button,
+  body.dark-mode #lesson-buttons button {
+    background-color: #444;
+    color: #eee;
+  }
+  body.dark-mode #start-menu button:hover,
+  body.dark-mode #lesson-buttons button:hover {
+    background-color: #666;
+  }
+  body.dark-mode #game-grid {
+    background-color: #121212;
+  }
+  body.dark-mode .droppable {
+    border-color: #555;
+    background-color: #222;
+    color: #eee;
+  }
+  body.dark-mode .droppable.matched {
+    background-color: #2a4d2a;
+    border-color: #57d26f;
+  }
+  body.dark-mode .draggable {
+    background-color: #333;
+    border-color: #555;
+    color: #eee;
+  }
+  body.dark-mode .draggable.matched {
+    background-color: #2a4d2a;
+    border-color: #57d26f;
+  }
+  body.dark-mode #progress-container {
+    background-color: #333;
+  }
+  /* Sparkle effect for correct */
+  .sparkle {
+    position: absolute;
+    pointer-events: none;
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, #fff, rgba(255,255,255,0));
+    border-radius: 50%;
+    animation: sparkleAnim 0.8s ease forwards;
+    top: -15px;
+    right: -15px;
+  }
+  @keyframes sparkleAnim {
+    0% {
+      opacity: 1;
+      transform: scale(0.5) rotate(0deg);
     }
-    body {
-      font-family: 'Comic Neue', cursive;
-      margin: 0;
-      padding: 0;
-      background-color: #fff8f4;
-      transition: background 0.4s, color 0.4s;
+    100% {
+      opacity: 0;
+      transform: scale(2) rotate(360deg);
     }
-    body.dark {
-      background-color: #1e1e1e;
-      color: #fefefe;
-    }
-    button {
-      font-family: 'Comic Neue', cursive;
-      padding: 10px 20px;
-      font-size: 1.2em;
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      background-color: #ffccdc;
-      transition: transform 0.2s, background 0.3s;
-    }
-    button:hover {
-      transform: scale(1.05);
-      background-color: #ffbcd0;
-    }
-    .title {
-      text-align: center;
-      font-size: 2.5em;
-      margin: 20px 0;
-    }
-    #start-menu {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      padding: 20px;
-    }
-    #lesson-buttons {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 10px;
-      width: 90%;
-      max-width: 800px;
-    }
-    #game-container {
-      display: none;
-      padding: 20px;
-    }
-    #game-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 20px;
-    }
-    .draggable, .droppable {
-      padding: 10px;
-      border: 2px solid #ccc;
-      background-color: #fff;
-      text-align: center;
-      border-radius: 8px;
-      user-select: none;
-      transition: all 0.3s;
-      font-size: 1.1em;
-    }
-    .draggable {
-      background-color: #f9f9ff;
-      cursor: grab;
-      position: relative;
-    }
-    .droppable {
-      background-color: #eef6ff;
-      min-height: 40px;
-    }
-    .matched {
-      background-color: #c8f7c5 !important;
-      border-color: #8ed18d !important;
-    }
-    .hide {
-      visibility: hidden;
-    }
-    .bounce {
-      animation: bounce 0.3s;
-    }
-    .flash-red {
-      background-color: #ffb3b3 !important;
-      border-color: red !important;
-    }
-    @keyframes bounce {
-      0% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-      100% { transform: translateY(0); }
-    }
-    #progress-container, #streak-counter {
-      margin-top: 10px;
-      text-align: center;
-    }
-    #progress-bar {
-      height: 10px;
-      background-color: #4caf50;
-      width: 0%;
-      transition: width 0.5s;
-      border-radius: 5px;
-    }
-    #end-screen {
-      display: none;
-      text-align: center;
-      padding: 30px;
-    }
-    canvas#confetti-canvas {
-      position: fixed;
-      pointer-events: none;
-      top: 0;
-      left: 0;
-      z-index: 1000;
-    }
-    .dark .draggable,
-    .dark .droppable {
-      background-color: #333;
-      border-color: #666;
-      color: #fff;
-    }
-    .dark .droppable {
-      background-color: #444;
-    }
-    .sparkle {
-      animation: sparkle 1.2s ease-in-out infinite;
-    }
-    @keyframes sparkle {
-      0%, 100% { text-shadow: 0 0 6px #fff, 0 0 12px #ff66cc, 0 0 18px #ff66cc; }
-      50% { text-shadow: 0 0 3px #fff, 0 0 6px #ff66cc, 0 0 9px #ff66cc; }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
-  <div id="start-menu">
-    <h1 class="title">Vocabulary Match Game</h1>
-    <div id="lesson-buttons"></div>
-    <button id="challenge-btn">🔥 Challenge Mode</button>
-    <button id="dark-mode-toggle">🌓 Toggle Dark Mode</button>
-  </div>
 
-  <div id="game-container">
-    <div id="progress-container"><div id="progress-bar"></div></div>
-    <div id="streak-counter"></div>
-    <div id="game-grid"></div>
-  </div>
+<div id="start-menu" class="active">
+  <h1 class="title">Vocabulary Match Game</h1>
+  <div id="lesson-buttons"></div>
+  <button id="dark-mode-toggle" title="Toggle Dark Mode">🌓 Toggle Dark Mode</button>
+</div>
 
-  <div id="end-screen">
-    <h2 id="end-title"></h2>
-    <p id="end-summary"></p>
-    <p id="end-score"></p>
-    <button id="restart-btn">🔁 Try Again</button>
-    <button id="back-to-menu-btn">🔙 Back to Menu</button>
-  </div>
+<div id="progress-container" style="display:none;">
+  <div id="progress-bar"></div>
+</div>
 
-  <canvas id="confetti-canvas"></canvas>
+<div id="streak-counter" style="display:none;">Streak: 0 🔥</div>
+
+<div id="game-grid" style="display:none;"></div>
+
+<canvas id="confetti-canvas"></canvas>
+
 <script>
-  // Confetti helper library (simple version)
-  // Source: https://www.kirilv.com/canvas-confetti/
-  class Confetti {
-    constructor(canvas) {
-      this.canvas = canvas;
-      this.ctx = canvas.getContext('2d');
-      this.particles = [];
-      this.width = window.innerWidth;
-      this.height = window.innerHeight;
-      canvas.width = this.width;
-      canvas.height = this.height;
-      window.addEventListener('resize', () => {
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-        canvas.width = this.width;
-        canvas.height = this.height;
-      });
-    }
-    createParticle() {
-      const colors = ['#ff66cc', '#ffb3d9', '#cc3399', '#ff99cc', '#ff4d94'];
-      return {
-        x: Math.random() * this.width,
-        y: Math.random() * this.height - this.height,
-        size: Math.random() * 7 + 3,
-        speedY: Math.random() * 3 + 2,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        opacity: 1,
-        decay: Math.random() * 0.01 + 0.005,
-      };
-    }
-    start() {
-      for(let i=0; i<150; i++) this.particles.push(this.createParticle());
-      this.animate();
-    }
-    animate() {
-      this.ctx.clearRect(0, 0, this.width, this.height);
-      this.particles.forEach((p, i) => {
-        p.y += p.speedY;
-        p.opacity -= p.decay;
-        if (p.opacity <= 0) {
-          this.particles[i] = this.createParticle();
-        }
-        this.ctx.fillStyle = `rgba(${this.hexToRgb(p.color)},${p.opacity})`;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-        this.ctx.fill();
-      });
-      this.animFrame = requestAnimationFrame(this.animate.bind(this));
-    }
-    stop() {
-      cancelAnimationFrame(this.animFrame);
-      this.ctx.clearRect(0,0,this.width,this.height);
-      this.particles = [];
-    }
-    hexToRgb(hex) {
-      hex = hex.replace('#','');
-      const bigint = parseInt(hex,16);
-      const r = (bigint >> 16) & 255;
-      const g = (bigint >> 8) & 255;
-      const b = bigint & 255;
-      return `${r},${g},${b}`;
-    }
-  }
-
-  // Vocabulary data for 14 lessons (sample for 2 lessons shown; add more as needed)
   const lessons = [
-  {
-    name: "Lesson 1",
-    words: [
-      {english: "minute", japanese: "分"},
-      {english: "before", japanese: "の前に"},
-      {english: "photography", japanese: "写真撮影"},
-      {english: "tournament", japanese: "トーナメント"},
-      {english: "against", japanese: "に対抗して"},
-      {english: "lost", japanese: "負けった"},
-      {english: "lose", japanese: "負ける"},
-      {english: "final", japanese: "最後の"},
-      {english: "second", japanese: "秒"},
-      {english: "broke", japanese: "壊した"},
-      {english: "surely", japanese: "確かに"},
-      {english: "until", japanese: "。。。まで"},
-      {english: "half", japanese: "半分の"},
-      {english: "hour", japanese: "１時間"},
-      {english: "tomorrow", japanese: "明日"},
-      {english: "today", japanese: "今日"},
-      {english: "yesterday", japanese: "昨日"},
-      {english: "ago", japanese: "～前に"},
-      {english: "spread", japanese: "広める"},
-      {english: "stadium", japanese: "スタジアム"}
-    ]
-  },
-  {
-    name: "Lesson 2",
-    words: [
-      {english: "delicious", japanese: "おいしい"},
-      {english: "happy", japanese: "幸せ"},
-      {english: "run", japanese: "走る"},
-      {english: "draw", japanese: "描く"},
-      {english: "build", japanese: "建てる"},
-      {english: "carry", japanese: "運ぶ"},
-      {english: "open", japanese: "開ける"},
-      {english: "close", japanese: "閉じる"},
-      {english: "wake up", japanese: "目を覚ます"},
-      {english: "sleep", japanese: "眠る"},
-      {english: "stand", japanese: "立つ"},
-      {english: "sit", japanese: "座る"},
-      {english: "jump", japanese: "跳ぶ"},
-      {english: "swim", japanese: "泳ぐ"},
-      {english: "drive", japanese: "運転する"},
-      {english: "listen", japanese: "聞く"},
-      {english: "write", japanese: "書く"},
-      {english: "read", japanese: "読む"},
-      {english: "speak", japanese: "話す"},
-      {english: "learn", japanese: "学ぶ"}
-    ]
-  },
-  {
-    name: "Lesson 3",
-    words: [
-      {english: "teacher", japanese: "先生"},
-      {english: "student", japanese: "生徒"},
-      {english: "classroom", japanese: "教室"},
-      {english: "library", japanese: "図書館"},
-      {english: "desk", japanese: "机"},
-      {english: "chair", japanese: "椅子"},
-      {english: "blackboard", japanese: "黒板"},
-      {english: "homework", japanese: "宿題"},
-      {english: "test", japanese: "テスト"},
-      {english: "question", japanese: "質問"},
-      {english: "answer", japanese: "答え"},
-      {english: "listen", japanese: "聞く"},
-      {english: "read", japanese: "読む"},
-      {english: "write", japanese: "書く"},
-      {english: "speak", japanese: "話す"},
-      {english: "understand", japanese: "理解する"},
-      {english: "learn", japanese: "学ぶ"},
-      {english: "practice", japanese: "練習する"},
-      {english: "study", japanese: "勉強する"},
-      {english: "remember", japanese: "覚える"}
-    ]
-  },
-  {
-    name: "Lesson 4",
-    words: [
-      {english: "apple", japanese: "りんご"},
-      {english: "banana", japanese: "バナナ"},
-      {english: "grape", japanese: "ぶどう"},
-      {english: "orange", japanese: "オレンジ"},
-      {english: "watermelon", japanese: "スイカ"},
-      {english: "strawberry", japanese: "いちご"},
-      {english: "peach", japanese: "もも"},
-      {english: "pineapple", japanese: "パイナップル"},
-      {english: "cherry", japanese: "さくらんぼ"},
-      {english: "melon", japanese: "メロン"},
-      {english: "pear", japanese: "なし"},
-      {english: "lemon", japanese: "レモン"},
-      {english: "mango", japanese: "マンゴー"},
-      {english: "blueberry", japanese: "ブルーベリー"},
-      {english: "kiwi", japanese: "キウイ"},
-      {english: "coconut", japanese: "ココナッツ"},
-      {english: "fig", japanese: "いちじく"},
-      {english: "date", japanese: "なつめやし"},
-      {english: "papaya", japanese: "パパイヤ"},
-      {english: "plum", japanese: "うめ"}
-    ]
-  },
-  {
-    name: "Lesson 5",
-    words: [
-      {english: "cat", japanese: "猫"},
-      {english: "dog", japanese: "犬"},
-      {english: "bird", japanese: "鳥"},
-      {english: "fish", japanese: "魚"},
-      {english: "rabbit", japanese: "うさぎ"},
-      {english: "horse", japanese: "馬"},
-      {english: "cow", japanese: "牛"},
-      {english: "pig", japanese: "豚"},
-      {english: "sheep", japanese: "羊"},
-      {english: "chicken", japanese: "鶏"},
-      {english: "duck", japanese: "アヒル"},
-      {english: "turtle", japanese: "亀"},
-      {english: "frog", japanese: "カエル"},
-      {english: "lion", japanese: "ライオン"},
-      {english: "tiger", japanese: "トラ"},
-      {english: "elephant", japanese: "象"},
-      {english: "bear", japanese: "クマ"},
-      {english: "monkey", japanese: "サル"},
-      {english: "wolf", japanese: "オオカミ"},
-      {english: "fox", japanese: "キツネ"}
-    ]
-  },
-  {
-    name: "Lesson 6",
-    words: [
-      {english: "car", japanese: "車"},
-      {english: "bicycle", japanese: "自転車"},
-      {english: "bus", japanese: "バス"},
-      {english: "train", japanese: "電車"},
-      {english: "airplane", japanese: "飛行機"},
-      {english: "boat", japanese: "ボート"},
-      {english: "truck", japanese: "トラック"},
-      {english: "motorcycle", japanese: "オートバイ"},
-      {english: "subway", japanese: "地下鉄"},
-      {english: "taxi", japanese: "タクシー"},
-      {english: "helicopter", japanese: "ヘリコプター"},
-      {english: "scooter", japanese: "スクーター"},
-      {english: "van", japanese: "バン"},
-      {english: "tram", japanese: "路面電車"},
-      {english: "ferry", japanese: "フェリー"},
-      {english: "cruise", japanese: "クルーズ"},
-      {english: "rocket", japanese: "ロケット"},
-      {english: "skateboard", japanese: "スケートボード"},
-      {english: "rollerblades", japanese: "ローラーブレード"},
-      {english: "hoverboard", japanese: "ホバーボード"}
-    ]
-  },
-  {
-    name: "Lesson 7",
-    words: [
-      {english: "red", japanese: "赤"},
-      {english: "blue", japanese: "青"},
-      {english: "green", japanese: "緑"},
-      {english: "yellow", japanese: "黄色"},
-      {english: "black", japanese: "黒"},
-      {english: "white", japanese: "白"},
-      {english: "pink", japanese: "ピンク"},
-      {english: "orange", japanese: "オレンジ"},
-      {english: "purple", japanese: "紫"},
-      {english: "brown", japanese: "茶色"},
-      {english: "gray", japanese: "灰色"},
-      {english: "gold", japanese: "金色"},
-      {english: "silver", japanese: "銀色"},
-      {english: "beige", japanese: "ベージュ"},
-      {english: "turquoise", japanese: "ターコイズ"},
-      {english: "navy", japanese: "ネイビー"},
-      {english: "lavender", japanese: "ラベンダー"},
-      {english: "maroon", japanese: "マルーン"},
-      {english: "teal", japanese: "ティール"},
-      {english: "magenta", japanese: "マゼンタ"}
-    ]
-  },
-  {
-    name: "Lesson 8",
-    words: [
-      {english: "happy", japanese: "幸せ"},
-      {english: "sad", japanese: "悲しい"},
-      {english: "angry", japanese: "怒っている"},
-      {english: "tired", japanese: "疲れた"},
-      {english: "excited", japanese: "興奮している"},
-      {english: "nervous", japanese: "緊張している"},
-      {english: "scared", japanese: "怖い"},
-      {english: "bored", japanese: "退屈している"},
-      {english: "surprised", japanese: "驚いた"},
-      {english: "proud", japanese: "誇りに思う"},
-      {english: "calm", japanese: "落ち着いた"},
-      {english: "confused", japanese: "混乱した"},
-      {english: "jealous", japanese: "嫉妬している"},
-      {english: "lonely", japanese: "孤独"},
-      {english: "relaxed", japanese: "リラックスした"},
-      {english: "hopeful", japanese: "希望に満ちた"},
-      {english: "grateful", japanese: "感謝している"},
-      {english: "shy", japanese: "恥ずかしがり屋"},
-      {english: "friendly", japanese: "友好的な"},
-      {english: "kind", japanese: "親切な"}
-    ]
-  },
-  {
-    name: "Lesson 9",
-    words: [
-      {english: "Monday", japanese: "月曜日"},
-      {english: "Tuesday", japanese: "火曜日"},
-      {english: "Wednesday", japanese: "水曜日"},
-      {english: "Thursday", japanese: "木曜日"},
-      {english: "Friday", japanese: "金曜日"},
-      {english: "Saturday", japanese: "土曜日"},
-      {english: "Sunday", japanese: "日曜日"},
-      {english: "week", japanese: "週"},
-      {english: "month", japanese: "月"},
-      {english: "year", japanese: "年"},
-      {english: "today", japanese: "今日"},
-      {english: "tomorrow", japanese: "明日"},
-      {english: "yesterday", japanese: "昨日"},
-      {english: "holiday", japanese: "休日"},
-      {english: "season", japanese: "季節"},
-      {english: "spring", japanese: "春"},
-      {english: "summer", japanese: "夏"},
-      {english: "autumn", japanese: "秋"},
-      {english: "winter", japanese: "冬"},
-      {english: "calendar", japanese: "カレンダー"}
-    ]
-  },
-  {
-    name: "Lesson 10",
-    words: [
-      {english: "food", japanese: "食べ物"},
-      {english: "water", japanese: "水"},
-      {english: "bread", japanese: "パン"},
-      {english: "rice", japanese: "ご飯"},
-      {english: "meat", japanese: "肉"},
-      {english: "fish", japanese: "魚"},
-      {english: "vegetables", japanese: "野菜"},
-      {english: "fruit", japanese: "果物"},
-      {english: "soup", japanese: "スープ"},
-      {english: "salad", japanese: "サラダ"},
-      {english: "dessert", japanese: "デザート"},
-      {english: "coffee", japanese: "コーヒー"},
-      {english: "tea", japanese: "お茶"},
-      {english: "milk", japanese: "牛乳"},
-      {english: "juice", japanese: "ジュース"},
-      {english: "breakfast", japanese: "朝食"},
-      {english: "lunch", japanese: "昼食"},
-      {english: "dinner", japanese: "夕食"},
-      {english: "snack", japanese: "おやつ"},
-      {english: "restaurant", japanese: "レストラン"}
-    ]
-  },
-  {
-    name: "Lesson 11",
-    words: [
-      {english: "family", japanese: "家族"},
-      {english: "mother", japanese: "母"},
-      {english: "father", japanese: "父"},
-      {english: "brother", japanese: "兄弟"},
-      {english: "sister", japanese: "姉妹"},
-      {english: "grandmother", japanese: "祖母"},
-      {english: "grandfather", japanese: "祖父"},
-      {english: "uncle", japanese: "おじ"},
-      {english: "aunt", japanese: "おば"},
-      {english: "cousin", japanese: "いとこ"},
-      {english: "child", japanese: "子供"},
-      {english: "baby", japanese: "赤ちゃん"},
-      {english: "husband", japanese: "夫"},
-      {english: "wife", japanese: "妻"},
-      {english: "parent", japanese: "親"},
-      {english: "relative", japanese: "親戚"},
-      {english: "neighbor", japanese: "隣人"},
-      {english: "friend", japanese: "友達"},
-      {english: "teacher", japanese: "先生"},
-      {english: "student", japanese: "学生"}
-    ]
-  },
-  {
-    name: "Lesson 12",
-    words: [
-      {english: "school", japanese: "学校"},
-      {english: "class", japanese: "クラス"},
-      {english: "teacher", japanese: "先生"},
-      {english: "student", japanese: "学生"},
-      {english: "lesson", japanese: "授業"},
-      {english: "homework", japanese: "宿題"},
-      {english: "test", japanese: "テスト"},
-      {english: "book", japanese: "本"},
-      {english: "notebook", japanese: "ノート"},
-      {english: "pen", japanese: "ペン"},
-      {english: "pencil", japanese: "鉛筆"},
-      {english: "eraser", japanese: "消しゴム"},
-      {english: "desk", japanese: "机"},
-      {english: "chair", japanese: "椅子"},
-      {english: "blackboard", japanese: "黒板"},
-      {english: "library", japanese: "図書館"},
-      {english: "computer", japanese: "コンピューター"},
-      {english: "teacher", japanese: "教師"},
-      {english: "student", japanese: "生徒"},
-      {english: "grade", japanese: "成績"}
-    ]
-  },
-  {
-    name: "Lesson 13",
-    words: [
-      {english: "weather", japanese: "天気"},
-      {english: "sunny", japanese: "晴れ"},
-      {english: "rainy", japanese: "雨"},
-      {english: "cloudy", japanese: "曇り"},
-      {english: "snowy", japanese: "雪"},
-      {english: "windy", japanese: "風が強い"},
-      {english: "hot", japanese: "暑い"},
-      {english: "cold", japanese: "寒い"},
-      {english: "storm", japanese: "嵐"},
-      {english: "temperature", japanese: "気温"},
-      {english: "season", japanese: "季節"},
-      {english: "spring", japanese: "春"},
-      {english: "summer", japanese: "夏"},
-      {english: "autumn", japanese: "秋"},
-      {english: "winter", japanese: "冬"},
-      {english: "foggy", japanese: "霧がかかった"},
-      {english: "hail", japanese: "雹"},
-      {english: "thunder", japanese: "雷"},
-      {english: "lightning", japanese: "稲妻"},
-      {english: "humidity", japanese: "湿度"}
-    ]
-  },
-  {
-    name: "Lesson 14",
-    words: [
-      {english: "family", japanese: "家族"},
-      {english: "friend", japanese: "友達"},
-      {english: "love", japanese: "愛"},
-      {english: "hate", japanese: "憎しみ"},
-      {english: "joy", japanese: "喜び"},
-      {english: "sadness", japanese: "悲しみ"},
-      {english: "anger", japanese: "怒り"},
-      {english: "fear", japanese: "恐れ"},
-      {english: "hope", japanese: "希望"},
-      {english: "peace", japanese: "平和"},
-      {english: "trust", japanese: "信頼"},
-      {english: "dream", japanese: "夢"},
-      {english: "luck", japanese: "運"},
-      {english: "success", japanese: "成功"},
-      {english: "failure", japanese: "失敗"},
-      {english: "courage", japanese: "勇気"},
-      {english: "honesty", japanese: "正直"},
-      {english: "kindness", japanese: "親切"},
-      {english: "patience", japanese: "忍耐"},
-      {english: "wisdom", japanese: "知恵"}
-    ]
-  }
-];
+    {
+      name: "Lesson 1",
+       1: [
+      {english:"minute", japanese:"分"},
+      {english:"before", japanese:"の前に"},
+      {english:"photography", japanese:"写真撮影"},
+      {english:"tournament", japanese:"トーナメント"},
+      {english:"against", japanese:"に対抗して"},
+      {english:"lost", japanese:"負けった"},
+      {english:"lose", japanese:"負ける"},
+      {english:"final", japanese:"最後の"},
+      {english:"second", japanese:"秒"},
+      {english:"broke", japanese:"壊した"},
+      {english:"surely", japanese:"確かに"},
+      {english:"until", japanese:"。。。まで"},
+      {english:"half", japanese:"半分の"},
+      {english:"hour", japanese:"１時間"},
+      {english:"tomorrow", japanese:"明日"},
+      {english:"today", japanese:"今日"},
+      {english:"yesterday", japanese:"昨日"},
+      {english:"ago", japanese:"～前に"},
+      {english:"spread", japanese:"広める"},
+    ],
+    2: [
+      {english:"if", japanese:"もし"},
+      {english:"plastic", japanese:"プラスチック"},
+      {english:"exam", japanese:"テスト"},
+      {english:"adventure", japanese:"冒険"},
+      {english:"read", japanese:"読む"},
+      {english:"main", japanese:"主な"},
+      {english:"naughty", japanese:"いたずらな"},
+      {english:"trouble", japanese:"心配、悩み、やっかいな事態"},
+      {english:"lend", japanese:"貸す"},
+      {english:"another", japanese:"もう一つの"},
+    ],
+    3: [
+      {english:"think", japanese:"考える・思う"},
+      {english:"author", japanese:"作者"},
+      {english:"drew", japanese:"描いた"},
+      {english:"scenery", japanese:"景色"},
+      {english:"in fact", japanese:"今まで"},
+      {english:"area", japanese:"地域"},
+      {english:"still", japanese:"まだ"},
+      {english:"hope", japanese:"望む"},
+      {english:"someday", japanese:"いつか"},
+      {english:"how", japanese:"どう"},
+      {english:"borrow", japanese:"借りる"},
+      {english:"fantasy", japanese:"ファンタジー"},
+      {english:"message", japanese:"メッセージ"},
+      {english:"horror", japanese:"ホラー"},
+      {english:"novel", japanese:"小説"},
+      {english:"mystery", japanese:"ミステリー"},
+      {english:"encourage", japanese:"励ます"},
+    ],
+    4: [
+      {english:"finish", japanese:"終わる"},
+      {english:"training", japanese:"トレーニング"},
+      {english:"perfect", japanese:"完璧"},
+      {english:"learner", japanese:"学習者"},
+      {english:"because", japanese:"だから・なので"},
+      {english:"easy", japanese:"優しい・簡単な"},
+      {english:"plus", japanese:"さらにその上"},
+      {english:"teenager", japanese:"１０代の少年"},
+      {english:"among", japanese:"の中に・の間に"},
+      {english:"ending", japanese:"終わり"},
+      {english:"town", japanese:"町"},
+      {english:"witch", japanese:"魔女"},
+    ],
+    5: [
+      {english:"famous", japanese:"有名"},
+      {english:"dream", japanese:"夢"},
+      {english:"build", japanese:"建てる"},
+      {english:"tower", japanese:"塔"},
+      {english:"around the world", japanese:"世界中"},
+      {english:"world", japanese:"世界"},
+      {english:"decide", japanese:"決める"},
+      {english:"interest", japanese:"興味"},
+      {english:"yourself", japanese:"あなた自身"},
+      {english:"lots of", japanese:"たくさんの"},
+      {english:"bake", japanese:"焼く"},
+      {english:"more", japanese:"もっと"},
+      {english:"perhaps", japanese:"多分"},
+      {english:"bakery", japanese:"パン屋"},
+      {english:"need", japanese:"必要"},
+    ],
+    6: [
+      {english:"relax", japanese:"くつろぐ"},
+      {english:"customer", japanese:"お客さん"},
+      {english:"provide", japanese:"提供する"},
+      {english:"several", japanese:"いくつかの"},
+      {english:"that way", japanese:"そのようにして"},
+      {english:"plenty", japanese:"十分な"},
+      {english:"choice", japanese:"選択"},
+      {english:"however", japanese:"しかしながら"},
+      {english:"leftovers", japanese:"残り物・食べ残し"},
+      {english:"away", japanese:"別の方向へ・わきへ"},
+      {english:"throw away", japanese:"無駄に使う"},
+      {english:"waste", japanese:"無駄"},
+      {english:"discount", japanese:"割引"},
+      {english:"enough", japanese:"十分な"},
+      {english:"help", japanese:"助ける"},
+    ],
+    7: [
+      {english:"pool", japanese:"プール"},
+      {english:"over", japanese:"〜以上"},
+      {english:"review", japanese:"見直す"},
+      {english:"rule", japanese:"規則"},
+      {english:"kitchen", japanese:"台所"},
+      {english:"must", japanese:"〜しなければならない"},
+      {english:"mask", japanese:"マスク"},
+      {english:"smartphone", japanese:"スマートフォン"},
+      {english:"back", japanese:"戻る"},
+      {english:"return", japanese:"返す"},
+      {english:"week", japanese:"週"},
+      {english:"quiet", japanese:"静かな"},
+      {english:"future", japanese:"未来"},
+      {english:"in the future", japanese:"将来"},
+      {english:"somewhere", japanese:"どこかに"},
+      {english:"explore", japanese:"探検する"},
+      {english:"clothes", japanese:"服"},
+      {english:"design", japanese:"デザイン"},
+      {english:"chef", japanese:"シェフ"},
+    ],
+    8: [
+      {english:"as", japanese:"〜として"},
+      {english:"behind", japanese:"後ろに"},
+      {english:"cut down", japanese:"切り倒す"},
+      {english:"building", japanese:"建物"},
+      {english:"destroy", japanese:"破壊する"},
+      {english:"shock", japanese:"衝撃"},
+      {english:"environment", japanese:"環境"},
+      {english:"guide", japanese:"案内する"},
+      {english:"tour", japanese:"ツアー"},
+      {english:"simply", japanese:"単純に"},
+      {english:"nothing", japanese:"何も"},
+      {english:"worry", japanese:"心配する"},
+      {english:"decide", japanese:"決める"},
+      {english:"major", japanese:"主要な"},
+      {english:"less", japanese:"より少ない"},
+      {english:"sell", japanese:"売る"},
+      {english:"sold", japanese:"売られた"},
+      {english:"knowledge", japanese:"知識"},
+      {english:"itself", japanese:"それ自身"},
+      {english:"share", japanese:"共有する"},
+    ],
+    9: [
+      {english:"billion", japanese:"１０億"},
+      {english:"than", japanese:"。。。よりも"},
+      {english:"more than...", japanese:"。。。より多くの"},
+      {english:"dirty", japanese:"汚れる"},
+      {english:"directly", japanese:"直接"},
+      {english:"pond", japanese:"池"},
+      {english:"should", japanese:"すべきである"},
+      {english:"presentation", japanese:"プレゼンテーション"},
+      {english:"everywhere", japanese:"どこでも"},
+      {english:"imagine", japanese:"想像する"},
+      {english:"step", japanese:"一歩"},
+      {english:"situation", japanese:"事態"},
+      {english:"one of...", japanese:"の一つ・一人"},
+      {english:"collect", japanese:"集める"},
+      {english:"drinking water", japanese:"飲み水"},
+      {english:"understand", japanese:"理解する"},
+      {english:"laundry", japanese:"洗濯物"},
+      {english:"available", japanese:"利用できる"},
+      {english:"post", japanese:"郵便"},
+      {english:"store", japanese:"店"},
+      {english:"office", japanese:"事務所"},
+    ],
+    10: [
+      {english:"minute", japanese:"分"},
+      {english:"before", japanese:"の前に"},
+      {english:"photography", japanese:"写真撮影"},
+      {english:"tournament", japanese:"トーナメント"},
+      {english:"against", japanese:"に対抗して"},
+      {english:"lost", japanese:"負けった"},
+      {english:"lose", japanese:"負ける"},
+      {english:"final", japanese:"最後の"},
+      {english:"second", japanese:"秒"},
+      {english:"broke", japanese:"壊した"},
+      {english:"surely", japanese:"確かに"},
+      {english:"until", japanese:"。。。まで"},
+      {english:"half", japanese:"半分の"},
+      {english:"hour", japanese:"１時間"},
+      {english:"tomorrow", japanese:"明日"},
+      {english:"today", japanese:"今日"},
+      {english:"yesterday", japanese:"昨日"},
+      {english:"ago", japanese:"～前に"},
+      {english:"spread", japanese:"広める"},
+    ],
+    11: [
+      {english:"kitchen", japanese:"台所"},
+      {english:"must", japanese:"〜しなければならない"},
+      {english:"mask", japanese:"マスク"},
+      {english:"smartphone", japanese:"スマートフォン"},
+      {english:"back", japanese:"戻る"},
+      {english:"return", japanese:"返す"},
+      {english:"week", japanese:"週"},
+      {english:"quiet", japanese:"静かな"},
+      {english:"future", japanese:"未来"},
+      {english:"in the future", japanese:"将来"},
+      {english:"somewhere", japanese:"どこかに"},
+      {english:"explore", japanese:"探検する"},
+      {english:"clothes", japanese:"服"},
+      {english:"design", japanese:"デザイン"},
+      {english:"chef", japanese:"シェフ"},
+    ],
+    12: [
+      {english:"as", japanese:"〜として"},
+      {english:"behind", japanese:"後ろに"},
+      {english:"cut down", japanese:"切り倒す"},
+      {english:"building", japanese:"建物"},
+      {english:"destroy", japanese:"破壊する"},
+      {english:"shock", japanese:"衝撃"},
+      {english:"environment", japanese:"環境"},
+      {english:"guide", japanese:"案内する"},
+      {english:"tour", japanese:"ツアー"},
+      {english:"simply", japanese:"単純に"},
+      {english:"nothing", japanese:"何も"},
+      {english:"worry", japanese:"心配する"},
+      {english:"decide", japanese:"決める"},
+      {english:"major", japanese:"主要な"},
+      {english:"less", japanese:"より少ない"},
+      {english:"sell", japanese:"売る"},
+      {english:"sold", japanese:"売られた"},
+      {english:"knowledge", japanese:"知識"},
+      {english:"itself", japanese:"それ自身"},
+      {english:"share", japanese:"共有する"},
+    ],
+    13: [
+      {english:"billion", japanese:"１０億"},
+      {english:"than", japanese:"。。。よりも"},
+      {english:"more than...", japanese:"。。。より多くの"},
+      {english:"dirty", japanese:"汚れる"},
+      {english:"directly", japanese:"直接"},
+      {english:"pond", japanese:"池"},
+      {english:"should", japanese:"すべきである"},
+      {english:"presentation", japanese:"プレゼンテーション"},
+      {english:"everywhere", japanese:"どこでも"},
+      {english:"imagine", japanese:"想像する"},
+      {english:"step", japanese:"一歩"},
+      {english:"situation", japanese:"事態"},
+      {english:"one of...", japanese:"の一つ・一人"},
+      {english:"collect", japanese:"集める"},
+      {english:"drinking water", japanese:"飲み水"},
+      {english:"understand", japanese:"理解する"},
+      {english:"laundry", japanese:"洗濯物"},
+      {english:"available", japanese:"利用できる"},
+      {english:"post", japanese:"郵便"},
+      {english:"store", japanese:"店"},
+      {english:"office", japanese:"事務所"},
+    ],
+    14: [
+      {english:"billion", japanese:"１０億"},
+      {english:"than", japanese:"。。。よりも"},
+      {english:"more than...", japanese:"。。。より多くの"},
+      {english:"dirty", japanese:"汚れる"},
+      {english:"directly", japanese:"直接"},
+      {english:"pond", japanese:"池"},
+      {english:"should", japanese:"すべきである"},
+      {english:"presentation", japanese:"プレゼンテーション"},
+      {english:"everywhere", japanese:"どこでも"},
+      {english:"imagine", japanese:"想像する"},
+      {english:"step", japanese:"一歩"},
+      {english:"situation", japanese:"事態"},
+      {english:"one of...", japanese:"の一つ・一人"},
+      {english:"collect", japanese:"集める"},
+      {english:"drinking water", japanese:"飲み水"},
+      {english:"understand", japanese:"理解する"},
+      {english:"laundry", japanese:"洗濯物"},
+      {english:"available", japanese:"利用できる"},
+      {english:"post", japanese:"郵便"},
+      {english:"store", japanese:"店"},
+      {english:"office", japanese:"事務所"},
+    ],
+    15: [
+      {english:"minute", japanese:"分"},
+      {english:"before", japanese:"の前に"},
+      {english:"photography", japanese:"写真撮影"},
+      {english:"tournament", japanese:"トーナメント"},
+      {english:"against", japanese:"に対抗して"},
+      {english:"lost", japanese:"負けった"},
+      {english:"lose", japanese:"負ける"},
+      {english:"final", japanese:"最後の"},
+      {english:"second", japanese:"秒"},
+      {english:"broke", japanese:"壊した"},
+      {english:"surely", japanese:"確かに"},
+      {english:"until", japanese:"。。。まで"},
+      {english:"half", japanese:"半分の"},
+      {english:"hour", japanese:"１時間"},
+      {english:"tomorrow", japanese:"明日"},
+      {english:"today", japanese:"今日"},
+      {english:"yesterday", japanese:"昨日"},
+      {english:"ago", japanese:"～前に"},
+      {english:"spread", japanese:"広める"},
+    ],
+  };
 
-  // Elements references
-  const lessonButtons = document.getElementById('lesson-buttons');
-  const startMenu = document.getElementById('start-menu');
-  const gameContainer = document.getElementById('game-container');
+  // Globals
+  const lessonButtonsDiv = document.getElementById('lesson-buttons');
   const gameGrid = document.getElementById('game-grid');
+  const startMenu = document.getElementById('start-menu');
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  const progressContainer = document.getElementById('progress-container');
   const progressBar = document.getElementById('progress-bar');
   const streakCounter = document.getElementById('streak-counter');
-  const endScreen = document.getElementById('end-screen');
-  const endTitle = document.getElementById('end-title');
-  const endSummary = document.getElementById('end-summary');
-  const endScore = document.getElementById('end-score');
-  const restartBtn = document.getElementById('restart-btn');
-  const backToMenuBtn = document.getElementById('back-to-menu-btn');
-  const challengeBtn = document.getElementById('challenge-btn');
-  const darkModeToggle = document.getElementById('dark-mode-toggle');
   const confettiCanvas = document.getElementById('confetti-canvas');
-  const confetti = new Confetti(confettiCanvas);
-
-  let currentLesson = null;
-  let pairsMatched = 0;
-  let totalPairs = 0;
-  let streak = 0;
-  let challengeMode = false;
-  let challengeTimer = null;
-  let challengeTimeLeft = 120; // seconds
-
-  // Audio synthesis for English words
-  function speak(word) {
-    if (!window.speechSynthesis) return;
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = 'en-US';
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utterance);
-  }
-
-  // Setup lesson buttons
-  function setupLessonButtons() {
-    lessonButtons.innerHTML = '';
-    lessons.forEach((lesson, i) => {
-      const btn = document.createElement('button');
-      btn.textContent = lesson.name;
-      btn.addEventListener('click', () => startGame(i, false));
-      lessonButtons.appendChild(btn);
-    });
-  }
-
-  // Start game with lesson index and challenge mode flag
-  function startGame(index, isChallenge) {
-    currentLesson = lessons[index];
-    challengeMode = !!isChallenge;
-    pairsMatched = 0;
-    streak = 0;
-    updateStreakDisplay();
-    startMenu.style.display = 'none';
-    endScreen.style.display = 'none';
-    gameContainer.style.display = 'block';
-    gameGrid.innerHTML = '';
-    progressBar.style.width = '0%';
-
-    const shuffledEnglish = shuffleArray(currentLesson.words.map(w => w.english));
-    const shuffledJapanese = shuffleArray(currentLesson.words.map(w => w.japanese));
-
-    totalPairs = currentLesson.words.length;
-
-    // Create English draggable boxes
-    shuffledEnglish.forEach(word => {
-      const div = document.createElement('div');
-      div.className = 'draggable';
-      div.textContent = word;
-      div.setAttribute('draggable', true);
-      div.dataset.word = word;
-      addDragAndTouchHandlers(div);
-      gameGrid.appendChild(div);
-    });
-
-    // Create Japanese droppable boxes
-    shuffledJapanese.forEach(word => {
-      const div = document.createElement('div');
-      div.className = 'droppable';
-      div.textContent = word;
-      const pair = currentLesson.words.find(w => w.japanese === word);
-      div.dataset.match = pair ? pair.english : '';
-      gameGrid.appendChild(div);
-    });
-
-    if (challengeMode) {
-      startChallengeTimer();
-    } else {
-      stopChallengeTimer();
-    }
-  }
-
-  // Shuffle helper
-  function shuffleArray(arr) {
-    const copy = arr.slice();
-    for (let i = copy.length -1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i+1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
-
-  // Update progress bar
-  function updateProgress() {
-    const percent = (pairsMatched / totalPairs) * 100;
-    progressBar.style.width = percent + '%';
-  }
-
-  // Update streak display
-  function updateStreakDisplay() {
-    if (streak >= 3) {
-      streakCounter.innerHTML = `🔥 Streak: <span class="sparkle">${streak}</span>`;
-    } else if (streak > 0) {
-      streakCounter.textContent = `Streak: ${streak}`;
-    } else {
-      streakCounter.textContent = '';
-    }
-  }
-  // Add drag and touch event listeners to English draggable divs
-  function addDragAndTouchHandlers(div) {
-    // Mouse drag
-    div.addEventListener('dragstart', dragStart);
-    div.addEventListener('dragend', dragEnd);
-
-    // Touch drag
-    div.addEventListener('touchstart', touchStart, {passive:false});
-  }
+  const confettiCtx = confettiCanvas.getContext('2d');
 
   let draggedElement = null;
-  let originalX = 0;
-  let originalY = 0;
-  let offsetX = 0;
-  let offsetY = 0;
+  let originalPos = {x:0, y:0};
+  let matchesMade = 0;
+  let totalMatches = 0;
+  let streak = 0;
+  let confettiActive = false;
 
+  // Initialize lesson buttons dynamically
+  function createLessonButtons() {
+    lessonButtonsDiv.innerHTML = '';
+    lessons.forEach((lesson,i) => {
+      const btn = document.createElement('button');
+      btn.textContent = lesson.name;
+      btn.onclick = () => startGame(i);
+      lessonButtonsDiv.appendChild(btn);
+    });
+  }
+  createLessonButtons();
+
+  // Dark mode toggle logic
+  darkModeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+  });
+
+  // Start game
+  function startGame(index) {
+    startMenu.style.display = 'none';
+    gameGrid.style.display = 'grid';
+    progressContainer.style.display = 'block';
+    streakCounter.style.display = 'block';
+    gameGrid.innerHTML = '';
+    streak = 0;
+    updateStreak(0);
+
+    const words = lessons[index].words;
+    totalMatches = words.length;
+    matchesMade = 0;
+    updateProgress();
+
+    // Shuffle words array
+    const shuffled = [...words].sort(() => Math.random() - 0.5);
+
+    // Create English draggable boxes (left 2 columns)
+    shuffled.forEach(pair => {
+      const engDiv = document.createElement('div');
+      engDiv.className = 'draggable';
+      engDiv.textContent = pair.english;
+      engDiv.setAttribute('draggable', 'true');
+      engDiv.dataset.word = pair.english;
+      engDiv.style.touchAction = 'none';
+
+      engDiv.addEventListener('dragstart', dragStart);
+      engDiv.addEventListener('dragend', dragEnd);
+      engDiv.addEventListener('touchstart', touchStart, {passive:false});
+      gameGrid.appendChild(engDiv);
+    });
+
+    // Create Japanese droppable boxes (right 2 columns)
+    shuffled.forEach(pair => {
+      const japDiv = document.createElement('div');
+      japDiv.className = 'droppable';
+      japDiv.textContent = pair.japanese;
+      japDiv.dataset.match = pair.english;
+      japDiv.addEventListener('dragover', e => e.preventDefault());
+      japDiv.addEventListener('drop', dropHandler);
+      gameGrid.appendChild(japDiv);
+    });
+  }
+
+  // Drag handlers for mouse
   function dragStart(e) {
     draggedElement = e.target;
-    speak(draggedElement.textContent);
+    originalPos = {
+      x: draggedElement.offsetLeft,
+      y: draggedElement.offsetTop
+    };
     e.dataTransfer.setData('text/plain', draggedElement.dataset.word);
-    setTimeout(() => {
-      draggedElement.classList.add('hide');
-    }, 0);
+    setTimeout(() => draggedElement.classList.add('hide'), 0);
+
+    // Play audio of English word using speech synthesis
+    playAudio(draggedElement.dataset.word);
   }
 
   function dragEnd(e) {
-    if (draggedElement) {
-      draggedElement.classList.remove('hide');
-      draggedElement.style.position = '';
-      draggedElement.style.zIndex = '';
-      draggedElement.style.left = '';
-      draggedElement.style.top = '';
-      draggedElement = null;
+    if (draggedElement) draggedElement.classList.remove('hide');
+    draggedElement = null;
+  }
+
+  // Drop handler for mouse drag
+  function dropHandler(e) {
+    e.preventDefault();
+    if (!draggedElement) return;
+
+    const dropTarget = e.target.closest('.droppable');
+    if (!dropTarget) return;
+
+    if (dropTarget.dataset.match === draggedElement.dataset.word) {
+      handleCorrectMatch(draggedElement, dropTarget);
+    } else {
+      handleIncorrectMatch(draggedElement);
     }
   }
 
-  gameGrid.addEventListener('dragover', e => {
-    e.preventDefault();
-  });
+  // Touch drag handlers
+  let touchData = null;
 
-  gameGrid.addEventListener('drop', e => {
-    e.preventDefault();
-    if (!draggedElement) return;
-    const dropTarget = e.target.closest('.droppable');
-    if (!dropTarget) return;
-    const draggedWord = draggedElement.dataset.word;
-    if (dropTarget.dataset.match === draggedWord) {
-      onCorrectMatch(draggedElement, dropTarget);
-    } else {
-      onWrongMatch(draggedElement);
-    }
-  });
-
-  // Touch drag functions
   function touchStart(e) {
     e.preventDefault();
     draggedElement = e.target;
-    speak(draggedElement.textContent);
+    draggedElement.classList.add('dragging-touch');
     draggedElement.style.position = 'absolute';
     draggedElement.style.zIndex = 1000;
+
     const touch = e.touches[0];
-    originalX = draggedElement.offsetLeft;
-    originalY = draggedElement.offsetTop;
-    offsetX = touch.clientX - originalX;
-    offsetY = touch.clientY - originalY;
-    moveAt(touch.pageX, touch.pageY);
+    const rect = draggedElement.getBoundingClientRect();
+
+    touchData = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top
+    };
+
+    moveAt(touch.clientX, touch.clientY);
+
     document.addEventListener('touchmove', touchMove, {passive:false});
     document.addEventListener('touchend', touchEnd);
-  }
 
-  function moveAt(pageX, pageY) {
-    if (!draggedElement) return;
-    draggedElement.style.left = (pageX - offsetX) + 'px';
-    draggedElement.style.top = (pageY - offsetY) + 'px';
+    // Play audio
+    playAudio(draggedElement.dataset.word);
   }
 
   function touchMove(e) {
     e.preventDefault();
     const touch = e.touches[0];
-    moveAt(touch.pageX, touch.pageY);
+    moveAt(touch.clientX, touch.clientY);
+  }
+
+  function moveAt(clientX, clientY) {
+    if (!draggedElement) return;
+    draggedElement.style.left = (clientX - touchData.offsetX) + 'px';
+    draggedElement.style.top = (clientY - touchData.offsetY) + 'px';
   }
 
   function touchEnd(e) {
     e.preventDefault();
+    if (!draggedElement) return;
+    draggedElement.classList.remove('dragging-touch');
+
     const touch = e.changedTouches[0];
-    const dropElem = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (dropElem && dropElem.classList.contains('droppable')) {
-      const draggedWord = draggedElement.dataset.word;
-      if (dropElem.dataset.match === draggedWord) {
-        onCorrectMatch(draggedElement, dropElem);
-      } else {
-        onWrongMatch(draggedElement);
-      }
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.droppable');
+
+    if (dropTarget && dropTarget.dataset.match === draggedElement.dataset.word) {
+      handleCorrectMatch(draggedElement, dropTarget);
     } else {
-      onWrongMatch(draggedElement);
+      handleIncorrectMatch(draggedElement);
     }
-    resetDraggedElement();
-    document.removeEventListener('touchmove', touchMove);
-    document.removeEventListener('touchend', touchEnd);
+
+    resetDraggedElementStyles();
   }
 
-  function resetDraggedElement() {
+  // Helpers
+  function resetDraggedElementStyles() {
     if (!draggedElement) return;
     draggedElement.style.position = '';
-    draggedElement.style.zIndex = '';
     draggedElement.style.left = '';
     draggedElement.style.top = '';
+    draggedElement.style.zIndex = '';
     draggedElement = null;
   }
 
   // Correct match handler
-  function onCorrectMatch(dragEl, dropEl) {
-    dropEl.classList.add('matched');
-    dragEl.classList.add('matched');
-    dragEl.setAttribute('draggable', 'false');
-    dropEl.textContent = ''; // clear Japanese text
-    dropEl.appendChild(dragEl);
-    pairsMatched++;
-    streak++;
+  function handleCorrectMatch(draggable, droppable) {
+    // Append draggable to droppable, snap with animation
+    droppable.innerHTML = '';
+    droppable.appendChild(draggable);
+    droppable.classList.add('matched');
+    draggable.classList.add('matched');
+    draggable.setAttribute('draggable', 'false');
+
+    // Reset styles for positioning
+    draggable.style.position = '';
+    draggable.style.left = '';
+    draggable.style.top = '';
+    draggable.style.zIndex = '';
+    draggable.style.transition = 'transform 0.3s ease';
+
+    // Snap visually: reset transform
+    draggable.style.transform = 'translate(0,0)';
+
+    // Play sparkle animation
+    createSparkle(droppable);
+
+    matchesMade++;
     updateProgress();
-    updateStreakDisplay();
-    animateCorrectMatch(dragEl);
-    checkGameComplete();
+
+    // Update streak
+    streak++;
+    updateStreak(streak);
+
+    // Check if all matched
+    if (matchesMade >= totalMatches) {
+      triggerConfetti();
+      setTimeout(() => alert('🎉 Congratulations! All matched! 🎉'), 500);
+    }
   }
 
-  // Wrong match handler
-  function onWrongMatch(dragEl) {
+  // Incorrect match handler
+  function handleIncorrectMatch(draggable) {
     streak = 0;
-    updateStreakDisplay();
-    animateWrongMatch(dragEl);
+    updateStreak(streak);
+    shakeAndBounceBack(draggable);
   }
 
-  // Animate correct match (small sparkle effect)
-  function animateCorrectMatch(el) {
-    el.classList.add('sparkle');
+  // Shake red and bounce back animation
+  function shakeAndBounceBack(el) {
+    if (!el) return;
+
+    el.classList.add('shake');
+    el.style.transition = 'transform 0.5s ease';
+
+    // Bounce back to original position (for touch drag)
+    el.style.transform = 'translate(0, 0)';
+
     setTimeout(() => {
-      el.classList.remove('sparkle');
-    }, 1200);
+      el.classList.remove('shake');
+      el.style.transition = '';
+      el.style.transform = '';
+    }, 500);
   }
 
-  // Animate wrong match (red flash + bounce)
-  function animateWrongMatch(el) {
-    el.classList.add('flash-red');
-    el.classList.add('bounce');
-    setTimeout(() => {
-      el.classList.remove('flash-red');
-      el.classList.remove('bounce');
-    }, 600);
-  }
-
-  // Check if all pairs matched
-  function checkGameComplete() {
-    if (pairsMatched === totalPairs) {
-      showEndScreen(true);
-    }
-  }
-  // Show end screen
-  function showEndScreen(won) {
-    confetti.start();
-    setTimeout(() => confetti.stop(), 6000);
-    gameContainer.style.display = 'none';
-    endScreen.style.display = 'block';
-    if (won) {
-      endTitle.textContent = "🎉 Congratulations! 🎉";
-      endSummary.textContent = `You matched all ${totalPairs} pairs!`;
-    } else {
-      endTitle.textContent = "⏰ Time's Up!";
-      endSummary.textContent = `You matched ${pairsMatched} out of ${totalPairs} pairs.`;
-    }
-    endScore.textContent = `Final Score: ${pairsMatched}`;
-  }
-
-  // Restart buttons
-  restartBtn.addEventListener('click', () => {
-    startGame(lessons.indexOf(currentLesson), challengeMode);
-  });
-
-  backToMenuBtn.addEventListener('click', () => {
-    endScreen.style.display = 'none';
-    startMenu.style.display = 'flex';
-    stopChallengeTimer();
-  });
-
-  challengeBtn.addEventListener('click', () => {
-    startGame(0, true);
-  });
-
-  // Challenge mode timer
-  const progressContainer = document.getElementById('progress-container');
-  function startChallengeTimer() {
-    challengeTimeLeft = 120;
-    progressContainer.style.display = 'block';
-    progressBar.style.backgroundColor = '#e74c3c';
-    updateChallengeProgress();
-    challengeTimer = setInterval(() => {
-      challengeTimeLeft--;
-      updateChallengeProgress();
-      if (challengeTimeLeft <= 0) {
-        clearInterval(challengeTimer);
-        showEndScreen(false);
-      }
-    }, 1000);
-  }
-
-  function updateChallengeProgress() {
-    const percent = (challengeTimeLeft / 120) * 100;
+  // Update progress bar
+  function updateProgress() {
+    const percent = (matchesMade / totalMatches) * 100;
     progressBar.style.width = percent + '%';
   }
 
-  function stopChallengeTimer() {
-    if (challengeTimer) {
-      clearInterval(challengeTimer);
-      challengeTimer = null;
+  // Update streak display
+  function updateStreak(value) {
+    if (value > 0) {
+      streakCounter.textContent = `Streak: ${value} 🔥`;
+      streakCounter.style.color = '#d6336c';
+    } else {
+      streakCounter.textContent = 'Streak: 0';
+      streakCounter.style.color = '#777';
     }
-    progressContainer.style.display = 'none';
-    progressBar.style.width = '0%';
   }
 
-  // Dark mode toggle
-  darkModeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark');
+  // Play audio for English word using SpeechSynthesis
+  function playAudio(text) {
+    if (!window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    window.speechSynthesis.cancel(); // cancel previous
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // Sparkle effect creation
+  function createSparkle(parent) {
+    const sparkle = document.createElement('div');
+    sparkle.className = 'sparkle';
+    parent.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 800);
+  }
+
+  // Confetti implementation
+  let confettiParticles = [];
+  let confettiAnimationId = null;
+
+  function triggerConfetti() {
+    if (confettiActive) return;
+    confettiActive = true;
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    confettiParticles = [];
+    const colors = ['#d6336c', '#ff96b8', '#57d26f', '#38b0de', '#ffd23f'];
+
+    for (let i = 0; i < 150; i++) {
+      confettiParticles.push({
+        x: Math.random() * confettiCanvas.width,
+        y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+        r: (Math.random() * 6) + 4,
+        d: (Math.random() * 20) + 10,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        tilt: Math.floor(Math.random() * 10) - 10,
+        tiltAngleIncremental: (Math.random() * 0.07) + 0.05,
+        tiltAngle: 0
+      });
+    }
+    animateConfetti();
+  }
+
+  function animateConfetti() {
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    confettiParticles.forEach(p => {
+      p.tiltAngle += p.tiltAngleIncremental;
+      p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+      p.x += Math.sin(p.tiltAngle) * 2;
+      p.tilt = Math.sin(p.tiltAngle) * 15;
+
+      confettiCtx.beginPath();
+      confettiCtx.lineWidth = p.r;
+      confettiCtx.strokeStyle = p.color;
+      confettiCtx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+      confettiCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+      confettiCtx.stroke();
+
+      if (p.y > confettiCanvas.height) {
+        p.x = Math.random() * confettiCanvas.width;
+        p.y = -10;
+      }
+    });
+    confettiAnimationId = requestAnimationFrame(animateConfetti);
+    // Stop confetti after 6 seconds
+    setTimeout(stopConfetti, 6000);
+  }
+  function stopConfetti() {
+    confettiActive = false;
+    cancelAnimationFrame(confettiAnimationId);
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  }
+
+  // Resize canvas on window resize
+  window.addEventListener('resize', () => {
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
   });
 
-  // Initialize
-  setupLessonButtons();
 </script>
+
 </body>
 </html>
