@@ -15,6 +15,15 @@
       --accent: #ffb5d2;
     }
 
+    body.dark-mode {
+      --bg: #1e1e2f;
+      --primary: #5e548e;
+      --hover: #7c6fb0;
+      --match: #98c1d9;
+      --text: #f5f5f5;
+      --accent: #ffb5d2;
+    }
+
     body {
       margin: 0;
       font-family: 'Comic Neue', cursive;
@@ -45,7 +54,7 @@
       color: #d85f84;
     }
 
-    .lesson-buttons button, .back-btn, .restart-btn {
+    .lesson-buttons button, .back-btn, .restart-btn, .toggle-dark, .challenge-btn {
       font-family: 'Comic Neue', cursive;
       padding: 12px 24px;
       margin: 10px;
@@ -58,7 +67,7 @@
       box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
     }
 
-    .lesson-buttons button:hover, .back-btn:hover, .restart-btn:hover {
+    .lesson-buttons button:hover, .back-btn:hover, .restart-btn:hover, .toggle-dark:hover, .challenge-btn:hover {
       background: var(--hover);
       transform: scale(1.05);
     }
@@ -96,6 +105,25 @@
     .matched {
       background: var(--match) !important;
       pointer-events: none;
+      animation: pulse 0.5s;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    .wrong {
+      background: #ffcccc !important;
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
     }
 
     #end-screen h2 {
@@ -107,6 +135,12 @@
       font-size: 1.2rem;
       margin-bottom: 20px;
     }
+
+    #timer {
+      font-size: 1.2rem;
+      margin-top: 10px;
+      color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -115,11 +149,14 @@
     <div class="lesson-buttons">
       <button onclick="startGame(0)">Lesson 1</button>
       <button onclick="startGame(1)">Lesson 2</button>
+      <button class="challenge-btn" onclick="startGame(0, true)">Challenge Mode 🔥</button>
     </div>
+    <button class="toggle-dark" onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
   </div>
 
   <div id="game-screen">
     <h2 class="title">🎯 Match the Words</h2>
+    <div id="timer"></div>
     <div class="grid-container">
       <div class="grid-column" id="english-column"></div>
       <div class="grid-column" id="japanese-column"></div>
@@ -133,70 +170,43 @@
     <button class="restart-btn" onclick="goBack()">🔁 Play Again</button>
   </div>
 
-  <script>
-    const sets = [
-      {
-        name: "Lesson 1",
-        words: [
-          { english: "apple", japanese: "りんご" },
-          { english: "book", japanese: "本" },
-          { english: "school", japanese: "学校" },
-          { english: "pen", japanese: "ペン" },
-          { english: "water", japanese: "水" },
-          { english: "dog", japanese: "犬" },
-          { english: "cat", japanese: "猫" },
-          { english: "chair", japanese: "椅子" },
-          { english: "table", japanese: "テーブル" },
-          { english: "teacher", japanese: "先生" },
-          { english: "student", japanese: "生徒" },
-          { english: "car", japanese: "車" },
-          { english: "bus", japanese: "バス" },
-          { english: "music", japanese: "音楽" },
-          { english: "movie", japanese: "映画" },
-          { english: "flower", japanese: "花" },
-          { english: "sky", japanese: "空" },
-          { english: "tree", japanese: "木" },
-          { english: "fish", japanese: "魚" },
-          { english: "bird", japanese: "鳥" },
-        ]
-      },
-      {
-        name: "Lesson 2",
-        words: [
-          { english: "run", japanese: "走る" },
-          { english: "jump", japanese: "跳ぶ" },
-          { english: "read", japanese: "読む" },
-          { english: "write", japanese: "書く" },
-          { english: "eat", japanese: "食べる" },
-          { english: "drink", japanese: "飲む" },
-          { english: "laugh", japanese: "笑う" },
-          { english: "cry", japanese: "泣く" },
-          { english: "talk", japanese: "話す" },
-          { english: "listen", japanese: "聞く" },
-          { english: "sleep", japanese: "寝る" },
-          { english: "wake", japanese: "起きる" },
-          { english: "walk", japanese: "歩く" },
-          { english: "swim", japanese: "泳ぐ" },
-          { english: "study", japanese: "勉強する" },
-          { english: "play", japanese: "遊ぶ" },
-          { english: "cook", japanese: "料理する" },
-          { english: "draw", japanese: "描く" },
-          { english: "paint", japanese: "絵を描く" },
-          { english: "sing", japanese: "歌う" },
-        ]
-      }
-    ];
+  <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
 
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <script>
+    const timerDisplay = document.getElementById("timer");
+    let countdown;
     let selectedSet = null;
     let matchedPairs = 0;
     let firstSelection = null;
+    let isChallenge = false;
 
-    function startGame(setIndex) {
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    function startGame(setIndex, challenge = false) {
       selectedSet = sets[setIndex];
+      isChallenge = challenge;
       document.getElementById('start-menu').classList.remove('active');
       document.getElementById('game-screen').classList.add('active');
       document.getElementById('end-screen').classList.remove('active');
+      timerDisplay.textContent = "";
       buildGrid();
+
+      if (isChallenge) {
+        let timeLeft = 120;
+        timerDisplay.textContent = `⏱️ ${timeLeft}s remaining`;
+        countdown = setInterval(() => {
+          timeLeft--;
+          timerDisplay.textContent = `⏱️ ${timeLeft}s remaining`;
+          if (timeLeft <= 0) {
+            clearInterval(countdown);
+            alert("⏰ Time's up! Try again!");
+            goBack();
+          }
+        }, 1000);
+      }
     }
 
     function buildGrid() {
@@ -234,38 +244,49 @@
     }
 
     function handleSelection(card, type) {
-      if (card.classList.contains('matched')) return;
+      if (card.classList.contains('matched') || card === firstSelection?.card) return;
+
       if (!firstSelection) {
         firstSelection = { card, type };
         card.style.background = '#ffe1e9';
         return;
       }
 
-      const match = firstSelection.card.dataset.match === card.textContent &&
-                    firstSelection.card.textContent === card.dataset.match;
+      const isMatch = firstSelection.card.dataset.match === card.textContent &&
+                      firstSelection.card.textContent === card.dataset.match;
 
-      if (match) {
+      if (isMatch) {
         firstSelection.card.classList.add('matched');
         card.classList.add('matched');
         matchedPairs++;
+
         if (matchedPairs === selectedSet.words.length) {
+          if (isChallenge) clearInterval(countdown);
           setTimeout(() => {
             document.getElementById('game-screen').classList.remove('active');
             document.getElementById('end-screen').classList.add('active');
-          }, 400);
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 }
+            });
+          }, 500);
         }
       } else {
-        const temp1 = firstSelection.card;
-        const temp2 = card;
+        firstSelection.card.classList.add("wrong");
+        card.classList.add("wrong");
         setTimeout(() => {
-          temp1.style.background = '';
-          temp2.style.background = '';
-        }, 600);
+          firstSelection.card.classList.remove("wrong");
+          card.classList.remove("wrong");
+          firstSelection.card.style.background = "";
+          card.style.background = "";
+        }, 700);
       }
       firstSelection = null;
     }
 
     function goBack() {
+      clearInterval(countdown);
       document.getElementById('game-screen').classList.remove('active');
       document.getElementById('end-screen').classList.remove('active');
       document.getElementById('start-menu').classList.add('active');
@@ -276,6 +297,59 @@
       utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
     }
+
+    const sets = [
+      {
+        name: "Lesson 1",
+        words: [
+          { english: "apple", japanese: "りんご" },
+          { english: "book", japanese: "本" },
+          { english: "school", japanese: "学校" },
+          { english: "pen", japanese: "ペン" },
+          { english: "water", japanese: "水" },
+          { english: "dog", japanese: "犬" },
+          { english: "cat", japanese: "猫" },
+          { english: "chair", japanese: "椅子" },
+          { english: "table", japanese: "テーブル" },
+          { english: "teacher", japanese: "先生" },
+          { english: "student", japanese: "生徒" },
+          { english: "car", japanese: "車" },
+          { english: "bus", japanese: "バス" },
+          { english: "music", japanese: "音楽" },
+          { english: "movie", japanese: "映画" },
+          { english: "flower", japanese: "花" },
+          { english: "sky", japanese: "空" },
+          { english: "tree", japanese: "木" },
+          { english: "fish", japanese: "魚" },
+          { english: "bird", japanese: "鳥" }
+        ]
+      },
+      {
+        name: "Lesson 2",
+        words: [
+          { english: "run", japanese: "走る" },
+          { english: "jump", japanese: "跳ぶ" },
+          { english: "read", japanese: "読む" },
+          { english: "write", japanese: "書く" },
+          { english: "eat", japanese: "食べる" },
+          { english: "drink", japanese: "飲む" },
+          { english: "laugh", japanese: "笑う" },
+          { english: "cry", japanese: "泣く" },
+          { english: "talk", japanese: "話す" },
+          { english: "listen", japanese: "聞く" },
+          { english: "sleep", japanese: "寝る" },
+          { english: "wake", japanese: "起きる" },
+          { english: "walk", japanese: "歩く" },
+          { english: "swim", japanese: "泳ぐ" },
+          { english: "study", japanese: "勉強する" },
+          { english: "play", japanese: "遊ぶ" },
+          { english: "cook", japanese: "料理する" },
+          { english: "draw", japanese: "描く" },
+          { english: "paint", japanese: "絵を描く" },
+          { english: "sing", japanese: "歌う" }
+        ]
+      }
+    ];
   </script>
 </body>
 </html>
