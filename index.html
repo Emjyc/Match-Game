@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Vocabulary Match Game - Enhanced Version" />
+  <meta name="description" content="Vocabulary Match Game - Fixed Version" />
   <title>Vocabulary Match Game</title>
 
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2&family=Poppins&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dragdroptouch/0.3.0/DragDropTouch.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -26,7 +25,6 @@
       --progress-start: #7f9ccb;
       --progress-end: #60d394;
     }
-
     body {
       font-family: 'Poppins', sans-serif;
       margin: 0;
@@ -37,21 +35,17 @@
       background-size: 20px 20px;
       transition: background-color 0.5s ease, color 0.5s ease, background-image 0.5s ease;
     }
-
     body.dark {
       background-color: var(--bg-dark);
       color: var(--text-dark);
       background-image: radial-gradient(#444 1px, transparent 1px);
     }
-
     h1.title {
       font-family: 'Baloo 2', cursive;
       font-size: 3em;
       text-align: center;
       margin-top: 30px;
-      animation: fadeIn 1s ease-in;
     }
-
     .lesson-btn {
       background: var(--secondary);
       border: none;
@@ -62,12 +56,10 @@
       transition: all 0.3s ease;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
     .lesson-btn:hover {
       transform: translateY(-5px) scale(1.05);
       box-shadow: 0 6px 14px rgba(0,0,0,0.15);
     }
-
     .draggable, .droppable {
       background: linear-gradient(to bottom, #ffffff, #f0f4ff);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -77,7 +69,6 @@
       font-size: 1.1em;
       transition: all 0.2s ease;
     }
-
     .droppable.matched::after {
       content: "✨";
       position: absolute;
@@ -86,19 +77,16 @@
       right: -8px;
       animation: sparkle 1s ease forwards;
     }
-
     @keyframes sparkle {
       0% { opacity: 0; transform: scale(0.5) rotate(0deg); }
       50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
       100% { opacity: 0; transform: scale(0.5) rotate(360deg); }
     }
-
     #progress-bar {
       background: linear-gradient(to right, var(--progress-start), var(--progress-end));
       height: 100%;
       transition: width 0.3s ease;
     }
-
     #dark-toggle {
       border: 2px solid var(--neutral);
       background: none;
@@ -106,42 +94,29 @@
       padding: 8px 16px;
       transition: background 0.3s ease;
     }
-
     #dark-toggle:hover {
       background: var(--neutral);
     }
-
-    .fade-in {
-      animation: fadeIn 0.5s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
-
 <body>
 
-<!-- ✅ START SCREEN: now properly wrapped -->
+<!-- ✅ Start Screen Wrapper -->
 <div id="start-screen">
   <h1 class="title">Vocabulary Match Game</h1>
 
-  <!-- Scoreboard -->
-  <div class="scoreboard">
+  <div class="scoreboard" style="text-align: center;">
     🏆 Best Score: <span id="best-score">0</span> |
     🔥 Best Streak: <span id="best-streak">0</span>
   </div>
 
-  <!-- Lesson Buttons -->
   <div id="lesson-buttons" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin: 20px auto; max-width: 650px; width: 90vw;"></div>
 
-  <!-- Dark Mode Toggle -->
   <div style="text-align: center; margin: 20px;">
     <button id="dark-toggle">🌓 Toggle Dark Mode</button>
   </div>
 </div>
+
 <!-- Game Screen -->
 <div id="game-screen" style="display: none; flex-direction: column; align-items: center; padding: 20px; max-width: 1100px; margin: auto;">
   <div id="game-controls" style="display: flex; justify-content: space-between; flex-wrap: wrap; width: 100%; max-width: 1000px; gap: 10px;">
