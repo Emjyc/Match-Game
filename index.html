@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Vocabulary Match Game</title>
 
-  <!-- Font & Touch Drag Support -->
+  <!-- Fonts + Touch Drag Support -->
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@dragdroptouch/dragdroptouch.min.js"></script>
 
@@ -13,23 +13,24 @@
     :root {
       --primary: #7f9ccb;
       --secondary: #ffd18d;
-      --tertiary: #f49d82;
-      --neutral: #ccd4e0;
       --correct: #a8e6cf;
       --incorrect: #ff8a80;
+      --neutral: #ccd4e0;
       --bg-light: #fefefe;
       --bg-dark: #1e1e1e;
       --text-light: #222;
-      --text-dark: #ddd;
+      --text-dark: #eee;
     }
 
     body {
       font-family: 'Comic Neue', sans-serif;
       margin: 0;
+      padding: 0;
       background: var(--bg-light);
       color: var(--text-light);
-      user-select: none;
       transition: background 0.3s, color 0.3s;
+      user-select: none;
+      overflow-x: hidden;
     }
 
     body.dark {
@@ -39,7 +40,7 @@
 
     h1.title {
       text-align: center;
-      font-size: 2.6em;
+      font-size: 2.8em;
       margin: 30px 0 10px 0;
     }
 
@@ -48,26 +49,33 @@
       flex-direction: column;
       align-items: center;
       padding: 30px 20px;
+      animation: fadeIn 0.6s ease-in-out;
     }
 
     #lesson-buttons {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 15px;
-      max-width: 600px;
+      max-width: 650px;
       width: 90vw;
       margin: 20px 0;
+      animation: slideUp 0.7s ease;
     }
 
     .lesson-btn {
-      padding: 12px;
+      padding: 14px;
       font-size: 1.1em;
       background: var(--secondary);
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       transition: 0.2s ease;
+      opacity: 0;
+      animation: fadeBounce 0.6s ease forwards;
     }
+
+    .lesson-btn:nth-child(odd) { animation-delay: 0.1s; }
+    .lesson-btn:nth-child(even) { animation-delay: 0.2s; }
 
     .lesson-btn:hover {
       transform: scale(1.05);
@@ -77,10 +85,9 @@
     #dark-toggle {
       background: none;
       border: 2px solid var(--neutral);
-      padding: 8px 14px;
+      padding: 8px 16px;
       border-radius: 20px;
       cursor: pointer;
-      margin-top: 20px;
       font-size: 1em;
       color: inherit;
     }
@@ -89,23 +96,401 @@
       background: var(--neutral);
     }
 
+    .scoreboard {
+      margin-top: 20px;
+      background: var(--neutral);
+      padding: 10px 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    /* Game Screen Layout */
+
     #game-screen {
       display: none;
       flex-direction: column;
       align-items: center;
       padding: 20px;
+      animation: slideIn 0.6s ease forwards;
       max-width: 1100px;
       margin: auto;
     }
 
-    .hide {
-      display: none !important;
+    #game-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 1000px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: slideFadeIn 0.6s ease forwards;
+      animation-delay: 0.3s;
     }
-  </style>
-</head>
+
+    .draggable, .droppable {
+      font-size: 1.1em;
+      padding: 10px;
+      height: 50px;
+      border-radius: 8px;
+      cursor: grab;
+      background: #fff;
+      border: 2px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .draggable.matched {
+      visibility: hidden;
+    }
+
+    .droppable.matched {
+      background-color: var(--correct);
+      border-color: #60b260;
+      cursor: default;
+      animation: bounce 0.4s ease;
+    }
+
+    .incorrect-flash {
+      animation: flashRed 0.4s;
+    }
+
+    @keyframes flashRed {
+      0%, 100% { background-color: #fff; border-color: #ccc; }
+      50% { background-color: var(--incorrect); border-color: #b71c1c; color: white; }
+    }
+
+    @keyframes bounce {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes fadeBounce {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transfor
 <body>
+  <!-- Start Screen -->
   <div id="start-screen">
     <h1 class="title">Vocabulary Match Game</h1>
+
+    <div class="scoreboard">
+      🏆 Best Score: <span id="best-score">0</span> |
+      🔥 Best Streak: <span id="best-streak">0</span>
+    </div>
+
     <div id="lesson-buttons"></div>
-    <button id="dark-toggle">🌙 Toggle Dark Mode</button>
+
+    <button id="dark-toggle">🌓 Toggle Dark Mode</button>
   </div>
+
+  <!-- Game Screen -->
+  <div id="game-screen">
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1000px; margin-bottom: 10px;">
+      <div id="score-display" style="font-weight: bold;">💰 Score: 0</div>
+      <div id="streak-display" style="font-weight: bold;">🔥 Streak: 0</div>
+      <div id="timer-display" style="font-weight: bold;">⏱️ 60s</div>
+    </div>
+
+    <div id="progress-container" style="width: 100%; max-width: 1000px; background: #ddd; border-radius: 10px; overflow: hidden; height: 20px; margin-bottom: 20px;">
+      <div id="progress-bar" style="height: 100%; width: 0%; background: var(--primary); transition: width 0.4s;"></div>
+    </div>
+
+    <div id="game-grid"></div>
+
+    <div style="margin-top: 20px;">
+      <button id="back-to-menu" style="margin-right: 10px; padding: 10px 18px; font-size: 1em; background: var(--secondary); border: none; border-radius: 8px; cursor: pointer;">
+        🔙 Back to Menu
+      </button>
+      <button id="export-btn" style="padding: 10px 18px; font-size: 1em; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer;">
+        📁 Export Results
+      </button>
+    </div>
+  </div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; pointer-events: none; width: 100vw; height: 100vh;"></canvas>
+<script>
+const lessons = [
+  {
+    name: "Lesson 1",
+    words: [
+      { english: "run", japanese: "走る" },
+      { english: "eat", japanese: "食べる" },
+      { english: "sleep", japanese: "寝る" },
+      { english: "drink", japanese: "飲む" }
+    ]
+  },
+  {
+    name: "Lesson 2",
+    words: [
+      { english: "sun", japanese: "太陽" },
+      { english: "moon", japanese: "月" },
+      { english: "star", japanese: "星" },
+      { english: "cloud", japanese: "雲" }
+    ]
+  }
+];
+
+const startScreen = document.getElementById("start-screen");
+const lessonButtons = document.getElementById("lesson-buttons");
+const gameScreen = document.getElementById("game-screen");
+const gameGrid = document.getElementById("game-grid");
+const progressBar = document.getElementById("progress-bar");
+const timerDisplay = document.getElementById("timer-display");
+const streakDisplay = document.getElementById("streak-display");
+const scoreDisplay = document.getElementById("score-display");
+const bestScore = document.getElementById("best-score");
+const bestStreak = document.getElementById("best-streak");
+const backToMenu = document.getElementById("back-to-menu");
+const exportBtn = document.getElementById("export-btn");
+const confettiCanvas = document.getElementById("confetti-canvas");
+const ctx = confettiCanvas.getContext("2d");
+
+let currentLesson = [], currentLessonName = "";
+let score = 0, streak = 0, matches = 0, timeLeft = 60, timer;
+let results = [];
+
+function shuffle(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+function speak(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  window.speechSynthesis.speak(utter);
+}
+
+function loadBestScores() {
+  bestScore.textContent = localStorage.getItem("bestScore") || 0;
+  bestStreak.textContent = localStorage.getItem("bestStreak") || 0;
+}
+
+function saveBestScores() {
+  if (score > +(localStorage.getItem("bestScore") || 0)) {
+    localStorage.setItem("bestScore", score);
+    bestScore.textContent = score;
+  }
+  if (streak > +(localStorage.getItem("bestStreak") || 0)) {
+    localStorage.setItem("bestStreak", streak);
+    bestStreak.textContent = streak;
+  }
+}
+
+function createLessonButtons() {
+  lessonButtons.innerHTML = "";
+  lessons.forEach((lesson, i) => {
+    const btn = document.createElement("button");
+    btn.className = "lesson-btn";
+    btn.textContent = lesson.name;
+    btn.onclick = () => startGame(i);
+    lessonButtons.appendChild(btn);
+  });
+}
+
+function startGame(index) {
+  const lesson = lessons[index];
+  currentLesson = lesson.words;
+  currentLessonName = lesson.name;
+  matches = 0;
+  score = 0;
+  streak = 0;
+  updateStats();
+  startScreen.classList.add("hide");
+  gameScreen.style.display = "flex";
+  createGrid(currentLesson);
+  startTimer();
+}
+
+function createGrid(words) {
+  gameGrid.innerHTML = "";
+  const eng = shuffle(words);
+  const jap = shuffle(words);
+
+  eng.forEach(word => {
+    const el = document.createElement("div");
+    el.className = "draggable";
+    el.setAttribute("draggable", "true");
+    el.dataset.word = word.english;
+    el.textContent = word.english;
+    el.addEventListener("dragstart", dragStart);
+    el.addEventListener("touchstart", dragStart);
+    gameGrid.appendChild(el);
+  });
+
+  jap.forEach(word => {
+    const el = document.createElement("div");
+    el.className = "droppable";
+    el.dataset.match = word.english;
+    el.textContent = word.japanese;
+    el.addEventListener("dragover", e => e.preventDefault());
+    el.addEventListener("drop", drop);
+    gameGrid.appendChild(el);
+  });
+}
+
+function dragStart(e) {
+  const word = e.target.dataset.word;
+  e.dataTransfer?.setData("text/plain", word);
+  speak(word);
+}
+
+function drop(e) {
+  e.preventDefault();
+  const word = e.dataTransfer.getData("text/plain");
+  const dropZone = e.target.closest(".droppable");
+  if (!dropZone || dropZone.classList.contains("matched")) return;
+
+  const match = dropZone.dataset.match;
+  const dragEl = [...document.querySelectorAll(".draggable")]
+    .find(el => el.dataset.word === word && !el.classList.contains("matched"));
+
+  if (match === word && dragEl) {
+    dropZone.classList.add("matched", "sparkle");
+    dragEl.classList.add("matched");
+    dropZone.style.background = "var(--correct)";
+    dragEl.style.visibility = "hidden";
+
+    matches++;
+    streak++;
+    score += 10 + (streak >= 3 ? 5 : 0);
+    speak(word);
+    updateStats();
+
+    if (matches === currentLesson.length) endGame();
+  } else {
+    dropZone.classList.add("incorrect-flash");
+    streak = 0;
+    setTimeout(() => dropZone.classList.remove("incorrect-flash"), 400);
+    updateStats();
+  }
+
+  progressBar.style.width = `${(matches / currentLesson.length) * 100}%`;
+}
+
+function updateStats() {
+  scoreDisplay.textContent = `💰 Score: ${score}`;
+  streakDisplay.textContent = `🔥 Streak: ${streak}`;
+}
+
+function startTimer() {
+  timeLeft = 60;
+  timerDisplay.textContent = `⏱️ ${timeLeft}s`;
+  timer = setInterval(() => {
+    timeLeft--;
+    timerDisplay.textContent = `⏱️ ${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      alert("⏰ Time's up!");
+      showStartScreen();
+    }
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(timer);
+  saveBestScores();
+  launchConfetti();
+  results.push({
+    lesson: currentLessonName,
+    score,
+    streak,
+    timestamp: new Date().toLocaleString()
+  });
+  setTimeout(() => {
+    alert("🎉 You matched all words!");
+    showStartScreen();
+  }, 1200);
+}
+
+function showStartScreen() {
+  gameScreen.style.display = "none";
+  startScreen.classList.remove("hide");
+  gameGrid.innerHTML = "";
+  progressBar.style.width = "0%";
+  loadBestScores();
+}
+
+function exportCSV() {
+  const headers = ["Lesson", "Score", "Streak", "Time"];
+  const csv = [headers.join(",")].concat(
+    results.map(r => [r.lesson, r.score, r.streak, r.timestamp].join(","))
+  ).join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "match-game-results.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("dark-toggle").onclick = () =>
+  document.body.classList.toggle("dark");
+
+backToMenu.onclick = showStartScreen;
+exportBtn.onclick = exportCSV;
+
+function launchConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  let particles = Array.from({ length: 100 }, () => ({
+    x: Math.random() * confettiCanvas.width,
+    y: Math.random() * -confettiCanvas.height,
+    r: Math.random() * 6 + 4,
+    d: Math.random() * 20 + 10,
+    color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+    tilt: Math.random() * 10 - 5,
+    tiltAngleIncrement: 0.07 + Math.random() / 10,
+    tiltAngle: 0
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    particles.forEach(p => {
+      p.tiltAngle += p.tiltAngleIncrement;
+      p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+      p.x += Math.sin(p.d);
+      p.tilt = Math.sin(p.tiltAngle) * 15;
+      ctx.beginPath();
+      ctx.lineWidth = p.r / 2;
+      ctx.strokeStyle = p.color;
+      ctx.moveTo(p.x + p.tilt + p.r / 4, p.y);
+      ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
+      ctx.stroke();
+    });
+  }
+
+  function animate() {
+    draw();
+    particles.forEach(p => { if (p.y > confettiCanvas.height) p.y = -10; });
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+  setTimeout(() => ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height), 5000);
+}
+
+// Support ?lesson=2 to auto-load
+const urlParams = new URLSearchParams(window.location.search);
+const autoLesson = urlParams.get("lesson");
+if (autoLesson && +autoLesson > 0 && +autoLesson <= lessons.length) {
+  window.addEventListener("DOMContentLoaded", () => startGame(+autoLesson - 1));
+} else {
+  window.addEventListener("DOMContentLoaded", () => {
+    loadBestScores();
+    createLessonButtons();
+  });
+}
+</script>
+</body>
+</html>
