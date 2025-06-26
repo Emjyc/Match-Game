@@ -1,100 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vocabulary Match Game</title>
-<link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
-<style>
-  body {
-    font-family: 'Comic Neue', cursive;
-    margin: 0;
-    padding: 0;
-    background: #fefefe;
-    color: #222;
-    user-select: none;
-  }
-  h1.title {
-    text-align: center;
-    font-size: 2.5em;
-    margin: 20px 0 10px 0;
-  }
-  #start-menu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    padding: 20px;
-  }
-  #lesson-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    width: 90vw;
-    max-width: 600px;
-  }
-  #lesson-buttons button {
-    flex: 1 1 120px;
-    padding: 12px 15px;
-    font-size: 1.1em;
-    border-radius: 8px;
-    border: none;
-    background: #ffe0f0;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-  }
-  #lesson-buttons button:hover {
-    background: #ffd2ea;
-    transform: scale(1.05);
-  }
-  #game-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    padding: 20px;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .draggable, .droppable {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.1em;
-    height: 45px;
-    border-radius: 8px;
-    cursor: grab;
-    background: #fafafa;
-    border: 2px solid #ccc;
-    transition: background-color 0.3s, border-color 0.3s;
-  }
-  .draggable.matched {
-    visibility: hidden;
-  }
-  .droppable.matched {
-    background-color: #c1f0c1;
-    border-color: #60b260;
-    cursor: default;
-  }
-  .incorrect-flash {
-    animation: flashRed 0.4s;
-  }
-  @keyframes flashRed {
-    0%, 100% { background-color: #fafafa; border-color: #ccc; }
-    50% { background-color: #f44336; border-color: #b71c1c; color: white; }
-  }
-  body.dark-mode {
-    background: #1e1e1e;
-    color: #ddd;
-  }
-  body.dark-mode .draggable,
-  body.dark-mode .droppable {
-    background: #333;
-    border-color: #555;
-    color: #eee;
-  }
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@dragdroptouch/drag-drop-touch@latest/dist/drag-drop-touch.esm.min.js?autoload"></script>
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vocabulary Match Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
+
+  <!-- ✅ Correct drag-drop-touch polyfill -->
+  <script src="https://cdn.jsdelivr.net/npm/@dragdroptouch/dragdroptouch.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Comic Neue', cursive;
+      margin: 0;
+      padding: 0;
+      background: #fefefe;
+      color: #222;
+      user-select: none;
+    }
+    h1.title {
+      text-align: center;
+      font-size: 2.5em;
+      margin: 20px 0 10px 0;
+    }
+    #start-menu {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+    }
+    #lesson-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      width: 90vw;
+      max-width: 600px;
+    }
+    #lesson-buttons button {
+      flex: 1 1 120px;
+      padding: 12px 15px;
+      font-size: 1.1em;
+      border-radius: 8px;
+      border: none;
+      background: #ffe0f0;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    #lesson-buttons button:hover {
+      background: #ffd2ea;
+      transform: scale(1.05);
+    }
+    #game-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .draggable, .droppable {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.1em;
+      height: 45px;
+      border-radius: 8px;
+      cursor: grab;
+      background: #fafafa;
+      border: 2px solid #ccc;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+    .draggable.matched {
+      visibility: hidden;
+    }
+    .droppable.matched {
+      background-color: #c1f0c1;
+      border-color: #60b260;
+      cursor: default;
+    }
+    .incorrect-flash {
+      animation: flashRed 0.4s;
+    }
+    @keyframes flashRed {
+      0%, 100% { background-color: #fafafa; border-color: #ccc; }
+      50% { background-color: #f44336; border-color: #b71c1c; color: white; }
+    }
+    body.dark-mode {
+      background: #1e1e1e;
+      color: #ddd;
+    }
+    body.dark-mode .draggable,
+    body.dark-mode .droppable {
+      background: #333;
+      border-color: #555;
+      color: #eee;
+    }
+  </style>
 </head>
 <body>
   <div id="start-menu">
@@ -103,6 +106,7 @@
     <button id="challenge-mode-btn">Challenge Mode 🔥</button>
     <button id="dark-mode-toggle">🌓 Toggle Dark Mode</button>
   </div>
+
   <div id="progress-container" style="display:none; width: 80%; margin: auto; background: #eee; height: 20px; border-radius: 10px; overflow: hidden;">
     <div id="progress-bar" style="height: 100%; width: 0%; background: #e91e63;"></div>
   </div>
@@ -110,6 +114,7 @@
   <div id="timer-display" style="text-align: center; margin-top: 10px; font-weight: bold; display: none;">Time Left: 120s</div>
   <div id="game-grid" style="display:none;"></div>
   <canvas id="confetti-canvas"></canvas>
+  
 <script>
 const lessons = Array.from({ length: 13 }, (_, i) => ({
   name: `Lesson ${i + 1}`,
