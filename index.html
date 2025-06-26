@@ -1,15 +1,16 @@
+Match game working file 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Vocabulary Match Game - Fixed Version" />
+  <meta name="description" content="Interactive vocabulary matching game with drag and drop functionality" />
   <title>Vocabulary Match Game</title>
 
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2&family=Poppins&display=swap" rel="stylesheet" />
+  <!-- Fonts + Touch Drag Support -->
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dragdroptouch/0.3.0/DragDropTouch.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
     :root {
@@ -22,174 +23,441 @@
       --bg-dark: #1e1e1e;
       --text-light: #222;
       --text-dark: #eee;
-      --progress-start: #7f9ccb;
-      --progress-end: #60d394;
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Comic Neue', sans-serif;
       margin: 0;
       padding: 0;
-      background-color: var(--bg-light);
+      background: var(--bg-light);
       color: var(--text-light);
-      background-image: radial-gradient(#ccc 1px, transparent 1px);
-      background-size: 20px 20px;
-      transition: background-color 0.5s ease, color 0.5s ease, background-image 0.5s ease;
+      transition: background 0.3s, color 0.3s;
+      user-select: none;
+      overflow-x: hidden;
     }
+
     body.dark {
-      background-color: var(--bg-dark);
+      background: var(--bg-dark);
       color: var(--text-dark);
-      background-image: radial-gradient(#444 1px, transparent 1px);
     }
+
     h1.title {
-      font-family: 'Baloo 2', cursive;
-      font-size: 3em;
       text-align: center;
-      margin-top: 30px;
+      font-size: 2.8em;
+      margin: 30px 0 10px 0;
     }
+
+    .hide {
+      display: none !important;
+    }
+
+    /* Start Screen Styles */
+    #start-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    #lesson-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      max-width: 650px;
+      width: 90vw;
+      margin: 20px 0;
+      animation: slideUp 0.7s ease;
+    }
+
     .lesson-btn {
+      padding: 14px;
+      font-size: 1.1em;
       background: var(--secondary);
       border: none;
-      border-radius: 12px;
-      padding: 16px;
-      font-size: 1.1em;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: 0.2s ease;
+      opacity: 0;
+      animation: fadeBounce 0.6s ease forwards;
+      touch-action: manipulation;
     }
+
+    .lesson-btn:nth-child(odd) { animation-delay: 0.1s; }
+    .lesson-btn:nth-child(even) { animation-delay: 0.2s; }
+
     .lesson-btn:hover {
-      transform: translateY(-5px) scale(1.05);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+      transform: scale(1.05);
+      background: #ffc166;
     }
-    .draggable, .droppable {
-      background: linear-gradient(to bottom, #ffffff, #f0f4ff);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      padding: 15px;
-      text-align: center;
-      font-size: 1.1em;
-      transition: all 0.2s ease;
-    }
-    .droppable.matched::after {
-      content: "✨";
-      position: absolute;
-      font-size: 1.2em;
-      top: -8px;
-      right: -8px;
-      animation: sparkle 1s ease forwards;
-    }
-    @keyframes sparkle {
-      0% { opacity: 0; transform: scale(0.5) rotate(0deg); }
-      50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
-      100% { opacity: 0; transform: scale(0.5) rotate(360deg); }
-    }
-    #progress-bar {
-      background: linear-gradient(to right, var(--progress-start), var(--progress-end));
-      height: 100%;
-      transition: width 0.3s ease;
-    }
+
     #dark-toggle {
-      border: 2px solid var(--neutral);
       background: none;
-      border-radius: 20px;
+      border: 2px solid var(--neutral);
       padding: 8px 16px;
-      transition: background 0.3s ease;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 1em;
+      color: inherit;
+      touch-action: manipulation;
     }
+
     #dark-toggle:hover {
       background: var(--neutral);
     }
+
+    .scoreboard {
+      margin-top: 20px;
+      background: var(--neutral);
+      padding: 10px 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    /* Game Screen Layout */
+    #game-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      animation: slideIn 0.6s ease forwards;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    #game-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1000px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .game-stat {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+
+    #progress-container {
+      width: 100%;
+      max-width: 1000px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 20px;
+      margin-bottom: 20px;
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 0.4s ease;
+    }
+
+    #game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      width: 100%;
+      max-width: 1000px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: slideFadeIn 0.6s ease forwards;
+      animation-delay: 0.3s;
+    }
+
+    .draggable, .droppable {
+      font-size: 1.1em;
+      padding: 15px;
+      min-height: 60px;
+      border-radius: 8px;
+      cursor: grab;
+      background: #fff;
+      border: 2px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.3s ease;
+      touch-action: none;
+    }
+
+    .draggable:active {
+      cursor: grabbing;
+    }
+
+    .draggable.matched {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .droppable.matched {
+      background-color: var(--correct);
+      border-color: #60b260;
+      cursor: default;
+      animation: bounce 0.4s ease;
+      color: #2d5a2d;
+      font-weight: bold;
+    }
+
+    .droppable.drag-over {
+      background-color: #e3f2fd;
+      border-color: var(--primary);
+      transform: scale(1.02);
+    }
+
+    .incorrect-flash {
+      animation: flashRed 0.4s;
+    }
+
+    .game-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .game-btn {
+      padding: 10px 18px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+
+    .game-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    #back-to-menu {
+      background: var(--secondary);
+      color: #333;
+    }
+
+    #export-btn {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Loading State */
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Animations */
+    @keyframes flashRed {
+      0%, 100% { 
+        background-color: #fff; 
+        border-color: #ccc; 
+        color: inherit;
+      }
+      50% { 
+        background-color: var(--incorrect); 
+        border-color: #b71c1c; 
+        color: white; 
+      }
+    }
+
+    @keyframes bounce {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes fadeBounce {
+      from { 
+        transform: translateY(10px); 
+        opacity: 0; 
+      }
+      to { 
+        transform: translateY(0); 
+        opacity: 1; 
+      }
+    }
+
+    @keyframes slideUp {
+      from { 
+        transform: translateY(30px); 
+        opacity: 0; 
+      }
+      to { 
+        transform: translateY(0); 
+        opacity: 1; 
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { 
+        transform: translateX(-100%); 
+        opacity: 0; 
+      }
+      to { 
+        transform: translateX(0); 
+        opacity: 1; 
+      }
+    }
+
+    @keyframes slideFadeIn {
+      from { 
+        transform: translateY(30px); 
+        opacity: 0; 
+      }
+      to { 
+        transform: translateY(0); 
+        opacity: 1; 
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      h1.title {
+        font-size: 2.2em;
+      }
+      
+      #game-controls {
+        justify-content: center;
+        text-align: center;
+      }
+      
+      .game-stat {
+        font-size: 1em;
+      }
+      
+      #game-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 8px;
+      }
+      
+      .draggable, .droppable {
+        font-size: 1em;
+        padding: 12px;
+        min-height: 50px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 10px;
+      }
+      
+      #game-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
   </style>
 </head>
+
 <body>
+  <!-- Start Screen -->
+  <div id="start-screen">
+    <h1 class="title">Vocabulary Match Game</h1>
 
-<!-- ✅ Start Screen Wrapper -->
-<div id="start-screen">
-  <h1 class="title">Vocabulary Match Game</h1>
+    <div class="scoreboard">
+      🏆 Best Score: <span id="best-score">0</span> |
+      🔥 Best Streak: <span id="best-streak">0</span>
+    </div>
 
-  <div class="scoreboard" style="text-align: center;">
-    🏆 Best Score: <span id="best-score">0</span> |
-    🔥 Best Streak: <span id="best-streak">0</span>
-  </div>
+    <div id="lesson-buttons"></div>
 
-  <div id="lesson-buttons" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin: 20px auto; max-width: 650px; width: 90vw;"></div>
-
-  <div style="text-align: center; margin: 20px;">
     <button id="dark-toggle">🌓 Toggle Dark Mode</button>
   </div>
-</div>
 
-<!-- Game UI, canvas, and script would go below -->
-<!-- You can paste the rest of your existing game HTML and script logic here -->
-</body>
-</html>
+  <!-- Game Screen -->
+  <div id="game-screen">
+    <div id="game-controls">
+      <div id="score-display" class="game-stat">💰 Score: 0</div>
+      <div id="streak-display" class="game-stat">🔥 Streak: 0</div>
+      <div id="timer-display" class="game-stat">⏱️ 60s</div>
+    </div>
 
-<!-- Game Screen -->
-<div id="game-screen" style="display: none; flex-direction: column; align-items: center; padding: 20px; max-width: 1100px; margin: auto;">
-  <div id="game-controls" style="display: flex; justify-content: space-between; flex-wrap: wrap; width: 100%; max-width: 1000px; gap: 10px;">
-    <div id="score-display" class="game-stat">💰 Score: 0</div>
-    <div id="streak-display" class="game-stat">🔥 Streak: 0</div>
-    <div id="timer-display" class="game-stat">⏱️ 60s</div>
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+
+    <div id="game-grid"></div>
+
+    <div class="game-buttons">
+      <button id="back-to-menu" class="game-btn">
+        🔙 Back to Menu
+      </button>
+      <button id="export-btn" class="game-btn">
+        📁 Export Results
+      </button>
+    </div>
   </div>
 
-  <div id="progress-container" style="width: 100%; max-width: 1000px; background: #ddd; border-radius: 10px; overflow: hidden; height: 20px; margin: 20px 0;">
-    <div id="progress-bar"></div>
-  </div>
-
-  <div id="game-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: 100%; max-width: 1000px;"></div>
-
-  <div class="game-buttons" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-    
-<button id="back-to-menu" class="game-btn">🔙 Back to Menu</button>
-<button id="export-btn" class="game-btn" style="background: #ffc166; border-radius: 12px;">📁 Save My Results</button>
-<button id="show-leaderboard" class="game-btn" style="background: #b8e1ff; border-radius: 12px;">🏅 See Leaderboard</button>
-
-  </div>
-</div>
-
-<!-- Confetti Canvas -->
-<canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; pointer-events: none; width: 100vw; height: 100vh; z-index: 1000;"></canvas>
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; pointer-events: none; width: 100vw; height: 100vh; z-index: 1000;"></canvas>
 
 <script>
 (function() {
+  'use strict';
+
+  // Game State Management
   const gameState = {
-    lessons: [
-      {
-        name: "Lesson 1",
-        words: [
-          { english: "run", japanese: "走る" },
-          { english: "eat", japanese: "食べる" },
-          { english: "sleep", japanese: "寝る" },
-          { english: "drink", japanese: "飲む" }
-        ]
-      },
-      {
-        name: "Lesson 2",
-        words: [
-          { english: "sun", japanese: "太陽" },
-          { english: "moon", japanese: "月" },
-          { english: "star", japanese: "星" },
-          { english: "cloud", japanese: "雲" }
-        ]
-      },
-      {
-        name: "Lesson 3",
-        words: [
-          { english: "book", japanese: "本" },
-          { english: "pen", japanese: "ペン" },
-          { english: "desk", japanese: "机" },
-          { english: "chair", japanese: "椅子" }
-        ]
-      }
-    ],
     currentLesson: [],
+    currentLessonName: "",
     score: 0,
     streak: 0,
     matches: 0,
     timeLeft: 60,
     timer: null,
-    gameActive: false
+    results: [],
+    confettiAnimationId: null,
+    isGameActive: false
   };
 
-  const el = {
+  // Game Data
+  const lessons = [
+    {
+      name: "Lesson 1",
+      words: [
+        { english: "run", japanese: "走る" },
+        { english: "eat", japanese: "食べる" },
+        { english: "sleep", japanese: "寝る" },
+        { english: "drink", japanese: "飲む" }
+      ]
+    },
+    {
+      name: "Lesson 2",
+      words: [
+        { english: "sun", japanese: "太陽" },
+        { english: "moon", japanese: "月" },
+        { english: "star", japanese: "星" },
+        { english: "cloud", japanese: "雲" }
+      ]
+    },
+    {
+      name: "Lesson 3",
+      words: [
+        { english: "book", japanese: "本" },
+        { english: "pen", japanese: "ペン" },
+        { english: "desk", japanese: "机" },
+        { english: "chair", japanese: "椅子" }
+      ]
+    }
+  ];
+
+  // DOM Elements
+  const elements = {
     startScreen: document.getElementById("start-screen"),
     lessonButtons: document.getElementById("lesson-buttons"),
     gameScreen: document.getElementById("game-screen"),
@@ -201,153 +469,494 @@
     bestScore: document.getElementById("best-score"),
     bestStreak: document.getElementById("best-streak"),
     backToMenu: document.getElementById("back-to-menu"),
+    exportBtn: document.getElementById("export-btn"),
     darkToggle: document.getElementById("dark-toggle"),
     confettiCanvas: document.getElementById("confetti-canvas")
   };
 
-  const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+  const ctx = elements.confettiCanvas.getContext("2d");
 
-  function initLessonButtons() {
-    el.lessonButtons.innerHTML = "";
-    gameState.lessons.forEach((lesson, i) => {
+  // Utility Functions
+  function shuffle(array) {
+    return [...array].sort(() => Math.random() - 0.5);
+  }
+
+  function speak(text) {
+    try {
+      if ('speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        utter.rate = 0.8;
+        utter.volume = 0.7;
+        window.speechSynthesis.speak(utter);
+      }
+    } catch (error) {
+      console.warn('Speech synthesis not available:', error);
+    }
+  }
+
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Score Management
+  function loadBestScores() {
+    try {
+      elements.bestScore.textContent = localStorage.getItem("bestScore") || 0;
+      elements.bestStreak.textContent = localStorage.getItem("bestStreak") || 0;
+    } catch (error) {
+      console.warn('Could not load scores from localStorage:', error);
+    }
+  }
+
+  function saveBestScores() {
+    try {
+      const currentBest = +(localStorage.getItem("bestScore") || 0);
+      const currentBestStreak = +(localStorage.getItem("bestStreak") || 0);
+      
+      if (gameState.score > currentBest) {
+        localStorage.setItem("bestScore", gameState.score);
+        elements.bestScore.textContent = gameState.score;
+      }
+      if (gameState.streak > currentBestStreak) {
+        localStorage.setItem("bestStreak", gameState.streak);
+        elements.bestStreak.textContent = gameState.streak;
+      }
+    } catch (error) {
+      console.warn('Could not save scores to localStorage:', error);
+    }
+  }
+
+  // UI Management
+  function createLessonButtons() {
+    elements.lessonButtons.innerHTML = "";
+    lessons.forEach((lesson, i) => {
       const btn = document.createElement("button");
       btn.className = "lesson-btn";
       btn.textContent = lesson.name;
       btn.onclick = () => startGame(i);
-      el.lessonButtons.appendChild(btn);
-    });
-  }
-
-  function startGame(index) {
-    const lesson = gameState.lessons[index];
-    gameState.currentLesson = lesson.words;
-    gameState.score = 0;
-    gameState.streak = 0;
-    gameState.matches = 0;
-    gameState.timeLeft = 60;
-    gameState.gameActive = true;
-    updateStats();
-    updateProgressBar();
-    el.startScreen.classList.add("hide");
-    el.gameScreen.style.display = "flex";
-    buildGrid(lesson.words);
-    startTimer();
-  }
-
-  function buildGrid(words) {
-    el.gameGrid.innerHTML = "";
-    const english = shuffle([...words]);
-    const japanese = shuffle([...words]);
-
-    english.forEach(w => {
-      const elWord = document.createElement("div");
-      elWord.className = "draggable";
-      elWord.setAttribute("draggable", "true");
-      elWord.dataset.word = w.english;
-      elWord.textContent = w.english;
-      elWord.addEventListener("dragstart", handleDragStart);
-      el.gameGrid.appendChild(elWord);
-    });
-
-    japanese.forEach(w => {
-      const drop = document.createElement("div");
-      drop.className = "droppable";
-      drop.dataset.match = w.english;
-      drop.textContent = w.japanese;
-      drop.addEventListener("dragover", e => e.preventDefault());
-      drop.addEventListener("drop", handleDrop);
-      el.gameGrid.appendChild(drop);
+      btn.setAttribute('aria-label', `Start ${lesson.name}`);
+      elements.lessonButtons.appendChild(btn);
     });
   }
 
   function updateStats() {
-    el.scoreDisplay.textContent = `💰 Score: ${gameState.score}`;
-    el.streakDisplay.textContent = `🔥 Streak: ${gameState.streak}`;
-    el.timerDisplay.textContent = `⏱️ ${gameState.timeLeft}s`;
+    elements.scoreDisplay.textContent = `💰 Score: ${gameState.score}`;
+    elements.streakDisplay.textContent = `🔥 Streak: ${gameState.streak}`;
+    elements.timerDisplay.textContent = `⏱️ ${gameState.timeLeft}s`;
   }
 
-  function updateProgressBar() {
-    const percent = (gameState.matches / gameState.currentLesson.length) * 100;
-    el.progressBar.style.width = `${percent}%`;
+  function updateProgress() {
+    const progress = (gameState.matches / gameState.currentLesson.length) * 100;
+    elements.progressBar.style.width = `${progress}%`;
   }
 
-  function startTimer() {
-    clearInterval(gameState.timer);
-    gameState.timer = setInterval(() => {
-      gameState.timeLeft--;
-      updateStats();
-      if (gameState.timeLeft <= 0) {
-        clearInterval(gameState.timer);
-        endGame();
-      }
-    }, 1000);
+  // Game Logic
+  function startGame(index) {
+    if (index < 0 || index >= lessons.length) {
+      console.error('Invalid lesson index:', index);
+      return;
+    }
+
+    const lesson = lessons[index];
+    gameState.currentLesson = lesson.words;
+    gameState.currentLessonName = lesson.name;
+    gameState.matches = 0;
+    gameState.score = 0;
+    gameState.streak = 0;
+    gameState.isGameActive = true;
+    
+    updateStats();
+    updateProgress();
+    
+    elements.startScreen.classList.add("hide");
+    elements.gameScreen.style.display = "flex";
+    
+    createGrid(gameState.currentLesson);
+    startTimer();
   }
 
+  function createGrid(words) {
+    elements.gameGrid.innerHTML = "";
+    elements.gameGrid.classList.add('loading');
+    
+    const englishWords = shuffle([...words]);
+    const japaneseWords = shuffle([...words]);
+
+    // Create English words (draggable)
+    englishWords.forEach(word => {
+      const el = document.createElement("div");
+      el.className = "draggable";
+      el.setAttribute("draggable", "true");
+      el.dataset.word = word.english;
+      el.textContent = word.english;
+      el.setAttribute('aria-label', `Drag ${word.english}`);
+      
+      // Event listeners
+      el.addEventListener("dragstart", handleDragStart);
+      el.addEventListener("dragend", handleDragEnd);
+      el.addEventListener("touchstart", handleTouchStart, { passive: false });
+      
+      elements.gameGrid.appendChild(el);
+    });
+
+    // Create Japanese words (droppable)
+    japaneseWords.forEach(word => {
+      const el = document.createElement("div");
+      el.className = "droppable";
+      el.dataset.match = word.english;
+      el.textContent = word.japanese;
+      el.setAttribute('aria-label', `Drop zone for ${word.english}`);
+      
+      // Event listeners
+      el.addEventListener("dragover", handleDragOver);
+      el.addEventListener("dragenter", handleDragEnter);
+      el.addEventListener("dragleave", handleDragLeave);
+      el.addEventListener("drop", handleDrop);
+      
+      elements.gameGrid.appendChild(el);
+    });
+
+    // Remove loading state
+    setTimeout(() => {
+      elements.gameGrid.classList.remove('loading');
+    }, 300);
+  }
+
+  // Drag and Drop Handlers
   function handleDragStart(e) {
-    e.dataTransfer.setData("text/plain", e.target.dataset.word);
+    if (!gameState.isGameActive) return;
+    
+    const word = e.target.dataset.word;
+    if (e.dataTransfer) {
+      e.dataTransfer.setData("text/plain", word);
+      e.dataTransfer.effectAllowed = 'move';
+    }
+    
+    e.target.style.opacity = '0.5';
+    speak(word);
+  }
+
+  function handleDragEnd(e) {
+    e.target.style.opacity = '1';
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function handleDragEnter(e) {
+    e.preventDefault();
+    if (e.target.classList.contains('droppable') && !e.target.classList.contains('matched')) {
+      e.target.classList.add('drag-over');
+    }
+  }
+
+  function handleDragLeave(e) {
+    if (e.target.classList.contains('droppable')) {
+      e.target.classList.remove('drag-over');
+    }
   }
 
   function handleDrop(e) {
     e.preventDefault();
-    const dragged = e.dataTransfer.getData("text/plain");
-    const target = e.target;
-    if (target.classList.contains("matched")) return;
+    
+    if (!gameState.isGameActive) return;
+    
+    const word = e.dataTransfer.getData("text/plain");
+    const dropZone = e.target.closest(".droppable");
+    
+    if (!dropZone || dropZone.classList.contains("matched")) return;
+    
+    dropZone.classList.remove('drag-over');
+    
+    const match = dropZone.dataset.match;
+    const dragEl = [...document.querySelectorAll(".draggable")]
+      .find(el => el.dataset.word === word && !el.classList.contains("matched"));
 
-    if (target.dataset.match === dragged) {
-      target.classList.add("matched");
-      const source = [...document.querySelectorAll(".draggable")]
-        .find(el => el.dataset.word === dragged && !el.classList.contains("matched"));
-      if (source) source.classList.add("matched");
-      gameState.score += 10;
-      gameState.streak++;
-      gameState.matches++;
-      updateStats();
-      updateProgressBar();
-      triggerConfetti();
-      if (gameState.matches === gameState.currentLesson.length) endGame();
+    if (match === word && dragEl) {
+      handleCorrectMatch(dropZone, dragEl, word);
     } else {
-      gameState.streak = 0;
+      handleIncorrectMatch(dropZone);
+    }
+  }
+
+  function handleTouchStart(e) {
+    e.preventDefault();
+    // Touch handling is managed by DragDropTouch library
+  }
+
+  function handleCorrectMatch(dropZone, dragEl, word) {
+    dropZone.classList.add("matched");
+    dragEl.classList.add("matched");
+    
+    gameState.matches++;
+    gameState.streak++;
+    gameState.score += 10 + (gameState.streak >= 3 ? 5 : 0);
+    
+    speak(word);
+    updateStats();
+    updateProgress();
+    
+    // Haptic feedback on mobile
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
+    if (gameState.matches === gameState.currentLesson.length) {
+      setTimeout(() => endGame(), 500);
+    }
+  }
+
+  function handleIncorrectMatch(dropZone) {
+    dropZone.classList.add("incorrect-flash");
+    gameState.streak = 0;
+    updateStats();
+    
+    // Haptic feedback on mobile
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100]);
+    }
+    
+    setTimeout(() => {
+      dropZone.classList.remove("incorrect-flash");
+    }, 400);
+  }
+
+  // Timer Management
+  function startTimer() {
+    gameState.timeLeft = 60;
+    updateStats();
+    
+    gameState.timer = setInterval(() => {
+      gameState.timeLeft--;
       updateStats();
+      
+      if (gameState.timeLeft <= 0) {
+        clearInterval(gameState.timer);
+        gameState.isGameActive = false;
+        alert("⏰ Time's up!");
+        showStartScreen();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (gameState.timer) {
+      clearInterval(gameState.timer);
+      gameState.timer = null;
     }
   }
 
+  // Game End Logic
   function endGame() {
-    clearInterval(gameState.timer);
-    gameState.gameActive = false;
-    alert("🎉 Game Over! Your score: " + gameState.score);
-    el.gameScreen.style.display = "none";
-    el.startScreen.classList.remove("hide");
-    initLessonButtons();
-  }
-
-  function triggerConfetti() {
-    confetti({
-      particleCount: 50,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#7f9ccb', '#ffd18d', '#a8e6cf']
+    gameState.isGameActive = false;
+    stopTimer();
+    saveBestScores();
+    launchConfetti();
+    
+    gameState.results.push({
+      lesson: gameState.currentLessonName,
+      score: gameState.score,
+      streak: gameState.streak,
+      timestamp: new Date().toLocaleString()
     });
+    
+    setTimeout(() => {
+      alert("🎉 Congratulations! You matched all words!");
+      showStartScreen();
+    }, 1200);
   }
 
-  el.darkToggle.onclick = () => {
-    document.body.classList.toggle("dark");
-    localStorage.setItem("darkMode", document.body.classList.contains("dark") ? "true" : "false");
-  };
+  function showStartScreen() {
+    gameState.isGameActive = false;
+    stopTimer();
+    stopConfetti();
+    
+    elements.gameScreen.style.display = "none";
+    elements.startScreen.classList.remove("hide");
+    elements.gameGrid.innerHTML = "";
+    elements.progressBar.style.width = "0%";
+    
+    loadBestScores();
+  }
 
-  el.backToMenu.onclick = () => {
-    clearInterval(gameState.timer);
-    el.gameScreen.style.display = "none";
-    el.startScreen.classList.remove("hide");
-  };
+  // Confetti Animation
+  function launchConfetti() {
+    elements.confettiCanvas.width = window.innerWidth;
+    elements.confettiCanvas.height = window.innerHeight;
+    
+    let particles = Array.from({ length: 100 }, () => ({
+      x: Math.random() * elements.confettiCanvas.width,
+      y: Math.random() * -elements.confettiCanvas.height,
+      r: Math.random() * 6 + 4,
+      d: Math.random() * 20 + 10,
+      color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+      tilt: Math.random() * 10 - 5,
+      tiltAngleIncrement: 0.07 + Math.random() / 10,
+      tiltAngle: 0
+    }));
 
-  function init() {
-    if (localStorage.getItem("darkMode") === "true") {
-      document.body.classList.add("dark");
+    let startTime = Date.now();
+    const duration = 5000; // 5 seconds
+
+    function draw() {
+      ctx.clearRect(0, 0, elements.confettiCanvas.width, elements.confettiCanvas.height);
+      
+      particles.forEach(p => {
+        p.tiltAngle += p.tiltAngleIncrement;
+        p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+        p.x += Math.sin(p.d);
+        p.tilt = Math.sin(p.tiltAngle) * 15;
+        
+        ctx.beginPath();
+        ctx.lineWidth = p.r / 2;
+        ctx.strokeStyle = p.color;
+        ctx.moveTo(p.x + p.tilt + p.r / 4, p.y);
+        ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
+        ctx.stroke();
+      });
     }
-    initLessonButtons();
+
+    function animate() {
+      const elapsed = Date.now() - startTime;
+      
+      if (elapsed < duration) {
+        draw();
+        particles.forEach(p => {
+          if (p.y > elements.confettiCanvas.height) {
+            p.y = -10;
+            p.x = Math.random() * elements.confettiCanvas.width;
+          }
+        });
+        gameState.confettiAnimationId = requestAnimationFrame(animate);
+      } else {
+        stopConfetti();
+      }
+    }
+
+    animate();
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  function stopConfetti() {
+    if (gameState.confettiAnimationId) {
+      cancelAnimationFrame(gameState.confettiAnimationId);
+      gameState.confettiAnimationId = null;
+    }
+    ctx.clearRect(0, 0, elements.confettiCanvas.width, elements.confettiCanvas.height);
+  }
+
+  // Export Functionality
+  function exportCSV() {
+    if (gameState.results.length === 0) {
+      alert("No results to export yet! Play some games first.");
+      return;
+    }
+
+    try {
+      const headers = ["Lesson", "Score", "Streak", "Timestamp"];
+      const csvContent = [
+        headers.join(","),
+        ...gameState.results.map(r => 
+          [r.lesson, r.score, r.streak, `"${r.timestamp}"`].join(",")
+        )
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      
+      link.setAttribute("href", url);
+      link.setAttribute("download", "vocabulary-game-results.csv");
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert("Export failed. Please try again.");
+    }
+  }
+
+  // Event Listeners
+  elements.darkToggle.addEventListener('click', () => {
+    document.body.classList.toggle("dark");
+    try {
+      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    } catch (error) {
+      console.warn('Could not save dark mode preference:', error);
+    }
+  });
+
+  elements.backToMenu.addEventListener('click', showStartScreen);
+  elements.exportBtn.addEventListener('click', exportCSV);
+
+  // Keyboard Navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && gameState.isGameActive) {
+      showStartScreen();
+    }
+  });
+
+  // Resize Handler
+  const handleResize = debounce(() => {
+    if (gameState.confettiAnimationId) {
+      elements.confettiCanvas.width = window.innerWidth;
+      elements.confettiCanvas.height = window.innerHeight;
+    }
+  }, 250);
+
+  window.addEventListener('resize', handleResize);
+
+  // Initialization
+  function init() {
+    try {
+      // Load dark mode preference
+      const darkMode = localStorage.getItem('darkMode');
+      if (darkMode === 'true') {
+        document.body.classList.add('dark');
+      }
+    } catch (error) {
+      console.warn('Could not load preferences:', error);
+    }
+
+    loadBestScores();
+    createLessonButtons();
+
+    // Support URL parameters for auto-loading lessons
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoLesson = urlParams.get("lesson");
+    
+    if (autoLesson && +autoLesson > 0 && +autoLesson <= lessons.length) {
+      startGame(+autoLesson - 1);
+    }
+  }
+
+  // Start the game when DOM is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    stopTimer();
+    stopConfetti();
+  });
+
 })();
 </script>
 </body>
