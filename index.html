@@ -25,20 +25,7 @@
       --progress-start: #7f9ccb;
       --progress-end: #60d394;
     }
-    
-body {
-  font-family: 'Comic Neue', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: var(--bg-light);
-  background-image: radial-gradient(#ccc 1px, transparent 1px);
-  background-size: 20px 20px;
-  color: var(--text-light);
-  transition: background 0.3s, color 0.3s;
-  user-select: none;
-  overflow-x: hidden;
-}
-
+    body {
       font-family: 'Poppins', sans-serif;
       margin: 0;
       padding: 0;
@@ -110,29 +97,7 @@ body {
     #dark-toggle:hover {
       background: var(--neutral);
     }
-  
-@keyframes correctFlash {
-  0%   { background-color: #a8e6cf; transform: scale(1); }
-  50%  { background-color: #b2f0d1; transform: scale(1.1); }
-  100% { background-color: #a8e6cf; transform: scale(1); }
-}
-
-@keyframes incorrectShake {
-  0%, 100% { transform: translateX(0); }
-  25%      { transform: translateX(-5px); }
-  50%      { transform: translateX(5px); }
-  75%      { transform: translateX(-3px); }
-}
-
-.correct-animate {
-  animation: correctFlash 0.5s ease;
-}
-
-.incorrect-animate {
-  animation: incorrectShake 0.4s ease;
-}
-
-</style>
+  </style>
 </head>
 <body>
 
@@ -145,14 +110,7 @@ body {
     🔥 Best Streak: <span id="best-streak">0</span>
   </div>
 
-  
-<div style="text-align: center; margin-top: 20px;">
-  <label for="student-name" style="font-weight: bold;">Enter your name:</label><br/>
-  <input id="student-name" type="text" placeholder="Your name..." style="margin-top: 8px; padding: 10px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc; width: 240px;" />
-</div>
-
-
-<div id="lesson-buttons" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin: 20px auto; max-width: 650px; width: 90vw;"></div>
+  <div id="lesson-buttons" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin: 20px auto; max-width: 650px; width: 90vw;"></div>
 
   <div style="text-align: center; margin: 20px;">
     <button id="dark-toggle">🌓 Toggle Dark Mode</button>
@@ -257,8 +215,6 @@ body {
   }
 
   function startGame(index) {
-    const nameInput = document.getElementById("student-name");
-    gameState.playerName = nameInput?.value?.trim() || "Anonymous";
     const lesson = gameState.lessons[index];
     gameState.currentLesson = lesson.words;
     gameState.score = 0;
