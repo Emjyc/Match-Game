@@ -480,19 +480,29 @@
     return [...array].sort(() => Math.random() - 0.5);
   }
 
+  function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  australianVoice = voices.find(voice => voice.lang === "en-AU");
+}
   function speak(text) {
-    try {
-      if ('speechSynthesis' in window) {
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = 'en-US';
-        utter.rate = 0.8;
-        utter.volume = 0.7;
-        window.speechSynthesis.speak(utter);
+  try {
+    if ('speechSynthesis' in window) {
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
       }
-    } catch (error) {
-      console.warn('Speech synthesis not available:', error);
+
+      currentUtterance = new SpeechSynthesisUtterance(text);
+      currentUtterance.voice = australianVoice || null; // Fallback if not found
+      currentUtterance.lang = 'en-AU';
+      currentUtterance.rate = 0.85;
+      currentUtterance.volume = 0.75;
+
+      speechSynthesis.speak(currentUtterance);
     }
+  } catch (error) {
+    console.warn('Speech synthesis error:', error);
   }
+}
 
   function debounce(func, wait) {
     let timeout;
