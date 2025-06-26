@@ -4,284 +4,108 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Vocabulary Match Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
 
-  <!-- Touch + mouse drag-and-drop support -->
+  <!-- Font & Touch Drag Support -->
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@dragdroptouch/dragdroptouch.min.js"></script>
 
   <style>
-    body {
-      font-family: 'Comic Neue', cursive;
-      margin: 0;
-      padding: 0;
-      background: #fefefe;
-      color: #222;
-      user-select: none;
+    :root {
+      --primary: #7f9ccb;
+      --secondary: #ffd18d;
+      --tertiary: #f49d82;
+      --neutral: #ccd4e0;
+      --correct: #a8e6cf;
+      --incorrect: #ff8a80;
+      --bg-light: #fefefe;
+      --bg-dark: #1e1e1e;
+      --text-light: #222;
+      --text-dark: #ddd;
     }
+
+    body {
+      font-family: 'Comic Neue', sans-serif;
+      margin: 0;
+      background: var(--bg-light);
+      color: var(--text-light);
+      user-select: none;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
     h1.title {
       text-align: center;
-      font-size: 2.5em;
-      margin: 20px 0 10px 0;
+      font-size: 2.6em;
+      margin: 30px 0 10px 0;
     }
-    #start-menu {
+
+    #start-screen {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 20px;
+      padding: 30px 20px;
     }
+
     #lesson-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      width: 90vw;
-      max-width: 600px;
-    }
-    #lesson-buttons button {
-      flex: 1 1 120px;
-      padding: 12px 15px;
-      font-size: 1.1em;
-      border-radius: 8px;
-      border: none;
-      background: #ffe0f0;
-      cursor: pointer;
-      transition: background-color 0.3s, transform 0.2s;
-    }
-    #lesson-buttons button:hover {
-      background: #ffd2ea;
-      transform: scale(1.05);
-    }
-    #game-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      padding: 20px;
-      max-width: 900px;
-      margin: 0 auto;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      max-width: 600px;
+      width: 90vw;
+      margin: 20px 0;
     }
-    .draggable, .droppable {
-      display: flex;
-      justify-content: center;
-      align-items: center;
+
+    .lesson-btn {
+      padding: 12px;
       font-size: 1.1em;
-      height: 45px;
+      background: var(--secondary);
+      border: none;
       border-radius: 8px;
-      cursor: grab;
-      background: #fafafa;
-      border: 2px solid #ccc;
-      transition: background-color 0.3s, border-color 0.3s;
+      cursor: pointer;
+      transition: 0.2s ease;
     }
-    .draggable.matched {
-      visibility: hidden;
+
+    .lesson-btn:hover {
+      transform: scale(1.05);
+      background: #ffc166;
     }
-    .droppable.matched {
-      background-color: #c1f0c1;
-      border-color: #60b260;
-      cursor: default;
+
+    #dark-toggle {
+      background: none;
+      border: 2px solid var(--neutral);
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      margin-top: 20px;
+      font-size: 1em;
+      color: inherit;
     }
-    .incorrect-flash {
-      animation: flashRed 0.4s;
+
+    #dark-toggle:hover {
+      background: var(--neutral);
     }
-    @keyframes flashRed {
-      0%, 100% { background-color: #fafafa; border-color: #ccc; }
-      50% { background-color: #f44336; border-color: #b71c1c; color: white; }
+
+    #game-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      max-width: 1100px;
+      margin: auto;
     }
-    .droppable {
-      pointer-events: all;
-    }
-    body.dark-mode {
-      background: #1e1e1e;
-      color: #ddd;
-    }
-    body.dark-mode .draggable,
-    body.dark-mode .droppable {
-      background: #333;
-      border-color: #555;
-      color: #eee;
+
+    .hide {
+      display: none !important;
     }
   </style>
 </head>
 <body>
-  <div id="start-menu">
+  <div id="start-screen">
     <h1 class="title">Vocabulary Match Game</h1>
     <div id="lesson-buttons"></div>
-    <button id="challenge-mode-btn">Challenge Mode 🔥</button>
-    <button id="dark-mode-toggle">🌓 Toggle Dark Mode</button>
+    <button id="dark-toggle">🌙 Toggle Dark Mode</button>
   </div>
-
-  <div id="progress-container" style="display:none; width: 80%; margin: auto; background: #eee; height: 20px; border-radius: 10px; overflow: hidden;">
-    <div id="progress-bar" style="height: 100%; width: 0%; background: #e91e63;"></div>
-  </div>
-  <div id="streak-counter" style="text-align: center; margin-top: 10px; font-weight: bold; display: none;">Streak: 0</div>
-  <div id="timer-display" style="text-align: center; margin-top: 10px; font-weight: bold; display: none;">Time Left: 120s</div>
-  <div id="game-grid" style="display:none;"></div>
-  <canvas id="confetti-canvas"></canvas>
-
-  <script>
-    const lessons = Array.from({ length: 13 }, (_, i) => ({
-      name: `Lesson ${i + 1}`,
-      words: [
-        { english: "run", japanese: "走る" },
-        { english: "eat", japanese: "食べる" },
-        { english: "sleep", japanese: "寝る" },
-        { english: "drink", japanese: "飲む" }
-      ]
-    }));
-
-    const startMenu = document.getElementById('start-menu');
-    const gameGrid = document.getElementById('game-grid');
-    const lessonButtons = document.getElementById('lesson-buttons');
-    const progressBar = document.getElementById('progress-bar');
-    const streakCounter = document.getElementById('streak-counter');
-    const timerDisplay = document.getElementById('timer-display');
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const confettiCanvas = document.getElementById('confetti-canvas');
-    const confettiCtx = confettiCanvas.getContext('2d');
-
-    let matches = 0, total = 0, streak = 0, timeLeft = 120, timer;
-
-    function shuffle(array) {
-      return array.sort(() => Math.random() - 0.5);
-    }
-
-    function playAudio(text) {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = 'en-US';
-      window.speechSynthesis.speak(utter);
-    }
-
-    function launchConfetti() {
-      confettiCanvas.width = window.innerWidth;
-      confettiCanvas.height = window.innerHeight;
-      let particles = Array.from({ length: 150 }, () => ({
-        x: Math.random() * confettiCanvas.width,
-        y: Math.random() * -confettiCanvas.height,
-        r: Math.random() * 6 + 4,
-        d: Math.random() * 20 + 10,
-        color: `hsl(${Math.random()*360}, 70%, 60%)`,
-        tilt: Math.random() * 10 - 5,
-        tiltAngleIncrement: 0.07 + Math.random() / 10,
-        tiltAngle: 0
-      }));
-      function draw() {
-        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-        particles.forEach(p => {
-          p.tiltAngle += p.tiltAngleIncrement;
-          p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
-          p.x += Math.sin(p.d);
-          p.tilt = Math.sin(p.tiltAngle) * 15;
-          confettiCtx.beginPath();
-          confettiCtx.lineWidth = p.r / 2;
-          confettiCtx.strokeStyle = p.color;
-          confettiCtx.moveTo(p.x + p.tilt + p.r / 4, p.y);
-          confettiCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
-          confettiCtx.stroke();
-        });
-      }
-      function animate() {
-        draw();
-        particles.forEach(p => { if (p.y > confettiCanvas.height) p.y = -10; });
-        requestAnimationFrame(animate);
-      }
-      animate();
-      setTimeout(() => confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height), 5000);
-    }
-
-    function createGrid(words) {
-      gameGrid.innerHTML = '';
-      const eng = shuffle([...words]);
-      const jap = shuffle([...words]);
-
-      eng.forEach(w => {
-        const div = document.createElement('div');
-        div.textContent = w.english;
-        div.className = 'draggable';
-        div.setAttribute('draggable', 'true');
-        div.dataset.match = w.english;
-        div.addEventListener('dragstart', dragStart);
-        gameGrid.appendChild(div);
-      });
-
-      jap.forEach(w => {
-        const div = document.createElement('div');
-        div.textContent = w.japanese;
-        div.className = 'droppable';
-        div.dataset.match = w.english;
-        div.addEventListener('dragover', e => e.preventDefault());
-        div.addEventListener('drop', drop);
-        gameGrid.appendChild(div);
-      });
-    }
-
-    function dragStart(e) {
-      e.dataTransfer.setData('text', e.target.dataset.match);
-    }
-
-    function drop(e) {
-      e.preventDefault();
-      const dropTarget = e.target.closest('.droppable');
-      const word = e.dataTransfer.getData('text');
-      const match = dropTarget?.dataset?.match;
-      const dragged = [...document.querySelectorAll('.draggable')].find(d => d.dataset.match === word);
-
-      if (word === match) {
-        dropTarget.classList.add('matched');
-        dragged.classList.add('matched');
-        matches++;
-        streak++;
-        playAudio(word);
-        if (matches === total) endGame();
-      } else {
-        dropTarget.classList.add('incorrect-flash');
-        streak = 0;
-        setTimeout(() => dropTarget.classList.remove('incorrect-flash'), 400);
-      }
-
-      progressBar.style.width = (matches / total) * 100 + '%';
-      streakCounter.textContent = `Streak: ${streak}`;
-    }
-
-    function startTimer() {
-      timeLeft = 120;
-      timerDisplay.style.display = 'block';
-      timerDisplay.textContent = `Time Left: ${timeLeft}s`;
-      timer = setInterval(() => {
-        timeLeft--;
-        timerDisplay.textContent = `Time Left: ${timeLeft}s`;
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          alert('⏰ Time is up!');
-          location.reload();
-        }
-      }, 1000);
-    }
-
-    function endGame() {
-      clearInterval(timer);
-      launchConfetti();
-      alert('🎉 You matched all words!');
-      location.reload();
-    }
-
-    lessons.forEach((lesson, i) => {
-      const btn = document.createElement('button');
-      btn.textContent = lesson.name;
-      btn.onclick = () => {
-        startMenu.style.display = 'none';
-        gameGrid.style.display = 'grid';
-        streakCounter.style.display = 'block';
-        matches = 0;
-        streak = 0;
-        total = lesson.words.length;
-        progressBar.style.width = '0%';
-        createGrid(lesson.words);
-        startTimer();
-      };
-      lessonButtons.appendChild(btn);
-    });
-
-    darkModeToggle.onclick = () => document.body.classList.toggle('dark-mode');
-  </script>
-</body>
-</html>
